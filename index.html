@@ -9,6 +9,26 @@
       rel="stylesheet"
     />
     <title>Lampas AI</title>
+    <script>
+      // Restore the real path after the GitHub Pages SPA redirect (see public/404.html).
+      (function () {
+        var search = window.location.search;
+        if (search[1] === "/") {
+          var decoded = search
+            .slice(1)
+            .split("&")
+            .map(function (s) {
+              return s.replace(/~and~/g, "&");
+            })
+            .join("?");
+          window.history.replaceState(
+            null,
+            "",
+            window.location.pathname.slice(0, -1) + decoded + window.location.hash
+          );
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

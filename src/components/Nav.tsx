@@ -1,25 +1,30 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useLanguage } from "../i18n";
+import { useAuth } from "../context/AuthContext";
+import lampasLogo from "../assets/lampas-logo.png";
 
 export default function Nav() {
   const [open, setOpen] = useState(false);
   const { lang, setLang, t } = useLanguage();
+  const { user, signOut } = useAuth();
 
   const links = [
-    { href: "#home", label: t.nav.home },
-    { href: "#about", label: t.nav.about },
-    { href: "#insights", label: t.nav.insights },
-    { href: "#team", label: t.nav.team },
-    { href: "#clients", label: t.nav.clients },
-    { href: "#services", label: t.nav.services },
+    { href: "/#home", label: t.nav.home },
+    { href: "/#about", label: t.nav.about },
+    { href: "/#insights", label: t.nav.insights },
+    { href: "/#team", label: t.nav.team },
+    { href: "/#clients", label: t.nav.clients },
+    { href: "/#services", label: t.nav.services },
   ];
 
   return (
     <nav className="sticky top-0 z-50 border-b border-white/10 bg-[#05070d]/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <a href="#home" className="font-display text-xl font-semibold tracking-tight">
+        <Link to="/" className="flex items-center gap-2 font-display text-xl font-semibold tracking-tight">
+          <img src={lampasLogo} alt="Lampas AI" className="h-8 w-8" />
           lampas<span className="text-violet-400">.ai</span>
-        </a>
+        </Link>
 
         <ul className="hidden items-center gap-8 text-sm text-white/70 md:flex">
           {links.map((link) => (
@@ -29,16 +34,31 @@ export default function Nav() {
               </a>
             </li>
           ))}
+          <li>
+            <Link to="/certifications" className="transition hover:text-white">
+              Certifications
+            </Link>
+          </li>
         </ul>
 
         <div className="hidden items-center gap-4 md:flex">
           <LangSwitch lang={lang} setLang={setLang} />
-          <a
-            href="#contact"
-            className="rounded-full bg-violet-500 px-5 py-2 text-sm font-medium text-white transition hover:bg-violet-400"
-          >
-            {t.nav.contact}
-          </a>
+          {user ? (
+            <button
+              type="button"
+              onClick={signOut}
+              className="rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white/70 transition hover:text-white"
+            >
+              Déconnexion
+            </button>
+          ) : (
+            <a
+              href="/#contact"
+              className="rounded-full bg-violet-500 px-5 py-2 text-sm font-medium text-white transition hover:bg-violet-400"
+            >
+              {t.nav.contact}
+            </a>
+          )}
         </div>
 
         <div className="flex items-center gap-3 md:hidden">
@@ -68,13 +88,35 @@ export default function Nav() {
             </li>
           ))}
           <li>
-            <a
-              href="#contact"
+            <Link
+              to="/certifications"
               onClick={() => setOpen(false)}
-              className="mt-2 block rounded-full bg-violet-500 px-4 py-3 text-center font-medium text-white"
+              className="block rounded-lg px-2 py-3 hover:bg-white/5"
             >
-              {t.nav.contact}
-            </a>
+              Certifications
+            </Link>
+          </li>
+          <li>
+            {user ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  signOut();
+                }}
+                className="mt-2 block w-full rounded-full border border-white/15 px-4 py-3 text-center font-medium text-white/70"
+              >
+                Déconnexion
+              </button>
+            ) : (
+              <a
+                href="/#contact"
+                onClick={() => setOpen(false)}
+                className="mt-2 block rounded-full bg-violet-500 px-4 py-3 text-center font-medium text-white"
+              >
+                {t.nav.contact}
+              </a>
+            )}
           </li>
         </ul>
       )}

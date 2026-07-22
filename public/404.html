@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Lampas AI</title>
+    <script>
+      // GitHub Pages SPA redirect trick (single-domain, path depth 0).
+      var l = window.location;
+      l.replace(
+        l.protocol + "//" + l.hostname + (l.port ? ":" + l.port : "") + "/?/" +
+        l.pathname.slice(1).replace(/&/g, "~and~") +
+        (l.search ? "&" + l.search.slice(1).replace(/&/g, "~and~") : "") +
+        l.hash
+      );
+    </script>
+  </head>
+  <body></body>
+</html>
