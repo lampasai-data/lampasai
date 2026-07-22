@@ -138,22 +138,13 @@ function LangSwitch({
   setLang: (lang: "fr" | "en") => void;
 }) {
   return (
-    <div className="flex items-center rounded-full border border-black/10 bg-black/[0.02] p-0.5 text-xs font-medium">
-      {(["fr", "en"] as const).map((code) => (
-        <button
-          key={code}
-          type="button"
-          onClick={() => setLang(code)}
-          aria-pressed={lang === code}
-          className={`rounded-full px-2.5 py-1 uppercase transition ${
-            lang === code
-              ? "brand-gradient text-white"
-              : "text-muted hover:text-ink"
-          }`}
-        >
-          {code}
-        </button>
-      ))}
-    </div>
+    <button
+      type="button"
+      onClick={() => setLang(lang === "fr" ? "en" : "fr")}
+      title={lang === "fr" ? "Switch to English" : "Passer en français"}
+      className="rounded-full border border-black/10 bg-black/[0.02] px-3 py-1.5 text-xs font-semibold uppercase text-ink/80 transition hover:border-black/20 hover:text-ink"
+    >
+      {lang}
+    </button>
   );
 }

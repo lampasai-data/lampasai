@@ -7,8 +7,15 @@ const TOOLS = ["Power BI", "Snowflake", "dbt"];
 export default function TrainingRequestForm() {
   const [sent, setSent] = useState(false);
   const [tooFast, setTooFast] = useState(false);
+  const [selectedTools, setSelectedTools] = useState<string[]>([]);
   const { t } = useLanguage();
   const mountedAt = useRef(Date.now());
+
+  function toggleTool(tool: string) {
+    setSelectedTools((prev) =>
+      prev.includes(tool) ? prev.filter((v) => v !== tool) : [...prev, tool]
+    );
+  }
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -29,10 +36,12 @@ export default function TrainingRequestForm() {
       return;
     }
 
+    if (selectedTools.length === 0) return;
+
     const body = [
       `Nom: ${data.get("name")}`,
       `Email: ${data.get("email")}`,
-      `Outil: ${data.get("tool")}`,
+      `Outil(s): ${selectedTools.join(", ")}`,
       `Niveau: ${data.get("level")}`,
       `Format: ${data.get("format")}`,
       `Précisions: ${data.get("message") || "-"}`,
@@ -43,6 +52,7 @@ export default function TrainingRequestForm() {
 
     setSent(true);
     form.reset();
+    setSelectedTools([]);
     setTimeout(() => setSent(false), 4000);
   }
 
@@ -80,28 +90,43 @@ export default function TrainingRequestForm() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-muted">
-            {t.formations.requestTool}
-          </label>
-          <select
-            name="tool"
-            required
-            defaultValue=""
-            className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink focus:border-teal focus:outline-none"
-          >
-            <option value="" disabled>
-              —
-            </option>
-            {TOOLS.map((tool) => (
-              <option key={tool} value={tool}>
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-muted">
+          {t.formations.requestTool}
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {TOOLS.map((tool) => {
+            const isSelected = selectedTools.includes(tool);
+            return (
+              <button
+                key={tool}
+                type="button"
+                onClick={() => toggleTool(tool)}
+                aria-pressed={isSelected}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition ${
+                  isSelected
+                    ? "border-teal/50 bg-teal/10 text-teal-dark"
+                    : "border-black/10 bg-white text-ink/80 hover:border-teal/30"
+                }`}
+              >
+                <span
+                  className={`flex h-4 w-4 items-center justify-center rounded border text-[10px] ${
+                    isSelected ? "border-teal bg-teal text-white" : "border-black/20"
+                  }`}
+                >
+                  {isSelected && "✓"}
+                </span>
                 {tool}
-              </option>
-            ))}
-          </select>
+              </button>
+            );
+          })}
         </div>
+        {selectedTools.length === 0 && (
+          <p className="mt-1.5 text-xs text-muted">{t.formations.requestToolHint}</p>
+        )}
+      </div>
 
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1.5 block text-xs font-medium text-muted">
             {t.formations.requestLevelLabel}
@@ -153,8 +178,8 @@ export default function TrainingRequestForm() {
 
       <button
         type="submit"
-        disabled={sent}
-        className="brand-gradient mt-2 self-start rounded-full px-7 py-3.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-70"
+        disabled={sent || selectedTools.length === 0}
+        className="brand-gradient mt-2 self-start rounded-full px-7 py-3.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40"
       >
         {sent ? t.formations.requestSent : t.formations.requestSubmit}
       </button>

@@ -17,13 +17,14 @@ const CERT_LOGOS: Record<string, string> = {
   snowflake: snowflakeLogo,
 };
 
-type Tab = "certifications" | "formations";
+type Tab = "certifications" | "formations" | "pricing";
 
 export default function Formations() {
   const [certs, setCerts] = useState<CertificationSummary[]>([]);
   const [tab, setTab] = useState<Tab>("certifications");
   const [showAuth, setShowAuth] = useState(false);
   const [downloadingSlug, setDownloadingSlug] = useState<string | null>(null);
+  const [pricingSlug, setPricingSlug] = useState<string>("power-bi");
   const { user, profile } = useAuth();
   const { lang, t } = useLanguage();
 
@@ -48,57 +49,27 @@ export default function Formations() {
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-24">
-      <div className={`grid grid-cols-1 gap-10 ${!isPro ? "lg:grid-cols-[1.3fr_1fr] lg:items-start" : ""}`}>
-        <Reveal className="max-w-2xl">
-          {profile?.first_name && (
-            <p className="mb-2 text-sm font-medium text-teal-dark">
-              Bienvenue {profile.first_name} 👋
-            </p>
-          )}
-          <h1 className="font-display text-4xl font-semibold text-ink md:text-5xl">
-            {t.formations.title}
-          </h1>
-          <p className="mt-5 leading-relaxed text-muted">{t.formations.lead}</p>
-          <p className="mt-3 text-sm font-medium text-teal-dark">{t.formations.valueProp}</p>
-        </Reveal>
-
-        {!isPro && (
-          <Reveal delay={100}>
-            <div className="relative overflow-hidden rounded-2xl border border-teal/25 bg-white p-7 shadow-sm">
-              <span className="brand-gradient inline-flex rounded-full px-3 py-1 text-xs font-semibold text-white">
-                {t.formations.offerBadge}
-              </span>
-              <div className="mt-4 flex flex-wrap items-end gap-2">
-                <span className="font-display text-4xl font-semibold text-ink">
-                  {t.formations.offerPrice}
-                </span>
-                <span className="pb-1 text-sm text-muted">{t.formations.offerPeriod}</span>
-              </div>
-              <p className="mt-1 text-xs text-muted">{t.formations.offerNote}</p>
-              <ul className="mt-5 flex flex-col gap-2 text-sm text-ink/80">
-                {t.formations.offerBenefits.map((benefit) => (
-                  <li key={benefit} className="flex items-start gap-2">
-                    <span className="mt-0.5 shrink-0 text-teal-dark">✓</span>
-                    {benefit}
-                  </li>
-                ))}
-              </ul>
-              <a
-                href="mailto:contact@lampasai.com?subject=Passage%20au%20mode%20Pro%20(9%2C99%E2%82%AC%20%2F%203%20mois)"
-                className="brand-gradient mt-6 inline-flex rounded-full px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
-              >
-                {t.formations.offerCta}
-              </a>
-            </div>
-          </Reveal>
+      <Reveal className="max-w-2xl">
+        {profile?.first_name && (
+          <p className="mb-2 text-sm font-medium text-teal-dark">
+            Bienvenue {profile.first_name} 👋
+          </p>
         )}
-      </div>
+        <h1 className="font-display text-4xl font-semibold text-ink md:text-5xl">
+          {t.formations.title}
+        </h1>
+        <p className="mt-5 leading-relaxed text-muted">{t.formations.lead}</p>
+        <p className="mt-3 text-sm font-medium text-teal-dark">{t.formations.valueProp}</p>
+      </Reveal>
 
       <div className="mt-10 inline-flex gap-1 rounded-full border border-black/8 bg-surface p-1.5">
         {(
           [
             { id: "formations" as const, label: t.formations.tabFormations },
             { id: "certifications" as const, label: t.formations.tabCertifications },
+            ...(!isPro
+              ? [{ id: "pricing" as const, label: t.formations.tabPricing }]
+              : []),
           ]
         ).map((item) => (
           <button
@@ -107,7 +78,7 @@ export default function Formations() {
             onClick={() => setTab(item.id)}
             className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
               tab === item.id
-                ? "brand-gradient text-white shadow-sm"
+                ? "bg-teal text-white shadow-sm"
                 : "text-muted hover:text-ink"
             }`}
           >
@@ -118,8 +89,10 @@ export default function Formations() {
 
       {tab === "certifications" ? (
         <>
+          <p className="mt-6 text-sm italic text-muted">{t.formations.certifValue}</p>
+
           {!isPro && (
-            <p className="mt-6 text-sm text-teal-dark">
+            <p className="mt-3 text-sm text-teal-dark">
               {Math.max(FREE_QUESTION_LIMIT - used, 0)} {t.formations.remainingFree}
             </p>
           )}
@@ -252,6 +225,63 @@ export default function Formations() {
             ))}
           </div>
         </>
+      ) : tab === "pricing" ? (
+        <Reveal delay={40} className="mt-8 max-w-md">
+          <div className="relative overflow-hidden rounded-2xl border border-teal/25 bg-white p-7 shadow-sm">
+            <span className="brand-gradient inline-flex rounded-full px-3 py-1 text-xs font-semibold text-white">
+              {t.formations.offerBadge}
+            </span>
+            <div className="mt-4 flex flex-wrap items-end gap-2">
+              <span className="font-display text-4xl font-semibold text-ink">
+                {t.formations.offerPrice}
+              </span>
+              <span className="pb-1 text-sm text-muted">{t.formations.offerPeriod}</span>
+            </div>
+            <p className="mt-1 text-xs text-muted">{t.formations.offerNote}</p>
+
+            {certs.filter((c) => CERTIFICATION_DOMAINS[c.slug]).length > 0 && (
+              <div className="mt-5">
+                <p className="text-xs font-medium text-muted">{t.formations.offerCertLabel}</p>
+                <div className="mt-2 inline-flex gap-1 rounded-full border border-black/8 bg-surface p-1">
+                  {certs
+                    .filter((c) => CERTIFICATION_DOMAINS[c.slug])
+                    .map((c) => (
+                      <button
+                        key={c.slug}
+                        type="button"
+                        onClick={() => setPricingSlug(c.slug)}
+                        className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                          pricingSlug === c.slug
+                            ? "brand-gradient text-white shadow-sm"
+                            : "text-muted hover:text-ink"
+                        }`}
+                      >
+                        {localize(c.name, lang)}
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            <p className="mt-5 text-xs font-medium text-teal-dark">{t.formations.domainsLabel}</p>
+            <ul className="mt-2.5 flex flex-col gap-2 text-sm text-ink/80">
+              {(CERTIFICATION_DOMAINS[pricingSlug] ?? []).map((domain) => (
+                <li key={domain.label.fr} className="flex items-start gap-2">
+                  <span className="mt-0.5 shrink-0 text-teal-dark">✓</span>
+                  {localize(domain.label, lang)}
+                </li>
+              ))}
+            </ul>
+            <a
+              href={`mailto:contact@lampasai.com?subject=Passage%20au%20mode%20Pro%20(9%2C99%E2%82%AC%20%2F%203%20mois%20-%20${encodeURIComponent(
+                certs.find((c) => c.slug === pricingSlug)?.name.fr ?? pricingSlug
+              )})`}
+              className="brand-gradient mt-6 inline-flex rounded-full px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
+            >
+              {t.formations.offerCta}
+            </a>
+          </div>
+        </Reveal>
       ) : null}
 
       <Reveal delay={80} className="mt-16 max-w-2xl">

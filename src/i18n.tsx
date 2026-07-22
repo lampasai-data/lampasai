@@ -74,10 +74,12 @@ interface Translations {
     lead: string;
     tabCertifications: string;
     tabFormations: string;
+    tabPricing: string;
     trainFor: string;
     accessQuiz: string;
     remainingFree: string;
     valueProp: string;
+    certifValue: string;
     skipFreeTitle: string;
     skipFreeDesc: string;
     createAccountCta: string;
@@ -89,6 +91,7 @@ interface Translations {
     requestName: string;
     requestEmail: string;
     requestTool: string;
+    requestToolHint: string;
     requestLevelLabel: string;
     levelBeginner: string;
     levelIntermediate: string;
@@ -105,7 +108,7 @@ interface Translations {
     offerPrice: string;
     offerPeriod: string;
     offerNote: string;
-    offerBenefits: string[];
+    offerCertLabel: string;
     offerCta: string;
     domainsLabel: string;
     downloadPdf: string;
@@ -232,10 +235,12 @@ const translations: Record<Lang, Translations> = {
       lead: "Prépare tes certifications ou découvre nos prochaines formations pour monter en compétence sur la donnée et l'IA.",
       tabCertifications: "Certifications",
       tabFormations: "Formations",
-      trainFor: "S'entraîner →",
+      tabPricing: "Pricing",
+      trainFor: "S'entraîner >",
       accessQuiz: "Accéder au quiz",
       remainingFree: "question(s) gratuite(s) restante(s)",
       valueProp: "Nos questions vont droit à l'essentiel : pas de superflu, seulement ce qu'il faut pour réussir ta certification.",
+      certifValue: "Avoir une certification est une vraie plus-value sur ton CV : prends le temps de bien la préparer.",
       skipFreeTitle: "Pas envie de passer par les questions gratuites ?",
       skipFreeDesc: "Tu peux créer ton compte dès maintenant et passer directement en accès illimité, sans faire les 20 questions gratuites.",
       createAccountCta: "Créer mon compte",
@@ -243,10 +248,11 @@ const translations: Record<Lang, Translations> = {
       comingSoonTitle: "Nos formations arrivent bientôt",
       comingSoonDesc: "Nous préparons des parcours de formation complets (Power BI, Snowflake, IA appliquée...). Reviens bientôt ou contacte-nous pour être informé en priorité.",
       requestTitle: "Demande de formation sur-mesure",
-      requestLead: "Envie d'une formation Power BI, Snowflake ou dbt adaptée à ton niveau ? Décris ton besoin, nous te recontactons avec un devis.",
+      requestLead: "Envie d'une formation Power BI, Snowflake ou dbt adaptée à ton niveau ? Pour aller plus loin et renforcer tes compétences pratiques sur ces outils, n'hésite pas à nous faire une demande de formation : nous te répondons sous 24h avec un devis.",
       requestName: "Nom complet*",
       requestEmail: "Email*",
       requestTool: "Outil souhaité*",
+      requestToolHint: "Sélectionne un ou plusieurs outils.",
       requestLevelLabel: "Niveau souhaité*",
       levelBeginner: "Débutant",
       levelIntermediate: "Intermédiaire",
@@ -261,13 +267,9 @@ const translations: Record<Lang, Translations> = {
       requestTooFast: "Merci de patienter quelques secondes avant d'envoyer.",
       offerBadge: "Accès illimité pendant 3 mois",
       offerPrice: "9,99 €",
-      offerPeriod: "pour 3 mois d'accès illimité",
-      offerNote: "Paiement unique, sans réengagement.",
-      offerBenefits: [
-        "Quiz illimités sur toutes les certifications",
-        "Questions mélangées à chaque session pour un entraînement plus efficace",
-        "Entraînement direct sur la plateforme, sans limite de tentatives",
-      ],
+      offerPeriod: "par certification, pour 3 mois d'accès illimité",
+      offerNote: "Paiement unique par certification, sans réengagement.",
+      offerCertLabel: "Certification :",
       offerCta: "Débloquer l'accès illimité",
       domainsLabel: "Nos questions couvrent les blocs réellement évalués à l'examen :",
       downloadPdf: "Télécharger en PDF",
@@ -392,10 +394,12 @@ const translations: Record<Lang, Translations> = {
       lead: "Prepare for your certifications or discover our upcoming training paths to grow your data and AI skills.",
       tabCertifications: "Certifications",
       tabFormations: "Training",
-      trainFor: "Practice →",
+      tabPricing: "Pricing",
+      trainFor: "Practice >",
       accessQuiz: "Go to quiz",
       remainingFree: "free question(s) left",
       valueProp: "Our questions go straight to the point: nothing superfluous, only what you need to pass your certification.",
+      certifValue: "Having a certification is a real asset on your resume: take the time to prepare it properly.",
       skipFreeTitle: "Don't want to go through the free questions?",
       skipFreeDesc: "You can create your account right away and go straight to unlimited access, without doing the 20 free questions.",
       createAccountCta: "Create my account",
@@ -403,10 +407,11 @@ const translations: Record<Lang, Translations> = {
       comingSoonTitle: "Our training paths are coming soon",
       comingSoonDesc: "We're building complete training paths (Power BI, Snowflake, applied AI...). Check back soon or contact us to be notified first.",
       requestTitle: "Request tailor-made training",
-      requestLead: "Want Power BI, Snowflake or dbt training tailored to your level? Tell us what you need and we'll get back to you with a quote.",
+      requestLead: "Want Power BI, Snowflake or dbt training tailored to your level? To go further and strengthen your practical skills on these tools, feel free to request a training — we reply within 24h with a quote.",
       requestName: "Full name*",
       requestEmail: "Email*",
       requestTool: "Tool*",
+      requestToolHint: "Select one or more tools.",
       requestLevelLabel: "Desired level*",
       levelBeginner: "Beginner",
       levelIntermediate: "Intermediate",
@@ -421,13 +426,9 @@ const translations: Record<Lang, Translations> = {
       requestTooFast: "Please wait a few seconds before sending.",
       offerBadge: "Unlimited access for 3 months",
       offerPrice: "€9.99",
-      offerPeriod: "for 3 months of unlimited access",
-      offerNote: "One-time payment, no subscription.",
-      offerBenefits: [
-        "Unlimited quizzes across all certifications",
-        "Shuffled questions every session for more effective practice",
-        "Practice directly on the platform, with no attempt limit",
-      ],
+      offerPeriod: "per certification, for 3 months of unlimited access",
+      offerNote: "One-time payment per certification, no subscription.",
+      offerCertLabel: "Certification:",
       offerCta: "Unlock unlimited access",
       domainsLabel: "Our questions cover the skill blocks actually assessed on the exam:",
       downloadPdf: "Download as PDF",
