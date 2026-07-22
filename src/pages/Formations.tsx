@@ -6,6 +6,8 @@ import { useLanguage } from "../i18n";
 import { localize } from "../lib/i18nText";
 import { FREE_QUESTION_LIMIT, getAnonymousUsage } from "../lib/freeQuota";
 import Reveal from "../components/Reveal";
+import AuthPanel from "../components/AuthPanel";
+import TrainingRequestForm from "../components/TrainingRequestForm";
 import powerBiLogo from "../assets/PowerBI.png";
 import snowflakeLogo from "../assets/snowflake.png";
 
@@ -19,6 +21,7 @@ type Tab = "certifications" | "formations";
 export default function Formations() {
   const [certs, setCerts] = useState<CertificationSummary[]>([]);
   const [tab, setTab] = useState<Tab>("certifications");
+  const [showAuth, setShowAuth] = useState(false);
   const { user, profile } = useAuth();
   const { lang, t } = useLanguage();
 
@@ -36,6 +39,7 @@ export default function Formations() {
           {t.formations.title}
         </h1>
         <p className="mt-5 leading-relaxed text-muted">{t.formations.lead}</p>
+        <p className="mt-3 text-sm font-medium text-teal-dark">{t.formations.valueProp}</p>
       </Reveal>
 
       <div className="mt-10 flex gap-2 border-b border-black/8">
@@ -69,6 +73,42 @@ export default function Formations() {
             <p className="mt-6 text-sm text-teal-dark">
               {Math.max(FREE_QUESTION_LIMIT - used, 0)} {t.formations.remainingFree}
             </p>
+          )}
+
+          {!isPro && (
+            <Reveal delay={40} className="mt-6">
+              <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-black/8 bg-surface p-6 sm:flex-row sm:items-center">
+                <div>
+                  <p className="font-display text-base font-medium text-ink">
+                    {t.formations.skipFreeTitle}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted">
+                    {t.formations.skipFreeDesc}
+                  </p>
+                </div>
+                {user ? (
+                  <a
+                    href="mailto:contact@lampasai.com?subject=Passage%20au%20mode%20Pro"
+                    className="brand-gradient shrink-0 rounded-full px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+                  >
+                    {t.formations.upgradeCta}
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowAuth((v) => !v)}
+                    className="brand-gradient shrink-0 rounded-full px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+                  >
+                    {t.formations.createAccountCta}
+                  </button>
+                )}
+              </div>
+              {showAuth && !user && (
+                <div className="mt-5">
+                  <AuthPanel />
+                </div>
+              )}
+            </Reveal>
           )}
 
           <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -116,14 +156,26 @@ export default function Formations() {
           </div>
         </>
       ) : (
-        <Reveal className="mt-10 rounded-2xl border border-black/8 bg-surface p-10 text-center">
-          <h3 className="font-display text-xl font-medium text-ink">
-            {t.formations.comingSoonTitle}
-          </h3>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">
-            {t.formations.comingSoonDesc}
-          </p>
-        </Reveal>
+        <>
+          <Reveal className="mt-10 rounded-2xl border border-black/8 bg-surface p-10 text-center">
+            <h3 className="font-display text-xl font-medium text-ink">
+              {t.formations.comingSoonTitle}
+            </h3>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">
+              {t.formations.comingSoonDesc}
+            </p>
+          </Reveal>
+
+          <Reveal delay={80} className="mt-10 max-w-2xl">
+            <h3 className="font-display text-2xl font-semibold text-ink">
+              {t.formations.requestTitle}
+            </h3>
+            <p className="mt-3 leading-relaxed text-muted">{t.formations.requestLead}</p>
+            <div className="mt-6">
+              <TrainingRequestForm />
+            </div>
+          </Reveal>
+        </>
       )}
     </section>
   );

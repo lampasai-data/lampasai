@@ -77,8 +77,30 @@ interface Translations {
     trainFor: string;
     accessQuiz: string;
     remainingFree: string;
+    valueProp: string;
+    skipFreeTitle: string;
+    skipFreeDesc: string;
+    createAccountCta: string;
+    upgradeCta: string;
     comingSoonTitle: string;
     comingSoonDesc: string;
+    requestTitle: string;
+    requestLead: string;
+    requestName: string;
+    requestEmail: string;
+    requestTool: string;
+    requestLevelLabel: string;
+    levelBeginner: string;
+    levelIntermediate: string;
+    levelAdvanced: string;
+    requestFormatLabel: string;
+    formatOnsite: string;
+    formatRemote: string;
+    requestMessage: string;
+    requestMessagePlaceholder: string;
+    requestSubmit: string;
+    requestSent: string;
+    requestTooFast: string;
   };
   quiz: {
     back: string;
@@ -100,6 +122,7 @@ interface Translations {
     finishedPoints: string;
     restart: string;
     backToFormations: string;
+    explanationLabel: string;
   };
 }
 
@@ -188,8 +211,30 @@ const translations: Record<Lang, Translations> = {
       trainFor: "S'entraîner →",
       accessQuiz: "Accéder au quiz",
       remainingFree: "question(s) gratuite(s) restante(s)",
+      valueProp: "Nos questions vont droit à l'essentiel : pas de superflu, seulement ce qu'il faut pour réussir ta certification.",
+      skipFreeTitle: "Pas envie de passer par les questions gratuites ?",
+      skipFreeDesc: "Tu peux créer ton compte dès maintenant et passer directement en accès illimité, sans faire les 20 questions gratuites.",
+      createAccountCta: "Créer mon compte",
+      upgradeCta: "Passer en illimité",
       comingSoonTitle: "Nos formations arrivent bientôt",
       comingSoonDesc: "Nous préparons des parcours de formation complets (Power BI, Snowflake, IA appliquée...). Reviens bientôt ou contacte-nous pour être informé en priorité.",
+      requestTitle: "Demande de formation sur-mesure",
+      requestLead: "Envie d'une formation Power BI, Snowflake ou dbt adaptée à ton niveau ? Décris ton besoin, nous te recontactons avec un devis.",
+      requestName: "Nom complet*",
+      requestEmail: "Email*",
+      requestTool: "Outil souhaité*",
+      requestLevelLabel: "Niveau souhaité*",
+      levelBeginner: "Débutant",
+      levelIntermediate: "Intermédiaire",
+      levelAdvanced: "Avancé",
+      requestFormatLabel: "Format de la séance*",
+      formatOnsite: "Présentiel",
+      formatRemote: "Distanciel",
+      requestMessage: "Précisions sur ton besoin",
+      requestMessagePlaceholder: "Objectifs, nombre de participants, dates souhaitées...",
+      requestSubmit: "Demander un devis",
+      requestSent: "Demande envoyée ✓ Nous te recontactons rapidement.",
+      requestTooFast: "Merci de patienter quelques secondes avant d'envoyer.",
     },
     quiz: {
       back: "Retour aux formations",
@@ -211,6 +256,7 @@ const translations: Record<Lang, Translations> = {
       finishedPoints: "Points obtenus",
       restart: "Recommencer",
       backToFormations: "Retour aux formations",
+      explanationLabel: "💡 Explication",
     },
   },
   en: {
@@ -297,8 +343,30 @@ const translations: Record<Lang, Translations> = {
       trainFor: "Practice →",
       accessQuiz: "Go to quiz",
       remainingFree: "free question(s) left",
+      valueProp: "Our questions go straight to the point: nothing superfluous, only what you need to pass your certification.",
+      skipFreeTitle: "Don't want to go through the free questions?",
+      skipFreeDesc: "You can create your account right away and go straight to unlimited access, without doing the 20 free questions.",
+      createAccountCta: "Create my account",
+      upgradeCta: "Go unlimited",
       comingSoonTitle: "Our training paths are coming soon",
       comingSoonDesc: "We're building complete training paths (Power BI, Snowflake, applied AI...). Check back soon or contact us to be notified first.",
+      requestTitle: "Request tailor-made training",
+      requestLead: "Want Power BI, Snowflake or dbt training tailored to your level? Tell us what you need and we'll get back to you with a quote.",
+      requestName: "Full name*",
+      requestEmail: "Email*",
+      requestTool: "Tool*",
+      requestLevelLabel: "Desired level*",
+      levelBeginner: "Beginner",
+      levelIntermediate: "Intermediate",
+      levelAdvanced: "Advanced",
+      requestFormatLabel: "Session format*",
+      formatOnsite: "On-site",
+      formatRemote: "Remote",
+      requestMessage: "Details about your needs",
+      requestMessagePlaceholder: "Goals, number of participants, preferred dates...",
+      requestSubmit: "Request a quote",
+      requestSent: "Request sent ✓ We'll get back to you shortly.",
+      requestTooFast: "Please wait a few seconds before sending.",
     },
     quiz: {
       back: "Back to training",
@@ -320,6 +388,7 @@ const translations: Record<Lang, Translations> = {
       finishedPoints: "Points earned",
       restart: "Restart",
       backToFormations: "Back to training",
+      explanationLabel: "💡 Explanation",
     },
   },
 };

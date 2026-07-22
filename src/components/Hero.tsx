@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { useLanguage } from "../i18n";
 import snowflakeLogo from "../assets/snowflake.png";
 import powerBiLogo from "../assets/PowerBI.png";
@@ -6,12 +6,17 @@ import dbtLogo from "../assets/dbt.png";
 import gcpLogo from "../assets/GCP.png";
 import fivetranLogo from "../assets/Fivetran.png";
 
-const TOOLS: { name: string; logo?: string; pos: string; float: string }[] = [
-  { name: "Snowflake", logo: snowflakeLogo, pos: "left-4 top-5", float: "9s" },
-  { name: "Power BI", logo: powerBiLogo, pos: "right-6 top-10", float: "8s" },
-  { name: "dbt", logo: dbtLogo, pos: "left-8 bottom-24", float: "10.5s" },
-  { name: "GCP", logo: gcpLogo, pos: "right-4 bottom-10", float: "7.5s" },
-  { name: "Fivetran", logo: fivetranLogo, pos: "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2", float: "11s" },
+const TOOLS: { name: string; logo?: string; style: CSSProperties; float: string }[] = [
+  { name: "Snowflake", logo: snowflakeLogo, style: { top: "6%", left: "4%" }, float: "9s" },
+  { name: "Power BI", logo: powerBiLogo, style: { top: "10%", right: "6%" }, float: "8s" },
+  { name: "dbt", logo: dbtLogo, style: { bottom: "30%", left: "2%" }, float: "10.5s" },
+  { name: "GCP", logo: gcpLogo, style: { bottom: "8%", right: "10%" }, float: "7.5s" },
+  {
+    name: "Fivetran",
+    logo: fivetranLogo,
+    style: { top: "52%", left: "50%", transform: "translate(-50%, -50%)" },
+    float: "11s",
+  },
 ];
 
 function MeshBackground() {
@@ -165,7 +170,7 @@ export default function Hero() {
           </div>
         </div>
 
-        <div className="relative mx-auto h-64 w-full max-w-md lg:h-96">
+        <div className="relative mx-auto h-72 w-full max-w-lg lg:h-[28rem]">
           <div
             className="float-slow absolute -left-6 -top-6 h-24 w-24 rounded-full opacity-30 blur-2xl"
             style={{ background: "radial-gradient(circle, #4a8896, transparent 70%)" }}
@@ -182,14 +187,18 @@ export default function Hero() {
             {TOOLS.map((tool, i) => (
               <div
                 key={tool.name}
-                className={`absolute ${tool.pos} flex h-14 w-14 items-center justify-center rounded-2xl border border-black/8 bg-white/95 shadow-md backdrop-blur-sm`}
-                style={{ animation: `float-slow ${tool.float} ease-in-out infinite`, animationDelay: `${i * 0.5}s` }}
+                className="absolute flex h-20 w-20 items-center justify-center rounded-2xl border border-black/8 bg-white/95 p-3 shadow-md backdrop-blur-sm lg:h-24 lg:w-24"
+                style={{
+                  ...tool.style,
+                  animation: `float-slow ${tool.float} ease-in-out infinite`,
+                  animationDelay: `${i * 0.5}s`,
+                }}
                 title={tool.name}
               >
                 {tool.logo ? (
-                  <img src={tool.logo} alt={tool.name} className="h-8 w-8 object-contain" />
+                  <img src={tool.logo} alt={tool.name} className="h-full w-full object-contain" />
                 ) : (
-                  <span className="font-display text-[10px] font-semibold text-ink/70">
+                  <span className="font-display text-xs font-semibold text-ink/70">
                     {tool.name}
                   </span>
                 )}

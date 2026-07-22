@@ -353,9 +353,14 @@ export default function CertificationQuiz() {
         {submitted && (
           <div className="mt-6">
             {question.explanation && (
-              <p className="text-sm leading-relaxed text-muted">
-                {localize(question.explanation, lang)}
-              </p>
+              <div className="rounded-2xl border border-teal/25 bg-teal/[0.06] p-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-teal-dark">
+                  {t.quiz.explanationLabel}
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-ink/80">
+                  {localize(question.explanation, lang)}
+                </p>
+              </div>
             )}
             <button
               type="button"
