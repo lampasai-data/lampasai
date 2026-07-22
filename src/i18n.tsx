@@ -11,6 +11,7 @@ interface Translations {
     clients: string;
     services: string;
     contact: string;
+    formations: string;
   };
   hero: {
     eyebrow: string;
@@ -41,6 +42,8 @@ interface Translations {
     tag: string;
     title: string;
     lead: string;
+    wonjoDesc: string;
+    visitSite: string;
   };
   services: {
     tag: string;
@@ -58,11 +61,42 @@ interface Translations {
     message: string;
     submit: string;
     sent: string;
-    infoTitle: string;
-    city: string;
+    tooFast: string;
   };
   footer: {
     copyright: string;
+  };
+  formations: {
+    tag: string;
+    title: string;
+    lead: string;
+    tabCertifications: string;
+    tabFormations: string;
+    trainFor: string;
+    remainingFree: string;
+    comingSoonTitle: string;
+    comingSoonDesc: string;
+  };
+  quiz: {
+    back: string;
+    score: string;
+    points: string;
+    remainingFree: string;
+    selectAnswers: string;
+    validate: string;
+    next: string;
+    skip: string;
+    flag: string;
+    unflag: string;
+    flaggedNotice: string;
+    reviewFlagged: (n: number) => string;
+    timeElapsed: string;
+    finishedTitle: string;
+    finishedScore: string;
+    finishedTime: string;
+    finishedPoints: string;
+    restart: string;
+    backToFormations: string;
   };
 }
 
@@ -76,6 +110,7 @@ const translations: Record<Lang, Translations> = {
       clients: "Partenaires",
       services: "Services",
       contact: "Contact",
+      formations: "Formations",
     },
     hero: {
       eyebrow: "Data & Intelligence Artificielle",
@@ -108,13 +143,15 @@ const translations: Record<Lang, Translations> = {
     team: {
       tag: "Teams",
       title: "Une équipe pluridisciplinaire, à vos côtés",
-      lead: "Travaillant de concert avec des partenaires technologiques, nous nous engageons à simplifier, accélérer et optimiser vos processus de données et d'entreprise. Pour donner un coup de pouce à votre projet, Lampas AI réunit avec enthousiasme Data Analysts, Data Scientists et Développeurs, tous issus de formations prestigieuses. Notre ouverture à de nouveaux partenariats témoigne de notre quête constante d'innovation pour renforcer votre réussite.",
-      roles: ["Data Analysts", "Data Scientists", "Développeurs"],
+      lead: "Travaillant de concert avec des partenaires technologiques, nous nous engageons à simplifier, accélérer et optimiser vos processus de données et d'entreprise. Pour donner un coup de pouce à votre projet, Lampas AI réunit avec enthousiasme Analytics Engineers, AI Scientists et Développeurs, tous issus de formations prestigieuses. Notre ouverture à de nouveaux partenariats témoigne de notre quête constante d'innovation pour renforcer votre réussite.",
+      roles: ["Analytics Engineers", "AI Scientists", "Développeurs"],
     },
     partners: {
       tag: "Partenaires",
       title: "Ils nous font confiance",
       lead: "Nous construisons des relations durables avec nos partenaires technologiques et académiques pour porter l'innovation IA plus loin.",
+      wonjoDesc: "Application de paiement et de transferts d'argent.",
+      visitSite: "Visiter wonjo.app",
     },
     services: {
       tag: "Services",
@@ -132,11 +169,42 @@ const translations: Record<Lang, Translations> = {
       message: "Message*",
       submit: "Contactez-nous",
       sent: "Message envoyé ✓",
-      infoTitle: "Nos coordonnées",
-      city: "Lyon, France",
+      tooFast: "Merci de patienter quelques secondes avant d'envoyer.",
     },
     footer: {
       copyright: "Copyright © 2026 Lampas AI",
+    },
+    formations: {
+      tag: "Formations",
+      title: "Certifications & formations data",
+      lead: "Prépare tes certifications ou découvre nos prochaines formations pour monter en compétence sur la donnée et l'IA.",
+      tabCertifications: "Certifications",
+      tabFormations: "Formations",
+      trainFor: "S'entraîner →",
+      remainingFree: "question(s) gratuite(s) restante(s)",
+      comingSoonTitle: "Nos formations arrivent bientôt",
+      comingSoonDesc: "Nous préparons des parcours de formation complets (Power BI, Snowflake, IA appliquée...). Reviens bientôt ou contacte-nous pour être informé en priorité.",
+    },
+    quiz: {
+      back: "← Retour aux formations",
+      score: "Score",
+      points: "Points",
+      remainingFree: "gratuite(s) restante(s)",
+      selectAnswers: "Sélectionne",
+      validate: "Valider",
+      next: "Question suivante →",
+      skip: "Passer",
+      flag: "Marquer pour plus tard",
+      unflag: "Retirer le marquage",
+      flaggedNotice: "Marquée pour plus tard",
+      reviewFlagged: (n) => `Revoir les questions marquées (${n})`,
+      timeElapsed: "Temps",
+      finishedTitle: "Certification terminée 🎉",
+      finishedScore: "Bonnes réponses",
+      finishedTime: "Temps total",
+      finishedPoints: "Points obtenus",
+      restart: "Recommencer",
+      backToFormations: "Retour aux formations",
     },
   },
   en: {
@@ -148,6 +216,7 @@ const translations: Record<Lang, Translations> = {
       clients: "Partners",
       services: "Services",
       contact: "Contact",
+      formations: "Training",
     },
     hero: {
       eyebrow: "Data & Artificial Intelligence",
@@ -180,13 +249,15 @@ const translations: Record<Lang, Translations> = {
     team: {
       tag: "Team",
       title: "A multidisciplinary team, by your side",
-      lead: "Working closely with technology partners, we are committed to simplifying, accelerating and optimizing your data and business processes. To give your project a boost, Lampas AI enthusiastically brings together Data Analysts, Data Scientists and Developers, all from prestigious backgrounds. Our openness to new partnerships reflects our constant quest for innovation to strengthen your success.",
-      roles: ["Data Analysts", "Data Scientists", "Developers"],
+      lead: "Working closely with technology partners, we are committed to simplifying, accelerating and optimizing your data and business processes. To give your project a boost, Lampas AI enthusiastically brings together Analytics Engineers, AI Scientists and Developers, all from prestigious backgrounds. Our openness to new partnerships reflects our constant quest for innovation to strengthen your success.",
+      roles: ["Analytics Engineers", "AI Scientists", "Developers"],
     },
     partners: {
       tag: "Partners",
       title: "They trust us",
       lead: "We build lasting relationships with our technology and academic partners to push AI innovation further.",
+      wonjoDesc: "Payments and money transfer application.",
+      visitSite: "Visit wonjo.app",
     },
     services: {
       tag: "Services",
@@ -204,11 +275,42 @@ const translations: Record<Lang, Translations> = {
       message: "Message*",
       submit: "Contact us",
       sent: "Message sent ✓",
-      infoTitle: "Get in touch",
-      city: "Lyon, France",
+      tooFast: "Please wait a few seconds before sending.",
     },
     footer: {
       copyright: "Copyright © 2026 Lampas AI",
+    },
+    formations: {
+      tag: "Training",
+      title: "Data certifications & training",
+      lead: "Prepare for your certifications or discover our upcoming training paths to grow your data and AI skills.",
+      tabCertifications: "Certifications",
+      tabFormations: "Training",
+      trainFor: "Practice →",
+      remainingFree: "free question(s) left",
+      comingSoonTitle: "Our training paths are coming soon",
+      comingSoonDesc: "We're building complete training paths (Power BI, Snowflake, applied AI...). Check back soon or contact us to be notified first.",
+    },
+    quiz: {
+      back: "← Back to training",
+      score: "Score",
+      points: "Points",
+      remainingFree: "free left",
+      selectAnswers: "Select",
+      validate: "Submit",
+      next: "Next question →",
+      skip: "Skip",
+      flag: "Flag for later",
+      unflag: "Remove flag",
+      flaggedNotice: "Flagged for later",
+      reviewFlagged: (n) => `Review flagged questions (${n})`,
+      timeElapsed: "Time",
+      finishedTitle: "Certification complete 🎉",
+      finishedScore: "Correct answers",
+      finishedTime: "Total time",
+      finishedPoints: "Points earned",
+      restart: "Restart",
+      backToFormations: "Back to training",
     },
   },
 };

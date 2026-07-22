@@ -1,10 +1,17 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
-import { CERTIFICATIONS, getCertification, type Question } from "../data/sampleQuestions";
+import { CERTIFICATIONS, getCertification } from "../data/sampleQuestions";
+import type { LocalizedText, Question } from "../data/types";
 
 export interface CertificationSummary {
   slug: string;
-  name: string;
-  description: string;
+  name: LocalizedText;
+  description: LocalizedText;
+}
+
+function toLocalized(value: string): LocalizedText {
+  // Supabase-backed questions are not yet translated per-language;
+  // reuse the stored text for both locales until the DB schema is migrated.
+  return { fr: value, en: value };
 }
 
 export async function listCertifications(): Promise<CertificationSummary[]> {
@@ -12,7 +19,13 @@ export async function listCertifications(): Promise<CertificationSummary[]> {
     const { data, error } = await supabase
       .from("certifications")
       .select("slug, name, description");
-    if (!error && data && data.length > 0) return data;
+    if (!error && data && data.length > 0) {
+      return data.map((row) => ({
+        slug: row.slug,
+        name: toLocalized(row.name),
+        description: toLocalized(row.description),
+      }));
+    }
   }
   return CERTIFICATIONS.map(({ slug, name, description }) => ({
     slug,
@@ -22,8 +35,8 @@ export async function listCertifications(): Promise<CertificationSummary[]> {
 }
 
 export async function loadQuestions(slug: string): Promise<{
-  name: string;
-  description: string;
+  name: LocalizedText;
+  description: LocalizedText;
   questions: Question[];
 } | null> {
   if (isSupabaseConfigured && supabase) {
@@ -42,14 +55,14 @@ export async function loadQuestions(slug: string): Promise<{
 
       if (rows && rows.length > 0) {
         return {
-          name: cert.name,
-          description: cert.description,
+          name: toLocalized(cert.name),
+          description: toLocalized(cert.description),
           questions: rows.map((r) => ({
             id: r.id,
-            question: r.question,
-            options: r.options as string[],
+            question: toLocalized(r.question),
+            options: (r.options as string[]).map(toLocalized),
             correctIndexes: r.correct_indexes as number[],
-            explanation: r.explanation ?? undefined,
+            explanation: r.explanation ? toLocalized(r.explanation) : undefined,
           })),
         };
       }

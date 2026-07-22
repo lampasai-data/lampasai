@@ -1,37 +1,37 @@
 import { useLanguage } from "../i18n";
+import Reveal from "./Reveal";
 
 export default function Insights() {
   const { t } = useLanguage();
 
   return (
-    <section id="insights" className="border-y border-white/10 bg-white/[0.02]">
+    <section id="insights" className="border-y border-black/5 bg-surface">
       <div className="mx-auto max-w-6xl px-6 py-24">
-        <div className="max-w-2xl">
-          <span className="text-xs font-medium uppercase tracking-widest text-violet-400">
+        <Reveal className="max-w-2xl">
+          <span className="text-xs font-medium uppercase tracking-widest text-teal-dark">
             {t.insights.tag}
           </span>
-          <h2 className="mt-3 font-display text-3xl font-semibold text-white md:text-4xl">
+          <h2 className="mt-3 font-display text-3xl font-semibold text-ink md:text-4xl">
             {t.insights.title}
           </h2>
-          <p className="mt-5 leading-relaxed text-white/60">{t.insights.lead}</p>
-        </div>
+          <p className="mt-5 leading-relaxed text-muted">{t.insights.lead}</p>
+        </Reveal>
 
         <div className="mt-14 grid grid-cols-1 gap-5 md:grid-cols-3">
           {t.insights.items.map((item, i) => (
-            <div
-              key={item.title}
-              className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-7"
-            >
-              <span className="font-display text-3xl font-semibold text-white/15">
-                0{i + 1}
-              </span>
-              <h3 className="mt-4 font-display text-lg font-medium text-white">
-                {item.title}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-white/55">
-                {item.desc}
-              </p>
-            </div>
+            <Reveal key={item.title} delay={i * 100}>
+              <div className="h-full rounded-2xl border border-black/8 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+                <span className="brand-gradient-text font-display text-3xl font-semibold opacity-40">
+                  0{i + 1}
+                </span>
+                <h3 className="mt-4 font-display text-lg font-medium text-ink">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">
+                  {item.desc}
+                </p>
+              </div>
+            </Reveal>
           ))}
         </div>
       </div>

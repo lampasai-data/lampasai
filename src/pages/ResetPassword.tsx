@@ -22,22 +22,22 @@ export default function ResetPassword() {
 
   return (
     <section className="mx-auto max-w-md px-6 py-24">
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-7">
-        <h1 className="font-display text-lg font-medium text-white">
+      <div className="rounded-2xl border border-black/8 bg-white p-7 shadow-sm">
+        <h1 className="font-display text-lg font-medium text-ink">
           Choisis un nouveau mot de passe
         </h1>
 
         {done ? (
           <>
-            <p className="mt-3 text-sm text-emerald-200">
+            <p className="mt-3 text-sm text-green">
               Mot de passe mis à jour.
             </p>
             <button
               type="button"
-              onClick={() => navigate("/certifications")}
-              className="mt-5 rounded-full bg-violet-500 px-5 py-3 text-sm font-medium text-white transition hover:bg-violet-400"
+              onClick={() => navigate("/formations")}
+              className="brand-gradient mt-5 rounded-full px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
             >
-              Continuer vers les certifications
+              Continuer vers les formations
             </button>
           </>
         ) : (
@@ -49,13 +49,13 @@ export default function ResetPassword() {
               placeholder="Nouveau mot de passe (8+ car., maj., min., chiffre)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-violet-400/50 focus:outline-none"
+              className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink placeholder:text-muted/70 focus:border-teal focus:outline-none"
             />
-            {error && <p className="text-sm text-red-400">{error}</p>}
+            {error && <p className="text-sm text-red-500">{error}</p>}
             <button
               type="submit"
               disabled={loading}
-              className="mt-1 rounded-full bg-violet-500 px-5 py-3 text-sm font-medium text-white transition hover:bg-violet-400 disabled:opacity-60"
+              className="brand-gradient mt-1 rounded-full px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
             >
               {loading ? "..." : "Mettre à jour"}
             </button>
@@ -64,10 +64,10 @@ export default function ResetPassword() {
       </div>
 
       <Link
-        to="/certifications"
-        className="mt-6 inline-block text-sm text-white/50 hover:text-white"
+        to="/formations"
+        className="mt-6 inline-block text-sm text-muted hover:text-ink"
       >
-        ← Retour aux certifications
+        ← Retour aux formations
       </Link>
     </section>
   );

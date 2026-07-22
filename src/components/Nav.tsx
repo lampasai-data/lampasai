@@ -19,55 +19,55 @@ export default function Nav() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-white/10 bg-[#05070d]/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 border-b border-black/5 bg-white/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link to="/" className="flex items-center gap-2 font-display text-xl font-semibold tracking-tight">
+        <Link to="/" className="flex items-center gap-2 font-display text-xl font-semibold tracking-tight text-ink">
           <img src={lampasLogo} alt="Lampas AI" className="h-8 w-8" />
-          lampas<span className="text-violet-400">.ai</span>
+          lampas<span className="brand-gradient-text">.ai</span>
         </Link>
 
-        <ul className="hidden items-center gap-8 text-sm text-white/70 md:flex">
+        <ul className="hidden items-center gap-8 text-sm text-muted lg:flex">
           {links.map((link) => (
             <li key={link.href}>
-              <a href={link.href} className="transition hover:text-white">
+              <a href={link.href} className="transition hover:text-ink">
                 {link.label}
               </a>
             </li>
           ))}
           <li>
-            <Link to="/certifications" className="transition hover:text-white">
-              Certifications
+            <Link to="/formations" className="transition hover:text-ink">
+              {t.nav.formations}
             </Link>
           </li>
         </ul>
 
-        <div className="hidden items-center gap-4 md:flex">
+        <div className="hidden items-center gap-4 lg:flex">
           <LangSwitch lang={lang} setLang={setLang} />
           {user ? (
             <button
               type="button"
               onClick={signOut}
-              className="rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white/70 transition hover:text-white"
+              className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-muted transition hover:border-black/20 hover:text-ink"
             >
               Déconnexion
             </button>
           ) : (
             <a
               href="/#contact"
-              className="rounded-full bg-violet-500 px-5 py-2 text-sm font-medium text-white transition hover:bg-violet-400"
+              className="brand-gradient rounded-full px-5 py-2 text-sm font-medium text-white shadow-sm transition hover:opacity-90"
             >
               {t.nav.contact}
             </a>
           )}
         </div>
 
-        <div className="flex items-center gap-3 md:hidden">
+        <div className="flex items-center gap-3 lg:hidden">
           <LangSwitch lang={lang} setLang={setLang} />
           <button
             type="button"
             aria-label="Menu"
             onClick={() => setOpen((v) => !v)}
-            className="text-2xl text-white"
+            className="text-2xl text-ink"
           >
             {open ? "✕" : "☰"}
           </button>
@@ -75,13 +75,13 @@ export default function Nav() {
       </div>
 
       {open && (
-        <ul className="flex flex-col gap-1 border-t border-white/10 bg-[#05070d] px-6 py-4 text-white/80 md:hidden">
+        <ul className="flex flex-col gap-1 border-t border-black/5 bg-white px-6 py-4 text-ink lg:hidden">
           {links.map((link) => (
             <li key={link.href}>
               <a
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="block rounded-lg px-2 py-3 hover:bg-white/5"
+                className="block rounded-lg px-2 py-3 hover:bg-black/[0.03]"
               >
                 {link.label}
               </a>
@@ -89,11 +89,11 @@ export default function Nav() {
           ))}
           <li>
             <Link
-              to="/certifications"
+              to="/formations"
               onClick={() => setOpen(false)}
-              className="block rounded-lg px-2 py-3 hover:bg-white/5"
+              className="block rounded-lg px-2 py-3 hover:bg-black/[0.03]"
             >
-              Certifications
+              {t.nav.formations}
             </Link>
           </li>
           <li>
@@ -104,7 +104,7 @@ export default function Nav() {
                   setOpen(false);
                   signOut();
                 }}
-                className="mt-2 block w-full rounded-full border border-white/15 px-4 py-3 text-center font-medium text-white/70"
+                className="mt-2 block w-full rounded-full border border-black/10 px-4 py-3 text-center font-medium text-muted"
               >
                 Déconnexion
               </button>
@@ -112,7 +112,7 @@ export default function Nav() {
               <a
                 href="/#contact"
                 onClick={() => setOpen(false)}
-                className="mt-2 block rounded-full bg-violet-500 px-4 py-3 text-center font-medium text-white"
+                className="brand-gradient mt-2 block rounded-full px-4 py-3 text-center font-medium text-white"
               >
                 {t.nav.contact}
               </a>
@@ -132,7 +132,7 @@ function LangSwitch({
   setLang: (lang: "fr" | "en") => void;
 }) {
   return (
-    <div className="flex items-center rounded-full border border-white/15 bg-white/[0.03] p-0.5 text-xs font-medium">
+    <div className="flex items-center rounded-full border border-black/10 bg-black/[0.02] p-0.5 text-xs font-medium">
       {(["fr", "en"] as const).map((code) => (
         <button
           key={code}
@@ -141,8 +141,8 @@ function LangSwitch({
           aria-pressed={lang === code}
           className={`rounded-full px-2.5 py-1 uppercase transition ${
             lang === code
-              ? "bg-violet-500 text-white"
-              : "text-white/50 hover:text-white"
+              ? "brand-gradient text-white"
+              : "text-muted hover:text-ink"
           }`}
         >
           {code}

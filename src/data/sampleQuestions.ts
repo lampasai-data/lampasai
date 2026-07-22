@@ -1,28 +1,33 @@
-import type { Question } from "./types";
+import type { LocalizedText, Question } from "./types";
 import { SNOWFLAKE_QUESTIONS } from "./snowflakeQuestions";
 import { POWERBI_QUESTIONS } from "./powerbiQuestions";
 
-export type { Question };
+export type { Question, LocalizedText };
 
 export interface CertificationDef {
   slug: "power-bi" | "snowflake";
-  name: string;
-  description: string;
+  name: LocalizedText;
+  description: LocalizedText;
   questions: Question[];
 }
 
 export const CERTIFICATIONS: CertificationDef[] = [
   {
     slug: "power-bi",
-    name: "Microsoft Power BI (PL-300)",
-    description:
-      "Entraînement à la certification Microsoft Power BI Data Analyst.",
+    name: { fr: "Microsoft Power BI (PL-300)", en: "Microsoft Power BI (PL-300)" },
+    description: {
+      fr: "Entraînement à la certification Microsoft Power BI Data Analyst.",
+      en: "Practice for the Microsoft Power BI Data Analyst certification.",
+    },
     questions: POWERBI_QUESTIONS,
   },
   {
     slug: "snowflake",
-    name: "Snowflake SnowPro Core",
-    description: "Entraînement à la certification SnowPro Core de Snowflake.",
+    name: { fr: "Snowflake SnowPro Core", en: "Snowflake SnowPro Core" },
+    description: {
+      fr: "Entraînement à la certification SnowPro Core de Snowflake.",
+      en: "Practice for the Snowflake SnowPro Core certification.",
+    },
     questions: SNOWFLAKE_QUESTIONS,
   },
 ];

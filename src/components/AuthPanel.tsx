@@ -52,7 +52,7 @@ export default function AuthPanel({
 
   if (!isSupabaseConfigured) {
     return (
-      <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-6 text-sm text-amber-200">
+      <div className="rounded-2xl border border-amber/30 bg-amber/10 p-6 text-sm text-amber">
         L'authentification n'est pas encore configurée sur ce site (variables
         Supabase manquantes). Reviens un peu plus tard.
       </div>
@@ -60,9 +60,9 @@ export default function AuthPanel({
   }
 
   return (
-    <div className="mx-auto max-w-md rounded-2xl border border-white/10 bg-white/[0.03] p-7">
-      <h3 className="font-display text-lg font-medium text-white">{title}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-white/55">{subtitle}</p>
+    <div className="mx-auto max-w-md rounded-2xl border border-black/8 bg-white p-7 shadow-sm">
+      <h3 className="font-display text-lg font-medium text-ink">{title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-muted">{subtitle}</p>
 
       {mode !== "forgot" && (
         <>
@@ -70,26 +70,26 @@ export default function AuthPanel({
             type="button"
             onClick={handleGoogle}
             disabled={loadingGoogle}
-            className="mt-6 flex w-full items-center justify-center gap-2.5 rounded-full border border-white/15 bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-white/90 disabled:opacity-60"
+            className="mt-6 flex w-full items-center justify-center gap-2.5 rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-medium text-ink transition hover:bg-black/[0.02] disabled:opacity-60"
           >
             <img src={googleLogo} alt="" className="h-4 w-4" />
             {loadingGoogle ? "Redirection..." : "Continuer avec Google"}
           </button>
 
-          <div className="my-5 flex items-center gap-3 text-xs text-white/40">
-            <span className="h-px flex-1 bg-white/10" />
+          <div className="my-5 flex items-center gap-3 text-xs text-muted">
+            <span className="h-px flex-1 bg-black/10" />
             ou par email
-            <span className="h-px flex-1 bg-white/10" />
+            <span className="h-px flex-1 bg-black/10" />
           </div>
         </>
       )}
 
       {resetSent ? (
-        <p className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-emerald-200">
+        <p className="rounded-xl border border-green/30 bg-green/10 p-4 text-sm text-green">
           Un email avec un lien de réinitialisation vient d'être envoyé.
         </p>
       ) : sentConfirmation ? (
-        <p className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-emerald-200">
+        <p className="rounded-xl border border-green/30 bg-green/10 p-4 text-sm text-green">
           Vérifie ta boîte mail pour confirmer ton inscription.
         </p>
       ) : (
@@ -100,7 +100,7 @@ export default function AuthPanel({
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-violet-400/50 focus:outline-none"
+            className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink placeholder:text-muted/70 focus:border-teal focus:outline-none"
           />
           {mode !== "forgot" && (
             <input
@@ -110,14 +110,14 @@ export default function AuthPanel({
               placeholder="Mot de passe (8+ car., maj., min., chiffre)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-violet-400/50 focus:outline-none"
+              className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink placeholder:text-muted/70 focus:border-teal focus:outline-none"
             />
           )}
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && <p className="text-sm text-red-500">{error}</p>}
           <button
             type="submit"
             disabled={loadingEmail}
-            className="mt-1 rounded-full bg-violet-500 px-5 py-3 text-sm font-medium text-white transition hover:bg-violet-400 disabled:opacity-60"
+            className="brand-gradient mt-1 rounded-full px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
           >
             {loadingEmail
               ? "..."
@@ -135,7 +135,7 @@ export default function AuthPanel({
                 setError(null);
                 setMode("forgot");
               }}
-              className="text-xs text-white/50 hover:text-white"
+              className="text-xs text-muted hover:text-ink"
             >
               Mot de passe oublié ?
             </button>
@@ -147,7 +147,7 @@ export default function AuthPanel({
               setError(null);
               setMode(mode === "signin" ? "signup" : "signin");
             }}
-            className="text-xs text-white/50 hover:text-white"
+            className="text-xs text-muted hover:text-ink"
           >
             {mode === "forgot"
               ? "Retour à la connexion"

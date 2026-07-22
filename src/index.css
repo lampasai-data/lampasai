@@ -3,6 +3,15 @@
 @theme {
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-sans: "Inter", system-ui, sans-serif;
+
+  --color-teal: #4a8896;
+  --color-teal-dark: #3a6b77;
+  --color-brown: #7d4e2e;
+  --color-amber: #f5a623;
+  --color-green: #1d9e75;
+  --color-ink: #14142b;
+  --color-muted: #5b5b70;
+  --color-surface: #f7f6fc;
 }
 
 html {
@@ -11,12 +20,13 @@ html {
 
 body {
   margin: 0;
-  background-color: #05070d;
-  color: #e7e9f2;
+  background-color: #ffffff;
+  color: var(--color-ink);
   font-family: var(--font-sans);
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 .font-display {
@@ -25,7 +35,48 @@ body {
 
 .glow-grid {
   background-image:
-    radial-gradient(circle at 15% 15%, rgba(124, 92, 255, 0.28), transparent 42%),
-    radial-gradient(circle at 88% 0%, rgba(53, 229, 184, 0.16), transparent 45%);
-  background-color: #05070d;
+    radial-gradient(circle at 12% 10%, rgba(74, 136, 150, 0.14), transparent 45%),
+    radial-gradient(circle at 90% 0%, rgba(125, 78, 46, 0.12), transparent 45%);
+  background-color: #ffffff;
+}
+
+.brand-gradient {
+  background-image: linear-gradient(135deg, var(--color-teal) 0%, var(--color-brown) 100%);
+}
+
+.brand-gradient-text {
+  background-image: linear-gradient(135deg, var(--color-teal) 0%, var(--color-brown) 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* Motion: scroll-reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, -18px, 0) scale(1.03); }
+}
+
+.float-slow {
+  animation: float-slow 9s ease-in-out infinite;
 }

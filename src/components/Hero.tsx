@@ -52,8 +52,8 @@ function MeshBackground() {
       }
 
       const gradient = ctx!.createLinearGradient(0, 0, canvas!.width, canvas!.height);
-      gradient.addColorStop(0, "rgba(124, 92, 255, 0.35)");
-      gradient.addColorStop(1, "rgba(53, 229, 184, 0.25)");
+      gradient.addColorStop(0, "rgba(74, 136, 150, 0.28)");
+      gradient.addColorStop(1, "rgba(125, 78, 46, 0.20)");
       ctx!.strokeStyle = gradient;
 
       for (let i = 0; i < cols; i++) {
@@ -123,30 +123,30 @@ export default function Hero() {
       <MeshBackground />
 
       <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-6 py-28 text-center md:py-36">
-        <span className="mb-6 rounded-full border border-violet-400/30 bg-violet-500/10 px-4 py-1.5 text-xs font-medium tracking-wide text-violet-300">
+        <span className="mb-6 animate-[float-slow_9s_ease-in-out_infinite] rounded-full border border-teal/25 bg-teal/[0.07] px-4 py-1.5 text-xs font-medium tracking-wide text-teal-dark">
           {t.hero.eyebrow}
         </span>
 
-        <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-white md:text-6xl">
+        <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-ink md:text-6xl">
           {t.hero.title[0]}
           <br />
-          {t.hero.title[1]}
+          <span className="brand-gradient-text">{t.hero.title[1]}</span>
         </h1>
 
-        <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/60 md:text-lg">
+        <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted md:text-lg">
           {t.hero.sub}
         </p>
 
         <div className="mt-10 flex flex-col gap-4 sm:flex-row">
           <a
             href="#contact"
-            className="rounded-full bg-violet-500 px-7 py-3.5 text-sm font-medium text-white shadow-lg shadow-violet-500/30 transition hover:bg-violet-400"
+            className="brand-gradient rounded-full px-7 py-3.5 text-sm font-medium text-white shadow-lg shadow-teal/20 transition hover:opacity-90 active:scale-95"
           >
             {t.hero.ctaPrimary}
           </a>
           <a
             href="#about"
-            className="rounded-full border border-white/15 px-7 py-3.5 text-sm font-medium text-white/80 transition hover:border-white/30 hover:text-white"
+            className="rounded-full border border-black/10 px-7 py-3.5 text-sm font-medium text-ink/80 transition hover:border-black/20 hover:text-ink active:scale-95"
           >
             {t.hero.ctaGhost}
           </a>
