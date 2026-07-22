@@ -45,8 +45,8 @@ export default function Services() {
   const { t } = useLanguage();
 
   return (
-    <section id="services" className="mx-auto max-w-6xl px-6 py-24">
-      <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
+    <section id="services" className="border-y border-black/5 bg-surface">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 py-24 lg:grid-cols-[1.1fr_0.9fr]">
         <Reveal className="max-w-2xl">
           <h2 className="font-display text-4xl font-semibold text-ink md:text-5xl">
             {t.services.title}

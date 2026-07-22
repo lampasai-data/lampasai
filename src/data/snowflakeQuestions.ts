@@ -1111,4 +1111,46 @@ export const SNOWFLAKE_QUESTIONS: Question[] = [
       en: "Both pre-compute and store aggregated results. Secure views provide no performance benefit — they always execute the underlying query each time.",
     },
   },
+  {
+    id: "sf-q60",
+    type: "order",
+    question: {
+      fr: "Remets dans l'ordre les étapes classiques d'un pipeline de chargement de données dans Snowflake.",
+      en: "Put the typical steps of a Snowflake data loading pipeline in order.",
+    },
+    options: [
+      { fr: "Déposer les fichiers sur un stage", en: "Land the files on a stage" },
+      { fr: "Créer un file format adapté", en: "Create a matching file format" },
+      { fr: "Charger les données avec COPY INTO", en: "Load the data with COPY INTO" },
+      { fr: "Transformer les données avec des vues ou des tâches", en: "Transform the data with views or tasks" },
+      { fr: "Exposer les données via une vue sécurisée", en: "Expose the data through a secure view" },
+    ],
+    correctIndexes: [],
+    correctOrder: [0, 1, 2, 3, 4],
+    explanation: {
+      fr: "Ordre classique : dépôt sur un stage, définition du file format, chargement via COPY INTO, transformation, puis exposition contrôlée via une vue sécurisée.",
+      en: "Typical order: land files on a stage, define the file format, load with COPY INTO, transform, then expose the data through a controlled secure view.",
+    },
+  },
+  {
+    id: "sf-q61",
+    type: "order",
+    question: {
+      fr: "Classe ces objets Snowflake du plus large (compte) au plus précis (ligne).",
+      en: "Rank these Snowflake objects from broadest (account) to most granular (row).",
+    },
+    options: [
+      { fr: "Compte Snowflake", en: "Snowflake account" },
+      { fr: "Base de données", en: "Database" },
+      { fr: "Schéma", en: "Schema" },
+      { fr: "Table", en: "Table" },
+      { fr: "Row access policy", en: "Row access policy" },
+    ],
+    correctIndexes: [],
+    correctOrder: [0, 1, 2, 3, 4],
+    explanation: {
+      fr: "La hiérarchie Snowflake va du compte à la base de données, puis au schéma, à la table, jusqu'à la row access policy qui filtre les lignes individuelles.",
+      en: "The Snowflake hierarchy goes from the account down to the database, then schema, table, and finally the row access policy filtering individual rows.",
+    },
+  },
 ];

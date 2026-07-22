@@ -48,20 +48,53 @@ export default function Formations() {
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-24">
-      <Reveal className="max-w-2xl">
-        {profile?.first_name && (
-          <p className="mb-2 text-sm font-medium text-teal-dark">
-            Bienvenue {profile.first_name} 👋
-          </p>
-        )}
-        <h1 className="font-display text-4xl font-semibold text-ink md:text-5xl">
-          {t.formations.title}
-        </h1>
-        <p className="mt-5 leading-relaxed text-muted">{t.formations.lead}</p>
-        <p className="mt-3 text-sm font-medium text-teal-dark">{t.formations.valueProp}</p>
-      </Reveal>
+      <div className={`grid grid-cols-1 gap-10 ${!isPro ? "lg:grid-cols-[1.3fr_1fr] lg:items-start" : ""}`}>
+        <Reveal className="max-w-2xl">
+          {profile?.first_name && (
+            <p className="mb-2 text-sm font-medium text-teal-dark">
+              Bienvenue {profile.first_name} 👋
+            </p>
+          )}
+          <h1 className="font-display text-4xl font-semibold text-ink md:text-5xl">
+            {t.formations.title}
+          </h1>
+          <p className="mt-5 leading-relaxed text-muted">{t.formations.lead}</p>
+          <p className="mt-3 text-sm font-medium text-teal-dark">{t.formations.valueProp}</p>
+        </Reveal>
 
-      <div className="mt-10 flex gap-2 border-b border-black/8">
+        {!isPro && (
+          <Reveal delay={100}>
+            <div className="relative overflow-hidden rounded-2xl border border-teal/25 bg-white p-7 shadow-sm">
+              <span className="brand-gradient inline-flex rounded-full px-3 py-1 text-xs font-semibold text-white">
+                {t.formations.offerBadge}
+              </span>
+              <div className="mt-4 flex flex-wrap items-end gap-2">
+                <span className="font-display text-4xl font-semibold text-ink">
+                  {t.formations.offerPrice}
+                </span>
+                <span className="pb-1 text-sm text-muted">{t.formations.offerPeriod}</span>
+              </div>
+              <p className="mt-1 text-xs text-muted">{t.formations.offerNote}</p>
+              <ul className="mt-5 flex flex-col gap-2 text-sm text-ink/80">
+                {t.formations.offerBenefits.map((benefit) => (
+                  <li key={benefit} className="flex items-start gap-2">
+                    <span className="mt-0.5 shrink-0 text-teal-dark">✓</span>
+                    {benefit}
+                  </li>
+                ))}
+              </ul>
+              <a
+                href="mailto:contact@lampasai.com?subject=Passage%20au%20mode%20Pro%20(9%2C99%E2%82%AC%20%2F%203%20mois)"
+                className="brand-gradient mt-6 inline-flex rounded-full px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
+              >
+                {t.formations.offerCta}
+              </a>
+            </div>
+          </Reveal>
+        )}
+      </div>
+
+      <div className="mt-10 inline-flex gap-1 rounded-full border border-black/8 bg-surface p-1.5">
         {(
           [
             { id: "formations" as const, label: t.formations.tabFormations },
@@ -72,16 +105,13 @@ export default function Formations() {
             key={item.id}
             type="button"
             onClick={() => setTab(item.id)}
-            className={`relative -mb-px px-4 py-3 text-sm font-medium transition ${
+            className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
               tab === item.id
-                ? "text-ink"
+                ? "brand-gradient text-white shadow-sm"
                 : "text-muted hover:text-ink"
             }`}
           >
             {item.label}
-            {tab === item.id && (
-              <span className="brand-gradient absolute inset-x-0 -bottom-px h-0.5 rounded-full" />
-            )}
           </button>
         ))}
       </div>
@@ -109,7 +139,7 @@ export default function Formations() {
                   <button
                     type="button"
                     onClick={() => setShowAuth((v) => !v)}
-                    className="inline-flex shrink-0 items-center gap-2 rounded-full border border-black/10 px-5 py-2.5 text-sm font-medium text-ink transition hover:border-black/20"
+                    className="brand-gradient inline-flex shrink-0 items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white shadow-md shadow-teal/20 transition hover:opacity-90 active:scale-95"
                   >
                     <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
                       <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="2" />
@@ -129,37 +159,6 @@ export default function Formations() {
                   <AuthPanel />
                 </div>
               )}
-            </Reveal>
-          )}
-
-          {!isPro && (
-            <Reveal delay={100} className="mt-6">
-              <div className="relative overflow-hidden rounded-2xl border border-teal/25 bg-white p-7 shadow-sm">
-                <span className="brand-gradient inline-flex rounded-full px-3 py-1 text-xs font-semibold text-white">
-                  {t.formations.offerBadge}
-                </span>
-                <div className="mt-4 flex flex-wrap items-end gap-2">
-                  <span className="font-display text-4xl font-semibold text-ink">
-                    {t.formations.offerPrice}
-                  </span>
-                  <span className="pb-1 text-sm text-muted">{t.formations.offerPeriod}</span>
-                </div>
-                <p className="mt-1 text-xs text-muted">{t.formations.offerNote}</p>
-                <ul className="mt-5 flex flex-col gap-2 text-sm text-ink/80">
-                  {t.formations.offerBenefits.map((benefit) => (
-                    <li key={benefit} className="flex items-start gap-2">
-                      <span className="mt-0.5 shrink-0 text-teal-dark">✓</span>
-                      {benefit}
-                    </li>
-                  ))}
-                </ul>
-                <a
-                  href="mailto:contact@lampasai.com?subject=Passage%20au%20mode%20Pro%20(9%2C99%E2%82%AC%20%2F%203%20mois)"
-                  className="brand-gradient mt-6 inline-flex rounded-full px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
-                >
-                  {t.formations.offerCta}
-                </a>
-              </div>
             </Reveal>
           )}
 
@@ -214,7 +213,7 @@ export default function Formations() {
                   <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
                     <Link
                       to={`/formations/${cert.slug}`}
-                      className="text-sm font-medium text-teal-dark group-hover:text-ink"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-teal/30 bg-teal/[0.06] px-4 py-1.5 text-xs font-semibold text-teal-dark transition group-hover:border-teal/50 group-hover:bg-teal/10"
                     >
                       {t.formations.trainFor}
                     </Link>
@@ -255,7 +254,7 @@ export default function Formations() {
         </>
       ) : null}
 
-      <Reveal delay={80} className="mt-16 max-w-2xl border-t border-black/8 pt-14">
+      <Reveal delay={80} className="mt-16 max-w-2xl">
         <h3 className="font-display text-2xl font-semibold text-ink">
           {t.formations.requestTitle}
         </h3>

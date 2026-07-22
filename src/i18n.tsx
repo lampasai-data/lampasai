@@ -145,6 +145,8 @@ interface Translations {
     passResult: string;
     failResult: string;
     passThresholdNote: string;
+    dragHint: string;
+    validateOrder: string;
   };
 }
 
@@ -257,9 +259,9 @@ const translations: Record<Lang, Translations> = {
       requestSubmit: "Demander un devis",
       requestSent: "Demande envoyée ✓ Nous te recontactons rapidement.",
       requestTooFast: "Merci de patienter quelques secondes avant d'envoyer.",
-      offerBadge: "Accès illimité",
+      offerBadge: "Accès illimité pendant 3 mois",
       offerPrice: "9,99 €",
-      offerPeriod: "/ 3 mois",
+      offerPeriod: "pour 3 mois d'accès illimité",
       offerNote: "Paiement unique, sans réengagement.",
       offerBenefits: [
         "Quiz illimités sur toutes les certifications",
@@ -305,6 +307,8 @@ const translations: Record<Lang, Translations> = {
       passResult: "Examen réussi 🎉",
       failResult: "Examen non réussi",
       passThresholdNote: "Seuil de réussite : 70% de bonnes réponses.",
+      dragHint: "Fais glisser pour réordonner",
+      validateOrder: "Valider mon classement",
     },
   },
   en: {
@@ -415,9 +419,9 @@ const translations: Record<Lang, Translations> = {
       requestSubmit: "Request a quote",
       requestSent: "Request sent ✓ We'll get back to you shortly.",
       requestTooFast: "Please wait a few seconds before sending.",
-      offerBadge: "Unlimited access",
+      offerBadge: "Unlimited access for 3 months",
       offerPrice: "€9.99",
-      offerPeriod: "/ 3 months",
+      offerPeriod: "for 3 months of unlimited access",
       offerNote: "One-time payment, no subscription.",
       offerBenefits: [
         "Unlimited quizzes across all certifications",
@@ -463,6 +467,8 @@ const translations: Record<Lang, Translations> = {
       passResult: "Exam passed 🎉",
       failResult: "Exam not passed",
       passThresholdNote: "Pass threshold: 70% correct answers.",
+      dragHint: "Drag to reorder",
+      validateOrder: "Submit my ranking",
     },
   },
 };

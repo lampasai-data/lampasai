@@ -1155,4 +1155,45 @@ export const POWERBI_QUESTIONS: Question[] = [
       en: "Power BI themes reusable across multiple reports are defined in a structured JSON file (colors, fonts, visual styles), importable into any PBIX file.",
     },
   },
+  {
+    id: "pbi-q66",
+    type: "order",
+    question: {
+      fr: "Remets dans l'ordre les étapes du flux Power BI, de la source de données à la publication du rapport.",
+      en: "Put the Power BI workflow steps in order, from data source to publishing the report.",
+    },
+    options: [
+      { fr: "Se connecter à la source de données", en: "Connect to the data source" },
+      { fr: "Transformer les données avec Power Query", en: "Transform the data with Power Query" },
+      { fr: "Modéliser les relations et créer des mesures DAX", en: "Model relationships and create DAX measures" },
+      { fr: "Concevoir les visuels du rapport", en: "Design the report visuals" },
+      { fr: "Publier le rapport sur le service Power BI", en: "Publish the report to the Power BI service" },
+    ],
+    correctIndexes: [],
+    correctOrder: [0, 1, 2, 3, 4],
+    explanation: {
+      fr: "Le flux classique Power BI : connexion aux données, transformation (Power Query), modélisation (relations, DAX), visualisation, puis publication sur le service.",
+      en: "The typical Power BI flow: connect to data, transform it (Power Query), model it (relationships, DAX), visualize it, then publish to the service.",
+    },
+  },
+  {
+    id: "pbi-q67",
+    type: "order",
+    question: {
+      fr: "Classe ces éléments d'un schéma en étoile du plus \"central\" au plus \"périphérique\".",
+      en: "Rank these star-schema elements from most \"central\" to most \"peripheral\".",
+    },
+    options: [
+      { fr: "Table de faits", en: "Fact table" },
+      { fr: "Table de dimension", en: "Dimension table" },
+      { fr: "Colonne calculée sur une dimension", en: "Calculated column on a dimension" },
+      { fr: "Mesure DAX affichée dans un visuel", en: "DAX measure displayed in a visual" },
+    ],
+    correctIndexes: [],
+    correctOrder: [0, 1, 2, 3],
+    explanation: {
+      fr: "La table de faits est au centre du modèle, reliée aux tables de dimension ; les colonnes calculées enrichissent les dimensions, et les mesures DAX sont l'élément final consommé par les visuels.",
+      en: "The fact table sits at the center of the model, linked to dimension tables; calculated columns enrich dimensions, and DAX measures are the final layer consumed by visuals.",
+    },
+  },
 ];

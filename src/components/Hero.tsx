@@ -6,18 +6,14 @@ import dbtLogo from "../assets/dbt.png";
 import gcpLogo from "../assets/GCP.png";
 import fivetranLogo from "../assets/Fivetran.png";
 
-const TOOLS: { name: string; logo?: string; style: CSSProperties; float: string }[] = [
-  { name: "Snowflake", logo: snowflakeLogo, style: { top: "6%", left: "4%" }, float: "9s" },
-  { name: "Power BI", logo: powerBiLogo, style: { top: "10%", right: "6%" }, float: "8s" },
-  { name: "dbt", logo: dbtLogo, style: { bottom: "30%", left: "2%" }, float: "10.5s" },
-  { name: "GCP", logo: gcpLogo, style: { bottom: "8%", right: "10%" }, float: "7.5s" },
-  {
-    name: "Fivetran",
-    logo: fivetranLogo,
-    style: { top: "52%", left: "50%", transform: "translate(-50%, -50%)" },
-    float: "11s",
-  },
+const CORNER_TOOLS: { name: string; logo: string; style: CSSProperties; float: string }[] = [
+  { name: "Snowflake", logo: snowflakeLogo, style: { top: "6%", left: "5%" }, float: "9s" },
+  { name: "Power BI", logo: powerBiLogo, style: { top: "6%", right: "5%" }, float: "8s" },
+  { name: "dbt", logo: dbtLogo, style: { bottom: "6%", left: "5%" }, float: "10.5s" },
+  { name: "GCP", logo: gcpLogo, style: { bottom: "6%", right: "5%" }, float: "7.5s" },
 ];
+
+const CENTER_TOOL = { name: "Fivetran", logo: fivetranLogo, float: "11s" };
 
 function MeshBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -138,56 +134,56 @@ export default function Hero() {
 
   return (
     <header id="home" className="glow-grid relative overflow-hidden">
-      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-14 px-6 py-24 md:py-32 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10">
+      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-6 py-16 md:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10">
         <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-          <span className="mb-6 animate-[float-slow_9s_ease-in-out_infinite] rounded-full border border-teal/25 bg-teal/[0.07] px-4 py-1.5 text-xs font-medium tracking-wide text-teal-dark">
+          <span className="mb-5 animate-[float-slow_9s_ease-in-out_infinite] rounded-full border border-teal/25 bg-teal/[0.07] px-4 py-1.5 text-xs font-medium tracking-wide text-teal-dark">
             {t.hero.eyebrow}
           </span>
 
-          <h1 className="font-display text-5xl font-semibold leading-[1.05] tracking-tight text-ink md:text-7xl">
+          <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-ink md:text-5xl">
             {t.hero.title[0]}
             <br />
             <span className="brand-gradient-text">{t.hero.title[1]}</span>
           </h1>
 
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted md:text-xl">
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-muted md:text-lg">
             {t.hero.sub}
           </p>
 
-          <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
             <a
               href="#contact"
-              className="brand-gradient rounded-full px-8 py-4 text-base font-medium text-white shadow-lg shadow-teal/20 transition hover:opacity-90 active:scale-95"
+              className="brand-gradient rounded-full px-7 py-3.5 text-sm font-medium text-white shadow-lg shadow-teal/20 transition hover:opacity-90 active:scale-95"
             >
               {t.hero.ctaPrimary}
             </a>
             <a
               href="#about"
-              className="rounded-full border border-black/10 px-8 py-4 text-base font-medium text-ink/80 transition hover:border-black/20 hover:text-ink active:scale-95"
+              className="rounded-full border border-black/10 px-7 py-3.5 text-sm font-medium text-ink/80 transition hover:border-black/20 hover:text-ink active:scale-95"
             >
               {t.hero.ctaGhost}
             </a>
           </div>
         </div>
 
-        <div className="relative mx-auto h-80 w-full max-w-xl lg:h-[32rem]">
+        <div className="relative mx-auto h-60 w-full max-w-md lg:h-80">
           <div
-            className="float-slow absolute -left-8 -top-8 h-32 w-32 rounded-full opacity-30 blur-2xl"
+            className="float-slow absolute -left-6 -top-6 h-20 w-20 rounded-full opacity-30 blur-2xl"
             style={{ background: "radial-gradient(circle, #4a8896, transparent 70%)" }}
             aria-hidden="true"
           />
           <div
-            className="absolute -bottom-10 -right-6 h-36 w-36 rounded-full opacity-25 blur-2xl"
+            className="absolute -bottom-8 -right-4 h-24 w-24 rounded-full opacity-25 blur-2xl"
             style={{ background: "radial-gradient(circle, #7d4e2e, transparent 70%)", animation: "float-slow 11s ease-in-out infinite" }}
             aria-hidden="true"
           />
           <div className="relative h-full w-full overflow-hidden rounded-3xl border border-black/8 bg-white/70 shadow-xl backdrop-blur-sm">
             <MeshBackground />
 
-            {TOOLS.map((tool, i) => (
+            {CORNER_TOOLS.map((tool, i) => (
               <div
                 key={tool.name}
-                className="absolute flex h-24 w-24 items-center justify-center rounded-2xl border border-black/8 bg-white/95 p-3.5 shadow-md backdrop-blur-sm lg:h-32 lg:w-32"
+                className="absolute flex h-14 w-14 items-center justify-center rounded-2xl border border-black/8 bg-white/95 p-2.5 shadow-md backdrop-blur-sm lg:h-16 lg:w-16"
                 style={{
                   ...tool.style,
                   animation: `float-slow ${tool.float} ease-in-out infinite`,
@@ -195,18 +191,29 @@ export default function Hero() {
                 }}
                 title={tool.name}
               >
-                {tool.logo ? (
-                  <img src={tool.logo} alt={tool.name} className="h-full w-full object-contain" />
-                ) : (
-                  <span className="font-display text-sm font-semibold text-ink/70">
-                    {tool.name}
-                  </span>
-                )}
+                <img src={tool.logo} alt={tool.name} className="h-full w-full object-contain" />
               </div>
             ))}
+
+            <div
+              className="absolute flex h-16 w-16 items-center justify-center rounded-2xl border border-teal/25 bg-white shadow-lg backdrop-blur-sm lg:h-20 lg:w-20"
+              style={{
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                animation: `float-slow ${CENTER_TOOL.float} ease-in-out infinite`,
+              }}
+              title={CENTER_TOOL.name}
+            >
+              <img
+                src={CENTER_TOOL.logo}
+                alt={CENTER_TOOL.name}
+                className="h-full w-full object-contain p-1"
+              />
+            </div>
           </div>
 
-          <p className="mt-5 text-center text-sm font-medium uppercase tracking-widest text-muted">
+          <p className="mt-4 text-center text-xs font-medium uppercase tracking-widest text-muted">
             {t.hero.toolsLabel}
           </p>
         </div>
