@@ -116,7 +116,7 @@ const translations: Record<Lang, Translations> = {
     },
     hero: {
       eyebrow: "Data & Intelligence Artificielle",
-      title: ["Rendre votre projet", "réussi par l'IA."],
+      title: ["Rendre votre projet", "réussi."],
       sub: "Lampas AI accompagne les organisations dans l'exploitation de leurs données grâce à des solutions d'intelligence artificielle sur-mesure, quantitatives et durables.",
       ctaPrimary: "Discutons de votre projet",
       ctaGhost: "En savoir plus",
