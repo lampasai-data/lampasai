@@ -7,14 +7,13 @@ import lampasLogo from "../assets/lampas-logo.png";
 export default function Nav() {
   const [open, setOpen] = useState(false);
   const { lang, setLang, t } = useLanguage();
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
 
   const links = [
     { href: "/#home", label: t.nav.home },
     { href: "/#about", label: t.nav.about },
     { href: "/#insights", label: t.nav.insights },
     { href: "/#team", label: t.nav.team },
-    { href: "/#clients", label: t.nav.clients },
     { href: "/#services", label: t.nav.services },
   ];
 
@@ -44,13 +43,20 @@ export default function Nav() {
         <div className="hidden items-center gap-4 lg:flex">
           <LangSwitch lang={lang} setLang={setLang} />
           {user ? (
-            <button
-              type="button"
-              onClick={signOut}
-              className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-muted transition hover:border-black/20 hover:text-ink"
-            >
-              Déconnexion
-            </button>
+            <div className="flex items-center gap-3">
+              {profile?.first_name && (
+                <span className="text-sm text-muted">
+                  Bienvenue <span className="font-medium text-ink">{profile.first_name}</span>
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={signOut}
+                className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-muted transition hover:border-black/20 hover:text-ink"
+              >
+                Déconnexion
+              </button>
+            </div>
           ) : (
             <a
               href="/#contact"

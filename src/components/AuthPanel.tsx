@@ -15,6 +15,7 @@ export default function AuthPanel({
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, sendPasswordReset } =
     useAuth();
   const [mode, setMode] = useState<Mode>("signup");
+  const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +44,10 @@ export default function AuthPanel({
       return;
     }
 
-    const fn = mode === "signin" ? signInWithEmail : signUpWithEmail;
-    const err = await fn(email, password);
+    const err =
+      mode === "signin"
+        ? await signInWithEmail(email, password)
+        : await signUpWithEmail(email, password, firstName);
     setLoadingEmail(false);
     if (err) setError(err);
     else if (mode === "signup") setSentConfirmation(true);
@@ -94,6 +97,16 @@ export default function AuthPanel({
         </p>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          {mode === "signup" && (
+            <input
+              type="text"
+              required
+              placeholder="Prénom"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink placeholder:text-muted/70 focus:border-teal focus:outline-none"
+            />
+          )}
           <input
             type="email"
             required

@@ -144,40 +144,40 @@ export default function Hero() {
             {t.hero.eyebrow}
           </span>
 
-          <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-ink md:text-6xl">
+          <h1 className="font-display text-5xl font-semibold leading-[1.05] tracking-tight text-ink md:text-7xl">
             {t.hero.title[0]}
             <br />
             <span className="brand-gradient-text">{t.hero.title[1]}</span>
           </h1>
 
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-muted md:text-lg">
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted md:text-xl">
             {t.hero.sub}
           </p>
 
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
             <a
               href="#contact"
-              className="brand-gradient rounded-full px-7 py-3.5 text-sm font-medium text-white shadow-lg shadow-teal/20 transition hover:opacity-90 active:scale-95"
+              className="brand-gradient rounded-full px-8 py-4 text-base font-medium text-white shadow-lg shadow-teal/20 transition hover:opacity-90 active:scale-95"
             >
               {t.hero.ctaPrimary}
             </a>
             <a
               href="#about"
-              className="rounded-full border border-black/10 px-7 py-3.5 text-sm font-medium text-ink/80 transition hover:border-black/20 hover:text-ink active:scale-95"
+              className="rounded-full border border-black/10 px-8 py-4 text-base font-medium text-ink/80 transition hover:border-black/20 hover:text-ink active:scale-95"
             >
               {t.hero.ctaGhost}
             </a>
           </div>
         </div>
 
-        <div className="relative mx-auto h-72 w-full max-w-lg lg:h-[28rem]">
+        <div className="relative mx-auto h-80 w-full max-w-xl lg:h-[32rem]">
           <div
-            className="float-slow absolute -left-6 -top-6 h-24 w-24 rounded-full opacity-30 blur-2xl"
+            className="float-slow absolute -left-8 -top-8 h-32 w-32 rounded-full opacity-30 blur-2xl"
             style={{ background: "radial-gradient(circle, #4a8896, transparent 70%)" }}
             aria-hidden="true"
           />
           <div
-            className="absolute -bottom-8 -right-4 h-28 w-28 rounded-full opacity-25 blur-2xl"
+            className="absolute -bottom-10 -right-6 h-36 w-36 rounded-full opacity-25 blur-2xl"
             style={{ background: "radial-gradient(circle, #7d4e2e, transparent 70%)", animation: "float-slow 11s ease-in-out infinite" }}
             aria-hidden="true"
           />
@@ -187,7 +187,7 @@ export default function Hero() {
             {TOOLS.map((tool, i) => (
               <div
                 key={tool.name}
-                className="absolute flex h-20 w-20 items-center justify-center rounded-2xl border border-black/8 bg-white/95 p-3 shadow-md backdrop-blur-sm lg:h-24 lg:w-24"
+                className="absolute flex h-24 w-24 items-center justify-center rounded-2xl border border-black/8 bg-white/95 p-3.5 shadow-md backdrop-blur-sm lg:h-32 lg:w-32"
                 style={{
                   ...tool.style,
                   animation: `float-slow ${tool.float} ease-in-out infinite`,
@@ -198,7 +198,7 @@ export default function Hero() {
                 {tool.logo ? (
                   <img src={tool.logo} alt={tool.name} className="h-full w-full object-contain" />
                 ) : (
-                  <span className="font-display text-xs font-semibold text-ink/70">
+                  <span className="font-display text-sm font-semibold text-ink/70">
                     {tool.name}
                   </span>
                 )}
@@ -206,7 +206,7 @@ export default function Hero() {
             ))}
           </div>
 
-          <p className="mt-4 text-center text-xs font-medium uppercase tracking-widest text-muted">
+          <p className="mt-5 text-center text-sm font-medium uppercase tracking-widest text-muted">
             {t.hero.toolsLabel}
           </p>
         </div>

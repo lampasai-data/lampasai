@@ -12,6 +12,7 @@ import { mapAuthError, validatePassword } from "../lib/authErrors";
 interface Profile {
   id: string;
   email: string | null;
+  first_name: string | null;
   plan: "free" | "pro";
   free_questions_used: number;
 }
@@ -23,7 +24,7 @@ interface AuthState {
   passwordRecovery: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<string | null>;
-  signUpWithEmail: (email: string, password: string) => Promise<string | null>;
+  signUpWithEmail: (email: string, password: string, firstName?: string) => Promise<string | null>;
   sendPasswordReset: (email: string) => Promise<string | null>;
   updatePassword: (password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
@@ -42,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return;
     const { data } = await supabase
       .from("profiles")
-      .select("id, email, plan, free_questions_used")
+      .select("id, email, first_name, plan, free_questions_used")
       .eq("id", userId)
       .single();
     if (data) setProfile(data as Profile);
@@ -85,11 +86,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return error ? mapAuthError(error.message) : null;
   }
 
-  async function signUpWithEmail(email: string, password: string) {
+  async function signUpWithEmail(email: string, password: string, firstName?: string) {
     if (!supabase) return "Supabase n'est pas configuré.";
     const passwordError = validatePassword(password);
     if (passwordError) return passwordError;
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { first_name: firstName || null } },
+    });
     return error ? mapAuthError(error.message) : null;
   }
 

@@ -16,12 +16,23 @@ import ProUpsell from "../components/ProUpsell";
 import BackLink from "../components/BackLink";
 
 const POINTS_PER_CORRECT = 10;
+const EXAM_SECONDS_PER_QUESTION = 90;
+const PASS_THRESHOLD = 0.7;
 
 function sameAnswers(a: number[], b: number[]) {
   if (a.length !== b.length) return false;
   const sortedA = [...a].sort();
   const sortedB = [...b].sort();
   return sortedA.every((v, i) => v === sortedB[i]);
+}
+
+function shuffledIndexes(length: number) {
+  const arr = Array.from({ length }, (_, i) => i);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 }
 
 function formatTime(totalSeconds: number) {
@@ -52,31 +63,63 @@ export default function CertificationQuiz() {
   const [elapsed, setElapsed] = useState(0);
   const startedAt = useRef<number>(Date.now());
 
+  const [mode, setMode] = useState<"training" | "exam" | null>(null);
+  const [examEndsAt, setExamEndsAt] = useState<number | null>(null);
+  const [examRemaining, setExamRemaining] = useState(0);
+  const [examEnded, setExamEnded] = useState(false);
+
   useEffect(() => {
     loadQuestions(slug).then((data) => {
       if (data) {
         setCert({ name: data.name, questions: data.questions });
-        setQueue(data.questions.map((_, i) => i));
+        setQueue(shuffledIndexes(data.questions.length));
         setPos(0);
         setFlagged(new Set());
         setResults({});
         startedAt.current = Date.now();
         setElapsed(0);
+        setMode(null);
+        setExamEndsAt(null);
+        setExamEnded(false);
       }
     });
   }, [slug]);
 
   const answeredCount = Object.keys(results).length;
   const total = cert?.questions.length ?? 0;
-  const finished = cert !== null && total > 0 && answeredCount >= total;
+  const finished = (cert !== null && total > 0 && answeredCount >= total) || examEnded;
 
   useEffect(() => {
-    if (!cert || finished) return;
+    if (!cert || finished || mode === null) return;
     const id = setInterval(() => {
       setElapsed(Math.floor((Date.now() - startedAt.current) / 1000));
     }, 1000);
     return () => clearInterval(id);
-  }, [cert, finished]);
+  }, [cert, finished, mode]);
+
+  useEffect(() => {
+    if (mode !== "exam" || examEnded || finished || !examEndsAt) return;
+    const id = setInterval(() => {
+      const remaining = Math.max(0, Math.round((examEndsAt - Date.now()) / 1000));
+      setExamRemaining(remaining);
+      if (remaining <= 0) setExamEnded(true);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [mode, examEndsAt, examEnded, finished]);
+
+  function startTraining() {
+    setMode("training");
+  }
+
+  function startExam() {
+    const duration = total * EXAM_SECONDS_PER_QUESTION;
+    setExamEndsAt(Date.now() + duration * 1000);
+    setExamRemaining(duration);
+    setExamEnded(false);
+    startedAt.current = Date.now();
+    setElapsed(0);
+    setMode("exam");
+  }
 
   if (!cert) {
     return (
@@ -102,14 +145,77 @@ export default function CertificationQuiz() {
     );
   }
 
+  if (mode === null) {
+    return (
+      <section className="mx-auto max-w-3xl px-6 py-24">
+        <BackLink to="/formations" label={t.quiz.back} />
+        <h1 className="mt-6 font-display text-2xl font-semibold text-ink">
+          {t.quiz.modeSelectTitle}
+        </h1>
+        <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div className="flex h-full flex-col rounded-2xl border border-black/8 bg-white p-6 shadow-sm">
+            <h3 className="font-display text-lg font-medium text-ink">
+              {t.quiz.modeTrainingTitle}
+            </h3>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
+              {t.quiz.modeTrainingDesc}
+            </p>
+            <button
+              type="button"
+              onClick={startTraining}
+              className="brand-gradient mt-5 rounded-full px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+            >
+              {t.quiz.startTraining}
+            </button>
+          </div>
+
+          <div className="flex h-full flex-col rounded-2xl border border-teal/25 bg-white p-6 shadow-sm">
+            <h3 className="font-display text-lg font-medium text-ink">{t.quiz.modeExamTitle}</h3>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
+              {t.quiz.modeExamDesc}
+            </p>
+            {isPro ? (
+              <button
+                type="button"
+                onClick={startExam}
+                className="mt-5 rounded-full border border-teal/40 px-5 py-2.5 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
+              >
+                {t.quiz.startExam}
+              </button>
+            ) : (
+              <p className="mt-5 rounded-xl border border-amber/30 bg-amber/10 px-4 py-2.5 text-xs text-amber">
+                {t.quiz.modeExamLocked}
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   if (finished) {
     const points = currentScore * POINTS_PER_CORRECT;
+    const passed = mode === "exam" && total > 0 && currentScore / total >= PASS_THRESHOLD;
     return (
       <section className="mx-auto max-w-2xl px-6 py-24 text-center">
         <div className="rounded-2xl border border-black/8 bg-white p-10 shadow-sm">
           <h1 className="font-display text-2xl font-semibold text-ink">
             {t.quiz.finishedTitle}
           </h1>
+          {mode === "exam" && (
+            <div className="mt-4">
+              <span
+                className={`inline-flex rounded-full px-4 py-1.5 text-sm font-medium ${
+                  passed
+                    ? "border border-green/30 bg-green/10 text-green"
+                    : "border border-red-300 bg-red-50 text-red-600"
+                }`}
+              >
+                {passed ? t.quiz.passResult : t.quiz.failResult}
+              </span>
+              <p className="mt-2 text-xs text-muted">{t.quiz.passThresholdNote}</p>
+            </div>
+          )}
           <div className={`mt-8 grid gap-4 ${isPro ? "grid-cols-3" : "grid-cols-2"}`}>
             <div>
               <p className="font-display text-2xl font-semibold text-ink">
@@ -142,7 +248,7 @@ export default function CertificationQuiz() {
             <button
               type="button"
               onClick={() => {
-                setQueue(cert.questions.map((_, i) => i));
+                setQueue(shuffledIndexes(cert.questions.length));
                 setPos(0);
                 setFlagged(new Set());
                 setResults({});
@@ -150,6 +256,9 @@ export default function CertificationQuiz() {
                 setSubmitted(false);
                 startedAt.current = Date.now();
                 setElapsed(0);
+                setMode(null);
+                setExamEndsAt(null);
+                setExamEnded(false);
               }}
               className="brand-gradient rounded-full px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
             >
@@ -254,10 +363,32 @@ export default function CertificationQuiz() {
               {t.quiz.score}
             </span>
           </div>
-          {isPro && (
-            <span className="rounded-full border border-black/10 bg-white px-3 py-2 text-sm text-muted shadow-sm">
-              {formatTime(elapsed)}
+          {mode === "exam" ? (
+            <span
+              className={`rounded-full border px-3 py-2 text-sm shadow-sm ${
+                examRemaining <= 60
+                  ? "border-red-300 bg-red-50 text-red-600"
+                  : "border-black/10 bg-white text-muted"
+              }`}
+              title={t.quiz.examTimeLeft}
+            >
+              {formatTime(examRemaining)}
             </span>
+          ) : (
+            isPro && (
+              <span className="rounded-full border border-black/10 bg-white px-3 py-2 text-sm text-muted shadow-sm">
+                {formatTime(elapsed)}
+              </span>
+            )
+          )}
+          {mode === "exam" && (
+            <button
+              type="button"
+              onClick={() => setExamEnded(true)}
+              className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-ink transition hover:border-black/20"
+            >
+              {t.quiz.endExam}
+            </button>
           )}
         </div>
       </div>

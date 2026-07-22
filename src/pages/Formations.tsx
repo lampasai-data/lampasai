@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { listCertifications, type CertificationSummary } from "../lib/quizData";
+import { listCertifications, loadQuestions, type CertificationSummary } from "../lib/quizData";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n";
 import { localize } from "../lib/i18nText";
@@ -8,6 +8,7 @@ import { FREE_QUESTION_LIMIT, getAnonymousUsage } from "../lib/freeQuota";
 import Reveal from "../components/Reveal";
 import AuthPanel from "../components/AuthPanel";
 import TrainingRequestForm from "../components/TrainingRequestForm";
+import { CERTIFICATION_DOMAINS } from "../data/certificationDomains";
 import powerBiLogo from "../assets/PowerBI.png";
 import snowflakeLogo from "../assets/snowflake.png";
 
@@ -22,6 +23,7 @@ export default function Formations() {
   const [certs, setCerts] = useState<CertificationSummary[]>([]);
   const [tab, setTab] = useState<Tab>("certifications");
   const [showAuth, setShowAuth] = useState(false);
+  const [downloadingSlug, setDownloadingSlug] = useState<string | null>(null);
   const { user, profile } = useAuth();
   const { lang, t } = useLanguage();
 
@@ -32,9 +34,26 @@ export default function Formations() {
   const used = user ? profile?.free_questions_used ?? 0 : getAnonymousUsage();
   const isPro = profile?.plan === "pro";
 
+  async function handleDownloadPdf(cert: CertificationSummary) {
+    setDownloadingSlug(cert.slug);
+    const [data, { exportCertificationPdf }] = await Promise.all([
+      loadQuestions(cert.slug),
+      import("../lib/pdfExport"),
+    ]);
+    if (data) {
+      exportCertificationPdf(localize(data.name, lang), data.questions, lang);
+    }
+    setDownloadingSlug(null);
+  }
+
   return (
     <section className="mx-auto max-w-6xl px-6 py-24">
       <Reveal className="max-w-2xl">
+        {profile?.first_name && (
+          <p className="mb-2 text-sm font-medium text-teal-dark">
+            Bienvenue {profile.first_name} 👋
+          </p>
+        )}
         <h1 className="font-display text-4xl font-semibold text-ink md:text-5xl">
           {t.formations.title}
         </h1>
@@ -86,19 +105,21 @@ export default function Formations() {
                     {t.formations.skipFreeDesc}
                   </p>
                 </div>
-                {user ? (
-                  <a
-                    href="mailto:contact@lampasai.com?subject=Passage%20au%20mode%20Pro"
-                    className="brand-gradient shrink-0 rounded-full px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
-                  >
-                    {t.formations.upgradeCta}
-                  </a>
-                ) : (
+                {!user && (
                   <button
                     type="button"
                     onClick={() => setShowAuth((v) => !v)}
-                    className="brand-gradient shrink-0 rounded-full px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+                    className="inline-flex shrink-0 items-center gap-2 rounded-full border border-black/10 px-5 py-2.5 text-sm font-medium text-ink transition hover:border-black/20"
                   >
+                    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+                      <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="2" />
+                      <path
+                        d="M5 20c0-3.5 3.13-6 7-6s7 2.5 7 6"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
                     {t.formations.createAccountCta}
                   </button>
                 )}
@@ -108,6 +129,37 @@ export default function Formations() {
                   <AuthPanel />
                 </div>
               )}
+            </Reveal>
+          )}
+
+          {!isPro && (
+            <Reveal delay={100} className="mt-6">
+              <div className="relative overflow-hidden rounded-2xl border border-teal/25 bg-white p-7 shadow-sm">
+                <span className="brand-gradient inline-flex rounded-full px-3 py-1 text-xs font-semibold text-white">
+                  {t.formations.offerBadge}
+                </span>
+                <div className="mt-4 flex flex-wrap items-end gap-2">
+                  <span className="font-display text-4xl font-semibold text-ink">
+                    {t.formations.offerPrice}
+                  </span>
+                  <span className="pb-1 text-sm text-muted">{t.formations.offerPeriod}</span>
+                </div>
+                <p className="mt-1 text-xs text-muted">{t.formations.offerNote}</p>
+                <ul className="mt-5 flex flex-col gap-2 text-sm text-ink/80">
+                  {t.formations.offerBenefits.map((benefit) => (
+                    <li key={benefit} className="flex items-start gap-2">
+                      <span className="mt-0.5 shrink-0 text-teal-dark">✓</span>
+                      {benefit}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href="mailto:contact@lampasai.com?subject=Passage%20au%20mode%20Pro%20(9%2C99%E2%82%AC%20%2F%203%20mois)"
+                  className="brand-gradient mt-6 inline-flex rounded-full px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
+                >
+                  {t.formations.offerCta}
+                </a>
+              </div>
             </Reveal>
           )}
 
@@ -134,6 +186,31 @@ export default function Formations() {
                       {localize(cert.description, lang)}
                     </p>
                   </Link>
+
+                  {CERTIFICATION_DOMAINS[cert.slug] && (
+                    <div className="mt-5 border-t border-black/5 pt-4">
+                      <p className="text-xs font-medium text-teal-dark">
+                        {t.formations.domainsLabel}
+                      </p>
+                      <ul className="mt-2.5 flex flex-col gap-1.5">
+                        {CERTIFICATION_DOMAINS[cert.slug].map((domain) => (
+                          <li
+                            key={domain.label.fr}
+                            className="flex items-center justify-between gap-3 text-xs text-ink/70"
+                          >
+                            <span className="flex items-center gap-1.5">
+                              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-teal/60" />
+                              {localize(domain.label, lang)}
+                            </span>
+                            <span className="shrink-0 font-medium text-muted">
+                              {domain.weight}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
                     <Link
                       to={`/formations/${cert.slug}`}
@@ -142,12 +219,33 @@ export default function Formations() {
                       {t.formations.trainFor}
                     </Link>
                     {isPro && (
-                      <Link
-                        to={`/formations/${cert.slug}`}
-                        className="brand-gradient rounded-full px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
-                      >
-                        {t.formations.accessQuiz}
-                      </Link>
+                      <>
+                        <Link
+                          to={`/formations/${cert.slug}`}
+                          className="brand-gradient rounded-full px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+                        >
+                          {t.formations.accessQuiz}
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadPdf(cert)}
+                          disabled={downloadingSlug === cert.slug}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-4 py-1.5 text-xs font-medium text-ink transition hover:border-black/20 disabled:opacity-50"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+                            <path
+                              d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          {downloadingSlug === cert.slug
+                            ? t.formations.downloadingPdf
+                            : t.formations.downloadPdf}
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -155,28 +253,17 @@ export default function Formations() {
             ))}
           </div>
         </>
-      ) : (
-        <>
-          <Reveal className="mt-10 rounded-2xl border border-black/8 bg-surface p-10 text-center">
-            <h3 className="font-display text-xl font-medium text-ink">
-              {t.formations.comingSoonTitle}
-            </h3>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">
-              {t.formations.comingSoonDesc}
-            </p>
-          </Reveal>
+      ) : null}
 
-          <Reveal delay={80} className="mt-10 max-w-2xl">
-            <h3 className="font-display text-2xl font-semibold text-ink">
-              {t.formations.requestTitle}
-            </h3>
-            <p className="mt-3 leading-relaxed text-muted">{t.formations.requestLead}</p>
-            <div className="mt-6">
-              <TrainingRequestForm />
-            </div>
-          </Reveal>
-        </>
-      )}
+      <Reveal delay={80} className="mt-16 max-w-2xl border-t border-black/8 pt-14">
+        <h3 className="font-display text-2xl font-semibold text-ink">
+          {t.formations.requestTitle}
+        </h3>
+        <p className="mt-3 leading-relaxed text-muted">{t.formations.requestLead}</p>
+        <div className="mt-6">
+          <TrainingRequestForm />
+        </div>
+      </Reveal>
     </section>
   );
 }

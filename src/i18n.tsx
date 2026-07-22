@@ -101,6 +101,15 @@ interface Translations {
     requestSubmit: string;
     requestSent: string;
     requestTooFast: string;
+    offerBadge: string;
+    offerPrice: string;
+    offerPeriod: string;
+    offerNote: string;
+    offerBenefits: string[];
+    offerCta: string;
+    domainsLabel: string;
+    downloadPdf: string;
+    downloadingPdf: string;
   };
   quiz: {
     back: string;
@@ -123,6 +132,19 @@ interface Translations {
     restart: string;
     backToFormations: string;
     explanationLabel: string;
+    modeSelectTitle: string;
+    modeTrainingTitle: string;
+    modeTrainingDesc: string;
+    modeExamTitle: string;
+    modeExamDesc: string;
+    modeExamLocked: string;
+    startTraining: string;
+    startExam: string;
+    endExam: string;
+    examTimeLeft: string;
+    passResult: string;
+    failResult: string;
+    passThresholdNote: string;
   };
 }
 
@@ -204,7 +226,7 @@ const translations: Record<Lang, Translations> = {
     },
     formations: {
       tag: "Formations",
-      title: "Certifications & formations data",
+      title: "Certifications & formations",
       lead: "Prépare tes certifications ou découvre nos prochaines formations pour monter en compétence sur la donnée et l'IA.",
       tabCertifications: "Certifications",
       tabFormations: "Formations",
@@ -235,6 +257,19 @@ const translations: Record<Lang, Translations> = {
       requestSubmit: "Demander un devis",
       requestSent: "Demande envoyée ✓ Nous te recontactons rapidement.",
       requestTooFast: "Merci de patienter quelques secondes avant d'envoyer.",
+      offerBadge: "Accès illimité",
+      offerPrice: "9,99 €",
+      offerPeriod: "/ 3 mois",
+      offerNote: "Paiement unique, sans réengagement.",
+      offerBenefits: [
+        "Quiz illimités sur toutes les certifications",
+        "Questions mélangées à chaque session pour un entraînement plus efficace",
+        "Entraînement direct sur la plateforme, sans limite de tentatives",
+      ],
+      offerCta: "Débloquer l'accès illimité",
+      domainsLabel: "Nos questions couvrent les blocs réellement évalués à l'examen :",
+      downloadPdf: "Télécharger en PDF",
+      downloadingPdf: "Génération...",
     },
     quiz: {
       back: "Retour aux formations",
@@ -257,6 +292,19 @@ const translations: Record<Lang, Translations> = {
       restart: "Recommencer",
       backToFormations: "Retour aux formations",
       explanationLabel: "💡 Explication",
+      modeSelectTitle: "Choisis ton mode d'entraînement",
+      modeTrainingTitle: "Entraînement libre",
+      modeTrainingDesc: "Avance à ton rythme, avec explications après chaque question.",
+      modeExamTitle: "Mode examen chronométré",
+      modeExamDesc: "Simule l'examen réel : temps limité, résultat réussi/échoué à la fin.",
+      modeExamLocked: "Réservé aux comptes en accès illimité.",
+      startTraining: "Commencer l'entraînement",
+      startExam: "Démarrer l'examen",
+      endExam: "Terminer l'examen",
+      examTimeLeft: "Temps restant",
+      passResult: "Examen réussi 🎉",
+      failResult: "Examen non réussi",
+      passThresholdNote: "Seuil de réussite : 70% de bonnes réponses.",
     },
   },
   en: {
@@ -367,6 +415,19 @@ const translations: Record<Lang, Translations> = {
       requestSubmit: "Request a quote",
       requestSent: "Request sent ✓ We'll get back to you shortly.",
       requestTooFast: "Please wait a few seconds before sending.",
+      offerBadge: "Unlimited access",
+      offerPrice: "€9.99",
+      offerPeriod: "/ 3 months",
+      offerNote: "One-time payment, no subscription.",
+      offerBenefits: [
+        "Unlimited quizzes across all certifications",
+        "Shuffled questions every session for more effective practice",
+        "Practice directly on the platform, with no attempt limit",
+      ],
+      offerCta: "Unlock unlimited access",
+      domainsLabel: "Our questions cover the skill blocks actually assessed on the exam:",
+      downloadPdf: "Download as PDF",
+      downloadingPdf: "Generating...",
     },
     quiz: {
       back: "Back to training",
@@ -389,6 +450,19 @@ const translations: Record<Lang, Translations> = {
       restart: "Restart",
       backToFormations: "Back to training",
       explanationLabel: "💡 Explanation",
+      modeSelectTitle: "Choose your practice mode",
+      modeTrainingTitle: "Free practice",
+      modeTrainingDesc: "Go at your own pace, with explanations after each question.",
+      modeExamTitle: "Timed exam mode",
+      modeExamDesc: "Simulate the real exam: limited time, pass/fail result at the end.",
+      modeExamLocked: "Reserved for unlimited access accounts.",
+      startTraining: "Start practice",
+      startExam: "Start exam",
+      endExam: "End exam",
+      examTimeLeft: "Time left",
+      passResult: "Exam passed 🎉",
+      failResult: "Exam not passed",
+      passThresholdNote: "Pass threshold: 70% correct answers.",
     },
   },
 };
