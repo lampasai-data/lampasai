@@ -19,6 +19,7 @@ interface Translations {
     sub: string;
     ctaPrimary: string;
     ctaGhost: string;
+    highlights: [string, string, string];
   };
   about: {
     tag: string;
@@ -119,6 +120,7 @@ const translations: Record<Lang, Translations> = {
       sub: "Lampas AI accompagne les organisations dans l'exploitation de leurs données grâce à des solutions d'intelligence artificielle sur-mesure, quantitatives et durables.",
       ctaPrimary: "Discutons de votre projet",
       ctaGhost: "En savoir plus",
+      highlights: ["KPIs & performance", "IA prédictive", "Cloud & données"],
     },
     about: {
       tag: "Qui sommes-nous ?",
@@ -226,6 +228,7 @@ const translations: Record<Lang, Translations> = {
       sub: "Lampas AI helps organizations unlock the value of their data through tailor-made, quantitative and sustainable artificial intelligence solutions.",
       ctaPrimary: "Let's talk about your project",
       ctaGhost: "Learn more",
+      highlights: ["KPIs & performance", "Predictive AI", "Cloud & data"],
     },
     about: {
       tag: "About us",

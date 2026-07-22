@@ -28,7 +28,7 @@ export default function Formations() {
         <span className="text-xs font-medium uppercase tracking-widest text-teal-dark">
           {t.formations.tag}
         </span>
-        <h1 className="mt-3 font-display text-3xl font-semibold text-ink md:text-4xl">
+        <h1 className="mt-3 font-display text-4xl font-semibold text-ink md:text-5xl">
           {t.formations.title}
         </h1>
         <p className="mt-5 leading-relaxed text-muted">{t.formations.lead}</p>

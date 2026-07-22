@@ -165,6 +165,36 @@ export default function Hero() {
           />
           <div className="relative h-full w-full overflow-hidden rounded-3xl border border-black/8 bg-white/70 shadow-xl backdrop-blur-sm">
             <MeshBackground />
+
+            <div
+              className="float-slow absolute left-5 top-6 flex items-center gap-2.5 rounded-xl border border-black/8 bg-white/90 px-3.5 py-2.5 text-xs font-medium text-ink shadow-md backdrop-blur-sm"
+              style={{ animationDelay: "0.4s" }}
+            >
+              <span className="brand-gradient flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] text-white">
+                ◆
+              </span>
+              {t.hero.highlights[0]}
+            </div>
+
+            <div
+              className="absolute right-6 top-1/2 flex -translate-y-1/2 items-center gap-2.5 rounded-xl border border-black/8 bg-white/90 px-3.5 py-2.5 text-xs font-medium text-ink shadow-md backdrop-blur-sm"
+              style={{ animation: "float-slow 8s ease-in-out infinite", animationDelay: "1.2s" }}
+            >
+              <span className="brand-gradient flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] text-white">
+                ✦
+              </span>
+              {t.hero.highlights[1]}
+            </div>
+
+            <div
+              className="absolute bottom-6 left-10 flex items-center gap-2.5 rounded-xl border border-black/8 bg-white/90 px-3.5 py-2.5 text-xs font-medium text-ink shadow-md backdrop-blur-sm"
+              style={{ animation: "float-slow 10s ease-in-out infinite", animationDelay: "0.8s" }}
+            >
+              <span className="brand-gradient flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] text-white">
+                ●
+              </span>
+              {t.hero.highlights[2]}
+            </div>
           </div>
         </div>
       </div>
