@@ -81,7 +81,12 @@ export default function Formations() {
 
       {tab === "certifications" ? (
         <>
-          <p className="mt-6 text-sm italic text-muted">{t.formations.certifValue}</p>
+          <div className="mt-6 flex items-start gap-3 rounded-2xl border border-amber/30 bg-amber/[0.08] px-5 py-4">
+            <span className="text-lg leading-none">💡</span>
+            <p className="text-sm font-medium leading-relaxed text-ink">
+              {t.formations.certifValue}
+            </p>
+          </div>
 
           {!isPro && (
             <Reveal delay={40} className="mt-6">
@@ -212,9 +217,9 @@ export default function Formations() {
           </div>
         </>
       ) : tab === "pricing" ? (
-        <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[1.1fr_1fr] lg:items-start">
-          <Reveal delay={40}>
-            <div className="relative max-w-xl overflow-hidden rounded-2xl border border-teal/25 bg-white p-8 shadow-sm">
+        <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[1.1fr_1fr] lg:items-stretch">
+          <Reveal delay={40} className="flex">
+            <div className="relative flex w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-teal/25 bg-white p-8 shadow-sm">
               <span className="brand-gradient inline-flex rounded-full px-3 py-1 text-xs font-semibold text-white">
                 {t.formations.offerBadge}
               </span>
@@ -263,19 +268,19 @@ export default function Formations() {
                 href={`mailto:contact@lampasai.com?subject=Passage%20au%20mode%20Pro%20(9%2C99%E2%82%AC%20%2F%203%20mois%20-%20${encodeURIComponent(
                   certs.find((c) => c.slug === pricingSlug)?.name.fr ?? pricingSlug
                 )})`}
-                className="brand-gradient mt-6 inline-flex rounded-full px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
+                className="brand-gradient mt-8 inline-flex self-start rounded-full px-6 py-3 text-sm font-medium text-white transition hover:opacity-90 lg:mt-auto"
               >
                 {t.formations.offerCta}
               </a>
             </div>
           </Reveal>
 
-          <Reveal delay={80}>
+          <Reveal delay={80} className="flex flex-col">
             <h3 className="font-display text-2xl font-semibold text-ink">
               {t.formations.requestTitle}
             </h3>
             <p className="mt-3 leading-relaxed text-muted">{t.formations.requestLead}</p>
-            <div className="mt-6">
+            <div className="mt-6 flex-1">
               <TrainingRequestForm />
             </div>
           </Reveal>

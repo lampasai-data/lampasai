@@ -1,7 +1,7 @@
 import { useEffect, useRef, type CSSProperties } from "react";
 import { useLanguage } from "../i18n";
 import snowflakeLogo from "../assets/snowflake.png";
-import powerBiLogo from "../assets/PowerBI.png";
+import powerBiLogo from "../assets/PowerBI-removebg-preview.png";
 import dbtLogo from "../assets/dbt.png";
 import gcpLogo from "../assets/GCP.png";
 import fivetranLogo from "../assets/Fivetran.png";

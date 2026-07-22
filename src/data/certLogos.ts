@@ -1,4 +1,4 @@
-import powerBiLogo from "../assets/PowerBI.png";
+import powerBiLogo from "../assets/PowerBI-removebg-preview.png";
 import snowflakeLogo from "../assets/snowflake.png";
 
 export const CERT_LOGOS: Record<string, string> = {

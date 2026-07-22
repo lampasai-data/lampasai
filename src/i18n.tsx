@@ -202,8 +202,8 @@ const translations: Record<Lang, Translations> = {
     team: {
       tag: "Teams",
       title: "Une équipe pluridisciplinaire, à vos côtés",
-      lead: "Travaillant de concert avec des partenaires technologiques, nous nous engageons à simplifier, accélérer et optimiser vos processus de données et d'entreprise. Pour donner un coup de pouce à votre projet, Lampas AI réunit avec enthousiasme Analytics Engineers, AI Scientists et Développeurs, tous issus de formations prestigieuses. Notre ouverture à de nouveaux partenariats témoigne de notre quête constante d'innovation pour renforcer votre réussite.",
-      roles: ["Analytics Engineers", "AI Scientists", "Développeurs"],
+      lead: "Travaillant de concert avec des partenaires technologiques, nous nous engageons à simplifier, accélérer et optimiser vos processus de données et d'entreprise. Pour donner un coup de pouce à votre projet, Lampas AI réunit avec enthousiasme Analytics Engineers, AI Scientists, Data Engineers, Data Analysts et Développeurs, tous issus de formations prestigieuses. Notre ouverture à de nouveaux partenariats témoigne de notre quête constante d'innovation pour renforcer votre réussite.",
+      roles: ["Analytics Engineers", "AI Scientists", "Data Engineers", "Data Analysts", "Développeurs"],
     },
     partners: {
       tag: "Partenaires",
@@ -365,8 +365,8 @@ const translations: Record<Lang, Translations> = {
     team: {
       tag: "Team",
       title: "A multidisciplinary team, by your side",
-      lead: "Working closely with technology partners, we are committed to simplifying, accelerating and optimizing your data and business processes. To give your project a boost, Lampas AI enthusiastically brings together Analytics Engineers, AI Scientists and Developers, all from prestigious backgrounds. Our openness to new partnerships reflects our constant quest for innovation to strengthen your success.",
-      roles: ["Analytics Engineers", "AI Scientists", "Developers"],
+      lead: "Working closely with technology partners, we are committed to simplifying, accelerating and optimizing your data and business processes. To give your project a boost, Lampas AI enthusiastically brings together Analytics Engineers, AI Scientists, Data Engineers, Data Analysts and Developers, all from prestigious backgrounds. Our openness to new partnerships reflects our constant quest for innovation to strengthen your success.",
+      roles: ["Analytics Engineers", "AI Scientists", "Data Engineers", "Data Analysts", "Developers"],
     },
     partners: {
       tag: "Partners",
