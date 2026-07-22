@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import BackLink from "../components/BackLink";
 
 export default function ResetPassword() {
   const { updatePassword } = useAuth();
@@ -63,12 +64,9 @@ export default function ResetPassword() {
         )}
       </div>
 
-      <Link
-        to="/formations"
-        className="mt-6 inline-block text-sm text-muted hover:text-ink"
-      >
-        ← Retour aux formations
-      </Link>
+      <div className="mt-6">
+        <BackLink to="/formations" label="Retour aux formations" />
+      </div>
     </section>
   );
 }

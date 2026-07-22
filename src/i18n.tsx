@@ -153,8 +153,8 @@ const translations: Record<Lang, Translations> = {
     },
     partners: {
       tag: "Partenaires",
-      title: "Ils nous font confiance",
-      lead: "Nous construisons des relations durables avec nos partenaires technologiques et académiques pour porter l'innovation IA plus loin.",
+      title: "Nos partenaires de confiance",
+      lead: "Nous construisons des collaborations solides avec des acteurs tech et académiques qui partagent notre vision de l'IA au service de la performance.",
       wonjoDesc: "Application de paiement et de transferts d'argent.",
       visitSite: "Visiter wonjo.app",
     },
@@ -192,7 +192,7 @@ const translations: Record<Lang, Translations> = {
       comingSoonDesc: "Nous préparons des parcours de formation complets (Power BI, Snowflake, IA appliquée...). Reviens bientôt ou contacte-nous pour être informé en priorité.",
     },
     quiz: {
-      back: "← Retour aux formations",
+      back: "Retour aux formations",
       score: "Score",
       points: "Points",
       remainingFree: "gratuite(s) restante(s)",
@@ -262,8 +262,8 @@ const translations: Record<Lang, Translations> = {
     },
     partners: {
       tag: "Partners",
-      title: "They trust us",
-      lead: "We build lasting relationships with our technology and academic partners to push AI innovation further.",
+      title: "Our trusted partners",
+      lead: "We're building strong collaborations with tech and academic players who share our vision of AI-driven performance.",
       wonjoDesc: "Payments and money transfer application.",
       visitSite: "Visit wonjo.app",
     },
@@ -301,7 +301,7 @@ const translations: Record<Lang, Translations> = {
       comingSoonDesc: "We're building complete training paths (Power BI, Snowflake, applied AI...). Check back soon or contact us to be notified first.",
     },
     quiz: {
-      back: "← Back to training",
+      back: "Back to training",
       score: "Score",
       points: "Points",
       remainingFree: "free left",

@@ -35,7 +35,8 @@ export default function Contact() {
   }
 
   return (
-    <section id="contact" className="mx-auto max-w-6xl px-6 py-24">
+    <section id="contact" className="border-t border-black/5 bg-surface">
+      <div className="mx-auto max-w-6xl px-6 py-24">
       <Reveal className="max-w-2xl">
         <h2 className="font-display text-4xl font-semibold text-ink md:text-5xl">
           {t.contact.title}
@@ -110,6 +111,7 @@ export default function Contact() {
           </button>
         </form>
       </Reveal>
+      </div>
     </section>
   );
 }

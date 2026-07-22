@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { loadQuestions } from "../lib/quizData";
 import type { LocalizedText, Question } from "../data/types";
 import { useAuth } from "../context/AuthContext";
@@ -13,6 +13,7 @@ import {
 import { supabase } from "../lib/supabase";
 import AuthPanel from "../components/AuthPanel";
 import ProUpsell from "../components/ProUpsell";
+import BackLink from "../components/BackLink";
 
 const POINTS_PER_CORRECT = 10;
 
@@ -88,13 +89,12 @@ export default function CertificationQuiz() {
   const isPro = profile?.plan === "pro";
   const used = user ? profile?.free_questions_used ?? 0 : anonUsed;
   const quotaExhausted = !isPro && used >= FREE_QUESTION_LIMIT && !finished;
+  const currentScore = Object.values(results).filter(Boolean).length;
 
   if (quotaExhausted) {
     return (
       <section className="mx-auto max-w-3xl px-6 py-24">
-        <Link to="/formations" className="text-sm text-muted hover:text-ink">
-          {t.quiz.back}
-        </Link>
+        <BackLink to="/formations" label={t.quiz.back} />
         <div className="mt-8">
           {user ? <ProUpsell certName={localize(cert.name, lang)} /> : <AuthPanel />}
         </div>
@@ -103,8 +103,7 @@ export default function CertificationQuiz() {
   }
 
   if (finished) {
-    const score = Object.values(results).filter(Boolean).length;
-    const points = score * POINTS_PER_CORRECT;
+    const points = currentScore * POINTS_PER_CORRECT;
     return (
       <section className="mx-auto max-w-2xl px-6 py-24 text-center">
         <div className="rounded-2xl border border-black/8 bg-white p-10 shadow-sm">
@@ -114,7 +113,7 @@ export default function CertificationQuiz() {
           <div className={`mt-8 grid gap-4 ${isPro ? "grid-cols-3" : "grid-cols-2"}`}>
             <div>
               <p className="font-display text-2xl font-semibold text-ink">
-                {score}/{total}
+                {currentScore}/{total}
               </p>
               <p className="mt-1 text-xs uppercase tracking-wide text-muted">
                 {t.quiz.finishedScore}
@@ -156,12 +155,9 @@ export default function CertificationQuiz() {
             >
               {t.quiz.restart}
             </button>
-            <Link
-              to="/formations"
-              className="rounded-full border border-black/10 px-6 py-2.5 text-sm font-medium text-ink transition hover:border-black/20"
-            >
-              {t.quiz.backToFormations}
-            </Link>
+            <div className="flex justify-center">
+              <BackLink to="/formations" label={t.quiz.backToFormations} />
+            </div>
           </div>
         </div>
       </section>
@@ -242,35 +238,36 @@ export default function CertificationQuiz() {
 
   return (
     <section className="mx-auto max-w-3xl px-6 py-24">
-      <Link to="/formations" className="text-sm text-muted hover:text-ink">
-        {t.quiz.back}
-      </Link>
+      <BackLink to="/formations" label={t.quiz.back} />
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-2xl font-semibold text-ink">
           {localize(cert.name, lang)}
         </h1>
-        <div className="flex items-center gap-4 text-sm text-muted">
-          <span>
-            {t.quiz.score} : {Object.values(results).filter(Boolean).length}
-          </span>
+
+        <div className="flex items-center gap-3">
+          <div className="brand-gradient flex items-center gap-2 rounded-full px-4 py-2 text-white shadow-sm">
+            <span className="font-display text-lg font-semibold leading-none">
+              {currentScore}
+            </span>
+            <span className="text-xs font-medium uppercase tracking-wide opacity-90">
+              {t.quiz.score}
+            </span>
+          </div>
           {isPro && (
-            <span>
-              {t.quiz.timeElapsed} : {formatTime(elapsed)}
+            <span className="rounded-full border border-black/10 bg-white px-3 py-2 text-sm text-muted shadow-sm">
+              {formatTime(elapsed)}
             </span>
           )}
-          <span>
-            {Math.max(FREE_QUESTION_LIMIT - used, 0)} {t.quiz.remainingFree}
-          </span>
         </div>
       </div>
 
-      <div className="mt-2 flex items-center justify-between text-xs text-muted">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
         <span>
-          {answeredCount}/{total}
+          {answeredCount}/{total} · {Math.max(FREE_QUESTION_LIMIT - used, 0)} {t.quiz.remainingFree}
         </span>
         {remainingFlagged > 0 && (
-          <span className="text-amber">{t.quiz.reviewFlagged(remainingFlagged)}</span>
+          <span className="font-medium text-amber">{t.quiz.reviewFlagged(remainingFlagged)}</span>
         )}
       </div>
 
@@ -284,22 +281,23 @@ export default function CertificationQuiz() {
             onClick={toggleFlag}
             title={isFlagged ? t.quiz.unflag : t.quiz.flag}
             aria-pressed={isFlagged}
-            className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+            className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-sm font-medium transition ${
               isFlagged
                 ? "border-amber/40 bg-amber/10 text-amber"
                 : "border-black/10 text-muted hover:border-black/20 hover:text-ink"
             }`}
           >
-            {isFlagged ? "🚩" : "⚑"}
+            <span className="text-lg leading-none">{isFlagged ? "🚩" : "⚑"}</span>
           </button>
         </div>
         {isFlagged && (
           <p className="mt-1 text-xs font-medium text-amber">{t.quiz.flaggedNotice}</p>
         )}
         {isMulti && (
-          <p className="mt-1 text-xs uppercase tracking-wide text-teal-dark">
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-teal/25 bg-teal/[0.08] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-teal-dark">
+            <span className="text-sm">☑</span>
             {t.quiz.selectAnswers} {question.correctIndexes.length}
-          </p>
+          </div>
         )}
 
         <div className="mt-6 flex flex-col gap-3">

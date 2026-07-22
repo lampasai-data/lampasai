@@ -6,6 +6,13 @@ import { useLanguage } from "../i18n";
 import { localize } from "../lib/i18nText";
 import { FREE_QUESTION_LIMIT, getAnonymousUsage } from "../lib/freeQuota";
 import Reveal from "../components/Reveal";
+import powerBiLogo from "../assets/PowerBI.png";
+import snowflakeLogo from "../assets/snowflake.png";
+
+const CERT_LOGOS: Record<string, string> = {
+  "power-bi": powerBiLogo,
+  snowflake: snowflakeLogo,
+};
 
 type Tab = "certifications" | "formations";
 
@@ -69,7 +76,18 @@ export default function Formations() {
               <Reveal key={cert.slug} delay={i * 80}>
                 <div className="group h-full rounded-2xl border border-black/8 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-teal/30 hover:shadow-md">
                   <Link to={`/formations/${cert.slug}`}>
-                    <h3 className="font-display text-xl font-medium text-ink">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-black/8 bg-surface">
+                      {CERT_LOGOS[cert.slug] ? (
+                        <img
+                          src={CERT_LOGOS[cert.slug]}
+                          alt=""
+                          className="h-7 w-7 object-contain"
+                        />
+                      ) : (
+                        <span className="brand-gradient h-2.5 w-2.5 rounded-full" />
+                      )}
+                    </div>
+                    <h3 className="mt-4 font-display text-xl font-medium text-ink">
                       {localize(cert.name, lang)}
                     </h3>
                     <p className="mt-3 text-sm leading-relaxed text-muted">

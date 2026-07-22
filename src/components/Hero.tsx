@@ -1,14 +1,17 @@
 import { useEffect, useRef } from "react";
 import { useLanguage } from "../i18n";
+import snowflakeLogo from "../assets/snowflake.png";
+import powerBiLogo from "../assets/PowerBI.png";
+import dbtLogo from "../assets/dbt.png";
+import gcpLogo from "../assets/GCP.png";
+import fivetranLogo from "../assets/Fivetran.png";
 
-// Tool logos can be dropped in later: import the image and set `logo` below
-// (e.g. logo: snowflakeLogo). Until then, a small brand-colored dot is shown.
-const TOOLS: { name: string; logo?: string }[] = [
-  { name: "Snowflake" },
-  { name: "Power BI" },
-  { name: "dbt" },
-  { name: "GCP" },
-  { name: "Fivetran" },
+const TOOLS: { name: string; logo?: string; pos: string; float: string }[] = [
+  { name: "Snowflake", logo: snowflakeLogo, pos: "left-4 top-5", float: "9s" },
+  { name: "Power BI", logo: powerBiLogo, pos: "right-6 top-10", float: "8s" },
+  { name: "dbt", logo: dbtLogo, pos: "left-8 bottom-24", float: "10.5s" },
+  { name: "GCP", logo: gcpLogo, pos: "right-4 bottom-10", float: "7.5s" },
+  { name: "Fivetran", logo: fivetranLogo, pos: "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2", float: "11s" },
 ];
 
 function MeshBackground() {
@@ -160,27 +163,6 @@ export default function Hero() {
               {t.hero.ctaGhost}
             </a>
           </div>
-
-          <div className="mt-12 w-full">
-            <p className="text-xs font-medium uppercase tracking-widest text-muted">
-              {t.hero.toolsLabel}
-            </p>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-              {TOOLS.map((tool) => (
-                <span
-                  key={tool.name}
-                  className="flex items-center gap-2 rounded-full border border-black/8 bg-white px-4 py-2 text-sm font-medium text-ink/80 shadow-sm"
-                >
-                  {tool.logo ? (
-                    <img src={tool.logo} alt={tool.name} className="h-4 w-4 object-contain" />
-                  ) : (
-                    <span className="brand-gradient h-1.5 w-1.5 rounded-full" />
-                  )}
-                  {tool.name}
-                </span>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div className="relative mx-auto h-64 w-full max-w-md lg:h-96">
@@ -197,36 +179,27 @@ export default function Hero() {
           <div className="relative h-full w-full overflow-hidden rounded-3xl border border-black/8 bg-white/70 shadow-xl backdrop-blur-sm">
             <MeshBackground />
 
-            <div
-              className="float-slow absolute left-5 top-6 flex items-center gap-2.5 rounded-xl border border-black/8 bg-white/90 px-3.5 py-2.5 text-xs font-medium text-ink shadow-md backdrop-blur-sm"
-              style={{ animationDelay: "0.4s" }}
-            >
-              <span className="brand-gradient flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] text-white">
-                ◆
-              </span>
-              {t.hero.highlights[0]}
-            </div>
-
-            <div
-              className="absolute right-6 top-1/2 flex -translate-y-1/2 items-center gap-2.5 rounded-xl border border-black/8 bg-white/90 px-3.5 py-2.5 text-xs font-medium text-ink shadow-md backdrop-blur-sm"
-              style={{ animation: "float-slow 8s ease-in-out infinite", animationDelay: "1.2s" }}
-            >
-              <span className="brand-gradient flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] text-white">
-                ✦
-              </span>
-              {t.hero.highlights[1]}
-            </div>
-
-            <div
-              className="absolute bottom-6 left-10 flex items-center gap-2.5 rounded-xl border border-black/8 bg-white/90 px-3.5 py-2.5 text-xs font-medium text-ink shadow-md backdrop-blur-sm"
-              style={{ animation: "float-slow 10s ease-in-out infinite", animationDelay: "0.8s" }}
-            >
-              <span className="brand-gradient flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] text-white">
-                ●
-              </span>
-              {t.hero.highlights[2]}
-            </div>
+            {TOOLS.map((tool, i) => (
+              <div
+                key={tool.name}
+                className={`absolute ${tool.pos} flex h-14 w-14 items-center justify-center rounded-2xl border border-black/8 bg-white/95 shadow-md backdrop-blur-sm`}
+                style={{ animation: `float-slow ${tool.float} ease-in-out infinite`, animationDelay: `${i * 0.5}s` }}
+                title={tool.name}
+              >
+                {tool.logo ? (
+                  <img src={tool.logo} alt={tool.name} className="h-8 w-8 object-contain" />
+                ) : (
+                  <span className="font-display text-[10px] font-semibold text-ink/70">
+                    {tool.name}
+                  </span>
+                )}
+              </div>
+            ))}
           </div>
+
+          <p className="mt-4 text-center text-xs font-medium uppercase tracking-widest text-muted">
+            {t.hero.toolsLabel}
+          </p>
         </div>
       </div>
     </header>
