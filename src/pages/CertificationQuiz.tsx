@@ -111,7 +111,7 @@ export default function CertificationQuiz() {
           <h1 className="font-display text-2xl font-semibold text-ink">
             {t.quiz.finishedTitle}
           </h1>
-          <div className="mt-8 grid grid-cols-3 gap-4">
+          <div className={`mt-8 grid gap-4 ${isPro ? "grid-cols-3" : "grid-cols-2"}`}>
             <div>
               <p className="font-display text-2xl font-semibold text-ink">
                 {score}/{total}
@@ -120,14 +120,16 @@ export default function CertificationQuiz() {
                 {t.quiz.finishedScore}
               </p>
             </div>
-            <div>
-              <p className="font-display text-2xl font-semibold text-ink">
-                {formatTime(elapsed)}
-              </p>
-              <p className="mt-1 text-xs uppercase tracking-wide text-muted">
-                {t.quiz.finishedTime}
-              </p>
-            </div>
+            {isPro && (
+              <div>
+                <p className="font-display text-2xl font-semibold text-ink">
+                  {formatTime(elapsed)}
+                </p>
+                <p className="mt-1 text-xs uppercase tracking-wide text-muted">
+                  {t.quiz.finishedTime}
+                </p>
+              </div>
+            )}
             <div>
               <p className="brand-gradient-text font-display text-2xl font-semibold">
                 {points}
@@ -252,9 +254,11 @@ export default function CertificationQuiz() {
           <span>
             {t.quiz.score} : {Object.values(results).filter(Boolean).length}
           </span>
-          <span>
-            {t.quiz.timeElapsed} : {formatTime(elapsed)}
-          </span>
+          {isPro && (
+            <span>
+              {t.quiz.timeElapsed} : {formatTime(elapsed)}
+            </span>
+          )}
           <span>
             {Math.max(FREE_QUESTION_LIMIT - used, 0)} {t.quiz.remainingFree}
           </span>

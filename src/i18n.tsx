@@ -73,6 +73,7 @@ interface Translations {
     tabCertifications: string;
     tabFormations: string;
     trainFor: string;
+    accessQuiz: string;
     remainingFree: string;
     comingSoonTitle: string;
     comingSoonDesc: string;
@@ -181,6 +182,7 @@ const translations: Record<Lang, Translations> = {
       tabCertifications: "Certifications",
       tabFormations: "Formations",
       trainFor: "S'entraîner →",
+      accessQuiz: "Accéder au quiz",
       remainingFree: "question(s) gratuite(s) restante(s)",
       comingSoonTitle: "Nos formations arrivent bientôt",
       comingSoonDesc: "Nous préparons des parcours de formation complets (Power BI, Snowflake, IA appliquée...). Reviens bientôt ou contacte-nous pour être informé en priorité.",
@@ -287,6 +289,7 @@ const translations: Record<Lang, Translations> = {
       tabCertifications: "Certifications",
       tabFormations: "Training",
       trainFor: "Practice →",
+      accessQuiz: "Go to quiz",
       remainingFree: "free question(s) left",
       comingSoonTitle: "Our training paths are coming soon",
       comingSoonDesc: "We're building complete training paths (Power BI, Snowflake, applied AI...). Check back soon or contact us to be notified first.",
@@ -325,7 +328,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>(() => {
     const stored = typeof window !== "undefined" ? window.localStorage.getItem("lang") : null;
     if (stored === "fr" || stored === "en") return stored;
-    if (typeof navigator !== "undefined" && navigator.language.toLowerCase().startsWith("en")) return "en";
+    // Default language is always French, regardless of browser locale.
     return "fr";
   });
 

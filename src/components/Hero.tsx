@@ -10,7 +10,7 @@ function MeshBackground() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const gridSize = 42;
+    const gridSize = 34;
     const mouse = { x: -9999, y: -9999 };
     let points: { x: number; y: number; ox: number; oy: number; z: number }[] = [];
     let rows = 0;
@@ -33,7 +33,7 @@ function MeshBackground() {
 
     function animate() {
       ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
-      const maxDist = 160;
+      const maxDist = 140;
 
       for (const p of points) {
         const dx = p.x - mouse.x;
@@ -52,8 +52,8 @@ function MeshBackground() {
       }
 
       const gradient = ctx!.createLinearGradient(0, 0, canvas!.width, canvas!.height);
-      gradient.addColorStop(0, "rgba(74, 136, 150, 0.28)");
-      gradient.addColorStop(1, "rgba(125, 78, 46, 0.20)");
+      gradient.addColorStop(0, "rgba(74, 136, 150, 0.45)");
+      gradient.addColorStop(1, "rgba(125, 78, 46, 0.35)");
       ctx!.strokeStyle = gradient;
 
       for (let i = 0; i < cols; i++) {
@@ -120,36 +120,52 @@ export default function Hero() {
 
   return (
     <header id="home" className="glow-grid relative overflow-hidden">
-      <MeshBackground />
+      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-14 px-6 py-24 md:py-32 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10">
+        <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+          <span className="mb-6 animate-[float-slow_9s_ease-in-out_infinite] rounded-full border border-teal/25 bg-teal/[0.07] px-4 py-1.5 text-xs font-medium tracking-wide text-teal-dark">
+            {t.hero.eyebrow}
+          </span>
 
-      <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-6 py-28 text-center md:py-36">
-        <span className="mb-6 animate-[float-slow_9s_ease-in-out_infinite] rounded-full border border-teal/25 bg-teal/[0.07] px-4 py-1.5 text-xs font-medium tracking-wide text-teal-dark">
-          {t.hero.eyebrow}
-        </span>
+          <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-ink md:text-6xl">
+            {t.hero.title[0]}
+            <br />
+            <span className="brand-gradient-text">{t.hero.title[1]}</span>
+          </h1>
 
-        <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-ink md:text-6xl">
-          {t.hero.title[0]}
-          <br />
-          <span className="brand-gradient-text">{t.hero.title[1]}</span>
-        </h1>
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-muted md:text-lg">
+            {t.hero.sub}
+          </p>
 
-        <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted md:text-lg">
-          {t.hero.sub}
-        </p>
+          <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+            <a
+              href="#contact"
+              className="brand-gradient rounded-full px-7 py-3.5 text-sm font-medium text-white shadow-lg shadow-teal/20 transition hover:opacity-90 active:scale-95"
+            >
+              {t.hero.ctaPrimary}
+            </a>
+            <a
+              href="#about"
+              className="rounded-full border border-black/10 px-7 py-3.5 text-sm font-medium text-ink/80 transition hover:border-black/20 hover:text-ink active:scale-95"
+            >
+              {t.hero.ctaGhost}
+            </a>
+          </div>
+        </div>
 
-        <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-          <a
-            href="#contact"
-            className="brand-gradient rounded-full px-7 py-3.5 text-sm font-medium text-white shadow-lg shadow-teal/20 transition hover:opacity-90 active:scale-95"
-          >
-            {t.hero.ctaPrimary}
-          </a>
-          <a
-            href="#about"
-            className="rounded-full border border-black/10 px-7 py-3.5 text-sm font-medium text-ink/80 transition hover:border-black/20 hover:text-ink active:scale-95"
-          >
-            {t.hero.ctaGhost}
-          </a>
+        <div className="relative mx-auto h-64 w-full max-w-md lg:h-96">
+          <div
+            className="float-slow absolute -left-6 -top-6 h-24 w-24 rounded-full opacity-30 blur-2xl"
+            style={{ background: "radial-gradient(circle, #4a8896, transparent 70%)" }}
+            aria-hidden="true"
+          />
+          <div
+            className="absolute -bottom-8 -right-4 h-28 w-28 rounded-full opacity-25 blur-2xl"
+            style={{ background: "radial-gradient(circle, #7d4e2e, transparent 70%)", animation: "float-slow 11s ease-in-out infinite" }}
+            aria-hidden="true"
+          />
+          <div className="relative h-full w-full overflow-hidden rounded-3xl border border-black/8 bg-white/70 shadow-xl backdrop-blur-sm">
+            <MeshBackground />
+          </div>
         </div>
       </div>
     </header>

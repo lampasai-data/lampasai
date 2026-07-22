@@ -37,8 +37,8 @@ export default function Formations() {
       <div className="mt-10 flex gap-2 border-b border-black/8">
         {(
           [
-            { id: "certifications" as const, label: t.formations.tabCertifications },
             { id: "formations" as const, label: t.formations.tabFormations },
+            { id: "certifications" as const, label: t.formations.tabCertifications },
           ]
         ).map((item) => (
           <button
@@ -70,20 +70,32 @@ export default function Formations() {
           <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
             {certs.map((cert, i) => (
               <Reveal key={cert.slug} delay={i * 80}>
-                <Link
-                  to={`/formations/${cert.slug}`}
-                  className="group block h-full rounded-2xl border border-black/8 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-teal/30 hover:shadow-md"
-                >
-                  <h3 className="font-display text-xl font-medium text-ink">
-                    {localize(cert.name, lang)}
-                  </h3>
-                  <p className="mt-3 text-sm leading-relaxed text-muted">
-                    {localize(cert.description, lang)}
-                  </p>
-                  <span className="mt-5 inline-block text-sm font-medium text-teal-dark group-hover:text-ink">
-                    {t.formations.trainFor}
-                  </span>
-                </Link>
+                <div className="group h-full rounded-2xl border border-black/8 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-teal/30 hover:shadow-md">
+                  <Link to={`/formations/${cert.slug}`}>
+                    <h3 className="font-display text-xl font-medium text-ink">
+                      {localize(cert.name, lang)}
+                    </h3>
+                    <p className="mt-3 text-sm leading-relaxed text-muted">
+                      {localize(cert.description, lang)}
+                    </p>
+                  </Link>
+                  <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
+                    <Link
+                      to={`/formations/${cert.slug}`}
+                      className="text-sm font-medium text-teal-dark group-hover:text-ink"
+                    >
+                      {t.formations.trainFor}
+                    </Link>
+                    {isPro && (
+                      <Link
+                        to={`/formations/${cert.slug}`}
+                        className="brand-gradient rounded-full px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+                      >
+                        {t.formations.accessQuiz}
+                      </Link>
+                    )}
+                  </div>
+                </div>
               </Reveal>
             ))}
           </div>

@@ -22,7 +22,7 @@ export default function Nav() {
     <nav className="sticky top-0 z-50 border-b border-black/5 bg-white/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-2 font-display text-xl font-semibold tracking-tight text-ink">
-          <img src={lampasLogo} alt="Lampas AI" className="h-8 w-8" />
+          <img src={lampasLogo} alt="Lampas AI" className="h-10 w-auto object-contain" />
           lampas<span className="brand-gradient-text">.ai</span>
         </Link>
 
