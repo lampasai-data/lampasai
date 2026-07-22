@@ -25,10 +25,7 @@ export default function Formations() {
   return (
     <section className="mx-auto max-w-6xl px-6 py-24">
       <Reveal className="max-w-2xl">
-        <span className="text-xs font-medium uppercase tracking-widest text-teal-dark">
-          {t.formations.tag}
-        </span>
-        <h1 className="mt-3 font-display text-4xl font-semibold text-ink md:text-5xl">
+        <h1 className="font-display text-4xl font-semibold text-ink md:text-5xl">
           {t.formations.title}
         </h1>
         <p className="mt-5 leading-relaxed text-muted">{t.formations.lead}</p>

@@ -29,10 +29,7 @@ export default function Team() {
     <section id="team" className="mx-auto max-w-6xl px-6 py-24">
       <div className="grid grid-cols-1 items-start gap-12 md:grid-cols-2">
         <Reveal>
-          <span className="text-xs font-medium uppercase tracking-widest text-teal-dark">
-            {t.team.tag}
-          </span>
-          <h2 className="mt-3 font-display text-4xl font-semibold text-ink md:text-5xl">
+          <h2 className="font-display text-4xl font-semibold text-ink md:text-5xl">
             {t.team.title}
           </h2>
           <p className="mt-5 leading-relaxed text-muted">{t.team.lead}</p>

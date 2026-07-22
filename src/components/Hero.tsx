@@ -1,6 +1,16 @@
 import { useEffect, useRef } from "react";
 import { useLanguage } from "../i18n";
 
+// Tool logos can be dropped in later: import the image and set `logo` below
+// (e.g. logo: snowflakeLogo). Until then, a small brand-colored dot is shown.
+const TOOLS: { name: string; logo?: string }[] = [
+  { name: "Snowflake" },
+  { name: "Power BI" },
+  { name: "dbt" },
+  { name: "GCP" },
+  { name: "Fivetran" },
+];
+
 function MeshBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -149,6 +159,27 @@ export default function Hero() {
             >
               {t.hero.ctaGhost}
             </a>
+          </div>
+
+          <div className="mt-12 w-full">
+            <p className="text-xs font-medium uppercase tracking-widest text-muted">
+              {t.hero.toolsLabel}
+            </p>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+              {TOOLS.map((tool) => (
+                <span
+                  key={tool.name}
+                  className="flex items-center gap-2 rounded-full border border-black/8 bg-white px-4 py-2 text-sm font-medium text-ink/80 shadow-sm"
+                >
+                  {tool.logo ? (
+                    <img src={tool.logo} alt={tool.name} className="h-4 w-4 object-contain" />
+                  ) : (
+                    <span className="brand-gradient h-1.5 w-1.5 rounded-full" />
+                  )}
+                  {tool.name}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 

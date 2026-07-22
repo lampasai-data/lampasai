@@ -9,10 +9,7 @@ export default function Partners() {
     <section id="clients" className="border-y border-black/5 bg-surface">
       <div className="mx-auto max-w-6xl px-6 py-24 text-center">
         <Reveal>
-          <span className="text-xs font-medium uppercase tracking-widest text-teal-dark">
-            {t.partners.tag}
-          </span>
-          <h2 className="mx-auto mt-3 max-w-2xl font-display text-4xl font-semibold text-ink md:text-5xl">
+          <h2 className="mx-auto max-w-2xl font-display text-4xl font-semibold text-ink md:text-5xl">
             {t.partners.title}
           </h2>
           <p className="mx-auto mt-5 max-w-2xl leading-relaxed text-muted">

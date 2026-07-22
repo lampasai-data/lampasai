@@ -20,6 +20,7 @@ interface Translations {
     ctaPrimary: string;
     ctaGhost: string;
     highlights: [string, string, string];
+    toolsLabel: string;
   };
   about: {
     tag: string;
@@ -121,6 +122,7 @@ const translations: Record<Lang, Translations> = {
       ctaPrimary: "Discutons de votre projet",
       ctaGhost: "En savoir plus",
       highlights: ["KPIs & performance", "IA prédictive", "Cloud & données"],
+      toolsLabel: "Les outils que nous maîtrisons",
     },
     about: {
       tag: "Qui sommes-nous ?",
@@ -229,6 +231,7 @@ const translations: Record<Lang, Translations> = {
       ctaPrimary: "Let's talk about your project",
       ctaGhost: "Learn more",
       highlights: ["KPIs & performance", "Predictive AI", "Cloud & data"],
+      toolsLabel: "Tools we work with",
     },
     about: {
       tag: "About us",
