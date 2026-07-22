@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background-color: #05070d;
+  color: #e7e9f2;
+  font-family: var(--font-sans);
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.glow-grid {
+  background-image:
+    radial-gradient(circle at 15% 15%, rgba(124, 92, 255, 0.28), transparent 42%),
+    radial-gradient(circle at 88% 0%, rgba(53, 229, 184, 0.16), transparent 45%);
+  background-color: #05070d;
+}
