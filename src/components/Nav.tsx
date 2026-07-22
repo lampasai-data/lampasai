@@ -22,7 +22,7 @@ export default function Nav() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-2 font-display text-xl font-semibold tracking-tight text-ink">
           <img src={lampasLogo} alt="Lampas AI" className="h-14 w-auto object-contain" />
-          Lampas <span className="brand-gradient-text">ai</span>
+          Lampas <span className="brand-gradient-text">.ai</span>
         </Link>
 
         <ul className="hidden items-center gap-8 text-sm text-muted lg:flex">
@@ -142,9 +142,27 @@ function LangSwitch({
       type="button"
       onClick={() => setLang(lang === "fr" ? "en" : "fr")}
       title={lang === "fr" ? "Switch to English" : "Passer en français"}
-      className="rounded-full border border-black/10 bg-black/[0.02] px-3 py-1.5 text-xs font-semibold uppercase text-ink/80 transition hover:border-black/20 hover:text-ink"
+      aria-pressed={lang === "en"}
+      className="relative inline-flex h-8 w-[4.5rem] items-center rounded-full border border-teal/25 bg-teal/[0.08] p-1"
     >
-      {lang}
+      <span
+        className="absolute top-1 h-6 w-8 rounded-full bg-teal shadow-sm transition-transform duration-200 ease-out"
+        style={{ transform: lang === "en" ? "translateX(100%)" : "translateX(0)" }}
+      />
+      <span
+        className={`relative z-10 flex-1 text-center text-[11px] font-bold uppercase transition-colors ${
+          lang === "fr" ? "text-white" : "text-teal-dark"
+        }`}
+      >
+        fr
+      </span>
+      <span
+        className={`relative z-10 flex-1 text-center text-[11px] font-bold uppercase transition-colors ${
+          lang === "en" ? "text-white" : "text-teal-dark"
+        }`}
+      >
+        en
+      </span>
     </button>
   );
 }

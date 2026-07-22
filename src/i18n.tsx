@@ -150,6 +150,10 @@ interface Translations {
     passThresholdNote: string;
     dragHint: string;
     validateOrder: string;
+    quotaScoreLabel: string;
+    quotaCongrats: string;
+    quotaEncourage: string;
+    quotaUnlockHint: string;
   };
 }
 
@@ -311,6 +315,10 @@ const translations: Record<Lang, Translations> = {
       passThresholdNote: "Seuil de réussite : 70% de bonnes réponses.",
       dragHint: "Fais glisser pour réordonner",
       validateOrder: "Valider mon classement",
+      quotaScoreLabel: "Ton score sur les 20 questions gratuites",
+      quotaCongrats: "Bravo, de très bons résultats ! Tu es sur la bonne voie pour réussir ta certification.",
+      quotaEncourage: "C'est un bon début, encore un peu d'entraînement et tu vas y arriver — ne lâche rien !",
+      quotaUnlockHint: "Dans tous les cas, débloque l'accès illimité pour t'entraîner sur toutes les questions et arriver serein le jour J.",
     },
   },
   en: {
@@ -470,6 +478,10 @@ const translations: Record<Lang, Translations> = {
       passThresholdNote: "Pass threshold: 70% correct answers.",
       dragHint: "Drag to reorder",
       validateOrder: "Submit my ranking",
+      quotaScoreLabel: "Your score on the 20 free questions",
+      quotaCongrats: "Great job, solid results! You're on track to pass your certification.",
+      quotaEncourage: "That's a good start — a bit more practice and you'll get there, don't give up!",
+      quotaUnlockHint: "Either way, unlock unlimited access to train on every question and feel ready on exam day.",
     },
   },
 };

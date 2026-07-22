@@ -1,42 +1,58 @@
 import { useLanguage } from "../i18n";
 import Reveal from "./Reveal";
 
+const DATA_NODES = [
+  { x: 40, y: 55, color: "#4a8896" },
+  { x: 30, y: 120, color: "#1d9e75" },
+  { x: 50, y: 185, color: "#7d4e2e" },
+  { x: 95, y: 90, color: "#f5a623" },
+  { x: 90, y: 155, color: "#4a8896" },
+];
+
 function ServicesIllustration() {
+  const gemLeft = { x: 190, y: 120 };
+
   return (
     <svg viewBox="0 0 320 240" className="h-full w-full" aria-hidden="true">
       <defs>
         <linearGradient id="svc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#4a8896" />
-          <stop offset="100%" stopColor="#7d4e2e" />
+          <stop offset="55%" stopColor="#7d4e2e" />
+          <stop offset="100%" stopColor="#f5a623" />
         </linearGradient>
       </defs>
 
-      <circle cx="230" cy="70" r="46" fill="url(#svc-grad)" opacity="0.16" />
-      <circle cx="230" cy="70" r="26" fill="url(#svc-grad)" opacity="0.9" />
-
-      {[
-        { x: 60, h: 60 },
-        { x: 100, h: 96 },
-        { x: 140, h: 74 },
-        { x: 180, h: 120 },
-      ].map((bar) => (
-        <rect
-          key={bar.x}
-          x={bar.x}
-          y={210 - bar.h}
-          width="24"
-          height={bar.h}
-          rx="6"
-          fill="url(#svc-grad)"
-          opacity="0.85"
+      {DATA_NODES.map((node) => (
+        <line
+          key={`${node.x}-${node.y}`}
+          x1={node.x}
+          y1={node.y}
+          x2={gemLeft.x}
+          y2={gemLeft.y}
+          stroke={node.color}
+          strokeOpacity="0.35"
+          strokeWidth="1.5"
         />
       ))}
+      {DATA_NODES.map((node) => (
+        <circle key={`n-${node.x}-${node.y}`} cx={node.x} cy={node.y} r="5" fill={node.color} />
+      ))}
 
-      <line x1="40" y1="210" x2="280" y2="210" stroke="#14142b" strokeOpacity="0.1" strokeWidth="2" />
+      <circle cx="230" cy="120" r="62" fill="url(#svc-grad)" opacity="0.14" />
 
-      <circle cx="72" cy="140" r="4" fill="#f5a623" />
-      <circle cx="150" cy="60" r="4" fill="#1d9e75" />
-      <circle cx="260" cy="140" r="4" fill="#4a8896" />
+      <polygon
+        points="230,58 274,120 230,182 186,120"
+        fill="url(#svc-grad)"
+        opacity="0.92"
+      />
+      <polygon points="230,58 274,120 230,120" fill="#ffffff" opacity="0.15" />
+      <polygon points="186,120 230,120 230,182" fill="#000000" opacity="0.08" />
+
+      <path
+        d="M258 76 l4 9 9 4 -9 4 -4 9 -4 -9 -9 -4 9 -4 z"
+        fill="#f5a623"
+      />
+      <circle cx="270" cy="150" r="3" fill="#1d9e75" />
     </svg>
   );
 }

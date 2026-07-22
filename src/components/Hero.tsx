@@ -196,20 +196,20 @@ export default function Hero() {
             ))}
 
             <div
-              className="absolute flex h-16 w-16 items-center justify-center rounded-2xl border border-teal/25 bg-white shadow-lg backdrop-blur-sm lg:h-20 lg:w-20"
-              style={{
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                animation: `float-slow ${CENTER_TOOL.float} ease-in-out infinite`,
-              }}
+              className="absolute"
+              style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
               title={CENTER_TOOL.name}
             >
-              <img
-                src={CENTER_TOOL.logo}
-                alt={CENTER_TOOL.name}
-                className="h-full w-full object-contain p-1"
-              />
+              <div
+                className="flex h-16 w-16 items-center justify-center rounded-2xl border border-teal/25 bg-white shadow-lg backdrop-blur-sm lg:h-20 lg:w-20"
+                style={{ animation: `float-slow ${CENTER_TOOL.float} ease-in-out infinite` }}
+              >
+                <img
+                  src={CENTER_TOOL.logo}
+                  alt={CENTER_TOOL.name}
+                  className="h-full w-full object-contain p-1"
+                />
+              </div>
             </div>
           </div>
 

@@ -16,6 +16,7 @@ import AuthPanel from "../components/AuthPanel";
 import ProUpsell from "../components/ProUpsell";
 import BackLink from "../components/BackLink";
 import lampasLogo from "../assets/Logo_Lampas_AI_flavicon.png";
+import { CERT_LOGOS } from "../data/certLogos";
 
 const POINTS_PER_CORRECT = 10;
 const EXAM_SECONDS_PER_QUESTION = 90;
@@ -149,10 +150,30 @@ export default function CertificationQuiz() {
   const currentScore = Object.values(results).filter(Boolean).length;
 
   if (quotaExhausted) {
+    const scoreRatio = FREE_QUESTION_LIMIT > 0 ? currentScore / FREE_QUESTION_LIMIT : 0;
+    const doingWell = scoreRatio >= 0.7;
     return (
       <section className="mx-auto max-w-3xl px-6 py-24">
         <BackLink to="/formations" label={t.quiz.back} />
-        <div className="mt-8">
+        <div className="mt-8 rounded-2xl border border-black/8 bg-white p-8 text-center shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted">
+            {t.quiz.quotaScoreLabel}
+          </p>
+          <motion.p
+            className="brand-gradient-text mt-2 font-display text-5xl font-bold"
+            animate={{ opacity: [1, 0.35, 1] }}
+            transition={{ duration: 1.1, repeat: 2, ease: "easeInOut" }}
+          >
+            {currentScore}/{FREE_QUESTION_LIMIT}
+          </motion.p>
+          <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-ink/80">
+            {doingWell ? t.quiz.quotaCongrats : t.quiz.quotaEncourage}
+          </p>
+          <p className="mx-auto mt-2 max-w-md text-sm font-medium text-teal-dark">
+            {t.quiz.quotaUnlockHint}
+          </p>
+        </div>
+        <div className="mt-6">
           {user ? <ProUpsell certName={localize(cert.name, lang)} /> : <AuthPanel />}
         </div>
       </section>
@@ -368,7 +389,11 @@ export default function CertificationQuiz() {
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <img src={lampasLogo} alt="" className="h-9 w-9 object-contain" />
+          <img
+            src={CERT_LOGOS[slug] ?? lampasLogo}
+            alt=""
+            className="h-9 w-9 object-contain"
+          />
           <h1 className="font-display text-2xl font-semibold text-ink">
             {localize(cert.name, lang)}
           </h1>
@@ -415,7 +440,10 @@ export default function CertificationQuiz() {
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
         <span>
-          {answeredCount}/{total} · {Math.max(FREE_QUESTION_LIMIT - used, 0)} {t.quiz.remainingFree}
+          {isPro
+            ? `${answeredCount}/${total}`
+            : `${Math.min(used, FREE_QUESTION_LIMIT)}/${FREE_QUESTION_LIMIT}`}{" "}
+          · {Math.max(FREE_QUESTION_LIMIT - used, 0)} {t.quiz.remainingFree}
         </span>
         {remainingFlagged > 0 && (
           <span className="font-medium text-amber">{t.quiz.reviewFlagged(remainingFlagged)}</span>
@@ -425,7 +453,15 @@ export default function CertificationQuiz() {
       <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
         <motion.div
           className="brand-gradient h-full rounded-full"
-          animate={{ width: `${total > 0 ? (answeredCount / total) * 100 : 0}%` }}
+          animate={{
+            width: `${
+              isPro
+                ? total > 0
+                  ? (answeredCount / total) * 100
+                  : 0
+                : (Math.min(used, FREE_QUESTION_LIMIT) / FREE_QUESTION_LIMIT) * 100
+            }%`,
+          }}
           transition={{ type: "spring", stiffness: 120, damping: 20 }}
         />
       </div>
