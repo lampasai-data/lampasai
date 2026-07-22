@@ -1,5 +1,6 @@
 import { useLanguage } from "../i18n";
 import Reveal from "./Reveal";
+import wonjoLogo from "../assets/wonjo.png";
 
 export default function Partners() {
   const { t } = useLanguage();
@@ -26,7 +27,8 @@ export default function Partners() {
             rel="noopener noreferrer"
             className="group flex w-full max-w-xs flex-col items-center gap-3 rounded-2xl border border-black/8 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:border-teal/30 hover:shadow-md"
           >
-            <span className="brand-gradient-text font-display text-3xl font-bold tracking-tight">
+            <img src={wonjoLogo} alt="Wonjo" className="h-16 w-16 object-contain" />
+            <span className="brand-gradient-text font-display text-2xl font-bold tracking-tight">
               wonjo
             </span>
             <p className="text-sm leading-relaxed text-muted">
