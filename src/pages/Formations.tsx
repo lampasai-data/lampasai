@@ -136,7 +136,11 @@ export default function Formations() {
                         <img
                           src={CERT_LOGOS[cert.slug]}
                           alt=""
-                          className="h-11 w-11 object-contain"
+                          className={
+                            cert.slug === "power-bi"
+                              ? "h-14 w-14 object-contain"
+                              : "h-11 w-11 object-contain"
+                          }
                         />
                       ) : (
                         <span className="brand-gradient h-2.5 w-2.5 rounded-full" />
