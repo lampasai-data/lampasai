@@ -50,18 +50,40 @@ export function exportCertificationPdf(certName: string, questions: Question[], 
     writeParagraph(`${i + 1}. ${localize(q.question, lang)}`, { bold: true });
     y += 1;
 
-    q.options.forEach((option, oi) => {
-      const isCorrect = q.correctIndexes.includes(oi);
-      const prefix = isCorrect ? "✓" : "•";
-      doc.setFont("helvetica", isCorrect ? "bold" : "normal");
+    const writeAnswerLine = (text: string, correct: boolean) => {
+      const prefix = correct ? "✓" : "•";
+      doc.setFont("helvetica", correct ? "bold" : "normal");
       doc.setFontSize(10.5);
-      if (isCorrect) doc.setTextColor(29, 158, 117);
-      const lines = doc.splitTextToSize(`${prefix} ${localize(option, lang)}`, CONTENT_WIDTH - 4);
+      if (correct) doc.setTextColor(29, 158, 117);
+      const lines = doc.splitTextToSize(`${prefix} ${text}`, CONTENT_WIDTH - 4);
       ensureSpace(lines.length);
       doc.text(lines, MARGIN + 4, y);
       doc.setTextColor(0);
       y += lines.length * LINE_HEIGHT;
-    });
+    };
+
+    if (q.type === "match" && q.pool && q.targets) {
+      q.targets.forEach((target) => {
+        writeAnswerLine(
+          `${localize(target.label, lang)} → ${localize(q.pool![target.correctPoolIndex], lang)}`,
+          true
+        );
+      });
+    } else if (q.type === "hotspot" && q.blanks) {
+      q.blanks.forEach((blank) => {
+        const answer = localize(blank.options[blank.correctIndex], lang);
+        const prefix = blank.label ? `${localize(blank.label, lang)}: ` : "";
+        writeAnswerLine(`${prefix}${answer}`, true);
+      });
+    } else if (q.type === "order" && q.options && q.correctOrder) {
+      q.correctOrder.forEach((optIdx, position) => {
+        writeAnswerLine(`${position + 1}. ${localize(q.options![optIdx], lang)}`, true);
+      });
+    } else if (q.options) {
+      q.options.forEach((option, oi) => {
+        writeAnswerLine(localize(option, lang), (q.correctIndexes ?? []).includes(oi));
+      });
+    }
 
     if (q.explanation) {
       y += 1;

@@ -150,6 +150,10 @@ interface Translations {
     passThresholdNote: string;
     dragHint: string;
     validateOrder: string;
+    matchHint: string;
+    hotspotHint: string;
+    dropHere: string;
+    choosePlaceholder: string;
     quotaScoreLabel: string;
     quotaCongrats: string;
     quotaEncourage: string;
@@ -315,6 +319,10 @@ const translations: Record<Lang, Translations> = {
       passThresholdNote: "Seuil de réussite : 70% de bonnes réponses.",
       dragHint: "Fais glisser pour réordonner",
       validateOrder: "Valider mon classement",
+      matchHint: "Fais glisser chaque élément vers la bonne cible",
+      hotspotHint: "Choisis la bonne option dans chaque liste",
+      dropHere: "Déposer ici",
+      choosePlaceholder: "Choisir…",
       quotaScoreLabel: "Ton score sur les 20 questions gratuites",
       quotaCongrats: "Bravo, de très bons résultats ! Tu es sur la bonne voie pour réussir ta certification.",
       quotaEncourage: "C'est un bon début, encore un peu d'entraînement et tu vas y arriver - ne lâche rien !",
@@ -478,6 +486,10 @@ const translations: Record<Lang, Translations> = {
       passThresholdNote: "Pass threshold: 70% correct answers.",
       dragHint: "Drag to reorder",
       validateOrder: "Submit my ranking",
+      matchHint: "Drag each item onto the correct target",
+      hotspotHint: "Pick the correct option in each dropdown",
+      dropHere: "Drop here",
+      choosePlaceholder: "Choose…",
       quotaScoreLabel: "Your score on the 20 free questions",
       quotaCongrats: "Great job, solid results! You're on track to pass your certification.",
       quotaEncourage: "That's a good start - a bit more practice and you'll get there, don't give up!",

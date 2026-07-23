@@ -62,6 +62,11 @@ export default function CertificationQuiz() {
   const [results, setResults] = useState<Record<number, boolean>>({});
   const [picked, setPicked] = useState<number[]>([]);
   const [orderArrangement, setOrderArrangement] = useState<number[]>([]);
+  // "match" (drag-drop): matchAssign[targetIndex] = pool index dropped there (or null).
+  const [matchAssign, setMatchAssign] = useState<(number | null)[]>([]);
+  const [dragPool, setDragPool] = useState<number | null>(null);
+  // "hotspot": hotspotPicks[blankIndex] = chosen option index for that dropdown (or null).
+  const [hotspotPicks, setHotspotPicks] = useState<(number | null)[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const startedAt = useRef<number>(Date.now());
@@ -116,8 +121,15 @@ export default function CertificationQuiz() {
   useEffect(() => {
     const activeQuestion = cert?.questions[queue[pos]];
     if (activeQuestion?.type === "order") {
-      setOrderArrangement(shuffledIndexes(activeQuestion.options.length));
+      setOrderArrangement(shuffledIndexes(activeQuestion.options?.length ?? 0));
     }
+    if (activeQuestion?.type === "match") {
+      setMatchAssign(new Array(activeQuestion.targets?.length ?? 0).fill(null));
+    }
+    if (activeQuestion?.type === "hotspot") {
+      setHotspotPicks(new Array(activeQuestion.blanks?.length ?? 0).fill(null));
+    }
+    setDragPool(null);
   }, [cert, queue, pos]);
 
   // Build a fresh, reshuffled run. Non-Pro users get a repeatable subset capped
@@ -310,7 +322,7 @@ export default function CertificationQuiz() {
 
   const qIndex = queue[pos];
   const question = cert.questions[qIndex];
-  const isMulti = question.correctIndexes.length > 1;
+  const isMulti = (question.correctIndexes?.length ?? 0) > 1;
   const isFlagged = flagged.has(qIndex);
   const remainingFlagged = flagged.size;
 
@@ -326,12 +338,8 @@ export default function CertificationQuiz() {
     }
   }
 
-  async function commitAnswer(answer: number[]) {
+  async function commitResult(correct: boolean) {
     setSubmitted(true);
-    const correct =
-      question.type === "order"
-        ? arraysEqualInOrder(answer, question.correctOrder ?? [])
-        : sameAnswers(answer, question.correctIndexes);
     setResults((prev) => ({ ...prev, [qIndex]: correct }));
 
     // Record the attempt for signed-in users (analytics only). Free questions are
@@ -344,6 +352,46 @@ export default function CertificationQuiz() {
       });
     }
   }
+
+  function commitAnswer(answer: number[]) {
+    commitResult(sameAnswers(answer, question.correctIndexes ?? []));
+  }
+
+  // Validate the current question according to its type.
+  function handleValidate() {
+    if (question.type === "order") {
+      commitResult(arraysEqualInOrder(orderArrangement, question.correctOrder ?? []));
+    } else if (question.type === "match") {
+      commitResult(
+        (question.targets ?? []).every((tg, i) => matchAssign[i] === tg.correctPoolIndex)
+      );
+    } else if (question.type === "hotspot") {
+      commitResult(
+        (question.blanks ?? []).every((bl, i) => hotspotPicks[i] === bl.correctIndex)
+      );
+    } else {
+      commitAnswer(picked);
+    }
+  }
+
+  function assignTarget(targetIndex: number, poolIndex: number | null) {
+    setMatchAssign((prev) => prev.map((v, i) => (i === targetIndex ? poolIndex : v)));
+  }
+
+  const canValidate =
+    question.type === "order"
+      ? true
+      : question.type === "match"
+        ? matchAssign.length > 0 && matchAssign.every((v) => v !== null)
+        : question.type === "hotspot"
+          ? hotspotPicks.length > 0 && hotspotPicks.every((v) => v !== null)
+          : picked.length > 0;
+
+  const needsValidateButton =
+    isMulti ||
+    question.type === "order" ||
+    question.type === "match" ||
+    question.type === "hotspot";
 
   function goToNextInQueue() {
     setPicked([]);
@@ -489,7 +537,7 @@ export default function CertificationQuiz() {
           {isMulti && (
             <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-teal/25 bg-teal/[0.08] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-teal-dark">
               <span className="text-sm">☑</span>
-              {t.quiz.selectAnswers} {question.correctIndexes.length}
+              {t.quiz.selectAnswers} {question.correctIndexes?.length ?? 0}
             </div>
           )}
           {question.type === "order" && (
@@ -498,8 +546,155 @@ export default function CertificationQuiz() {
               {t.quiz.dragHint}
             </div>
           )}
+          {question.type === "match" && (
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-teal/25 bg-teal/[0.08] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-teal-dark">
+              <span className="text-sm">⇥</span>
+              {t.quiz.matchHint}
+            </div>
+          )}
+          {question.type === "hotspot" && (
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-teal/25 bg-teal/[0.08] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-teal-dark">
+              <span className="text-sm">▾</span>
+              {t.quiz.hotspotHint}
+            </div>
+          )}
 
-          {question.type === "order" ? (
+          {question.type === "match" ? (
+            <div className="mt-6 space-y-6">
+              <div className="flex flex-wrap gap-2">
+                {(question.pool ?? []).map((item, pi) => (
+                  <button
+                    key={localize(item, lang)}
+                    type="button"
+                    draggable={!submitted}
+                    onDragStart={() => setDragPool(pi)}
+                    onDragEnd={() => setDragPool(null)}
+                    onClick={() => setDragPool((cur) => (cur === pi ? null : pi))}
+                    disabled={submitted}
+                    className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                      dragPool === pi
+                        ? "border-teal bg-teal/10 text-ink"
+                        : "border-black/10 bg-white text-ink/80 hover:border-teal/30"
+                    } ${submitted ? "opacity-60" : "cursor-grab active:cursor-grabbing"}`}
+                  >
+                    {localize(item, lang)}
+                  </button>
+                ))}
+              </div>
+              <div className="space-y-3">
+                {(question.targets ?? []).map((target, ti) => {
+                  const assigned = matchAssign[ti];
+                  const isRight = submitted && assigned === target.correctPoolIndex;
+                  const isWrong = submitted && !isRight;
+                  return (
+                    <div
+                      key={localize(target.label, lang)}
+                      onDragOver={(e) => {
+                        if (!submitted) e.preventDefault();
+                      }}
+                      onDrop={() => {
+                        if (submitted || dragPool === null) return;
+                        assignTarget(ti, dragPool);
+                        setDragPool(null);
+                      }}
+                      onClick={() => {
+                        if (submitted) return;
+                        if (dragPool !== null) {
+                          assignTarget(ti, dragPool);
+                          setDragPool(null);
+                        } else if (assigned !== null) {
+                          assignTarget(ti, null);
+                        }
+                      }}
+                      className={`flex flex-col gap-1.5 rounded-xl border px-4 py-3 transition sm:flex-row sm:items-center sm:gap-4 ${
+                        submitted
+                          ? isRight
+                            ? "border-green/40 bg-green/10"
+                            : "border-red-400/50 bg-red-50"
+                          : dragPool !== null
+                            ? "cursor-pointer border-dashed border-teal/50 bg-teal/[0.04]"
+                            : "border-black/10 bg-white"
+                      }`}
+                    >
+                      <span className="text-sm font-medium text-ink/70 sm:w-1/3">
+                        {localize(target.label, lang)}
+                      </span>
+                      <span
+                        className={`flex-1 rounded-lg border px-3 py-2 text-sm ${
+                          assigned !== null
+                            ? isWrong
+                              ? "border-red-300 bg-white text-red-600"
+                              : "border-teal/30 bg-white text-ink"
+                            : "border-dashed border-black/15 bg-black/[0.02] text-muted"
+                        }`}
+                      >
+                        {assigned !== null
+                          ? localize((question.pool ?? [])[assigned], lang)
+                          : t.quiz.dropHere}
+                      </span>
+                      {isWrong && (
+                        <span className="text-xs font-medium text-green sm:w-1/4">
+                          ✓ {localize((question.pool ?? [])[target.correctPoolIndex], lang)}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : question.type === "hotspot" ? (
+            <div className="mt-6 space-y-3">
+              {(question.blanks ?? []).map((blank, bi) => {
+                const pick = hotspotPicks[bi];
+                const isRight = submitted && pick === blank.correctIndex;
+                const isWrong = submitted && !isRight;
+                return (
+                  <div
+                    key={bi}
+                    className="flex flex-col gap-1.5 rounded-xl border border-black/8 bg-white px-4 py-3 sm:flex-row sm:items-center sm:gap-4"
+                  >
+                    {blank.label && (
+                      <span className="font-mono text-xs text-ink/70 sm:w-2/5">
+                        {localize(blank.label, lang)}
+                      </span>
+                    )}
+                    <div className="flex flex-1 items-center gap-2">
+                      <select
+                        value={pick ?? ""}
+                        disabled={submitted}
+                        onChange={(e) =>
+                          setHotspotPicks((prev) =>
+                            prev.map((v, i) => (i === bi ? Number(e.target.value) : v))
+                          )
+                        }
+                        className={`w-full rounded-lg border px-3 py-2 text-sm transition ${
+                          submitted
+                            ? isRight
+                              ? "border-green/40 bg-green/10 text-green"
+                              : "border-red-400/50 bg-red-50 text-red-600"
+                            : "border-black/15 bg-white text-ink focus:border-teal focus:outline-none"
+                        }`}
+                      >
+                        <option value="" disabled>
+                          {t.quiz.choosePlaceholder}
+                        </option>
+                        {blank.options.map((opt, oi) => (
+                          <option key={oi} value={oi}>
+                            {localize(opt, lang)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {isWrong && (
+                      <span className="text-xs font-medium text-green sm:w-1/4">
+                        ✓ {localize(blank.options[blank.correctIndex], lang)}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : question.type === "order" ? (
             <Reorder.Group
               axis="y"
               values={orderArrangement}
@@ -509,7 +704,7 @@ export default function CertificationQuiz() {
               {orderArrangement.map((optIdx, position) => {
                 const isCorrectPos = submitted && question.correctOrder?.[position] === optIdx;
                 const isWrongPos = submitted && !isCorrectPos;
-                const label = localize(question.options[optIdx], lang);
+                const label = localize((question.options ?? [])[optIdx], lang);
 
                 return (
                   <Reorder.Item
@@ -544,8 +739,8 @@ export default function CertificationQuiz() {
             </Reorder.Group>
           ) : (
             <div className="mt-6 flex flex-col gap-3">
-              {question.options.map((option, i) => {
-                const isCorrect = question.correctIndexes.includes(i);
+              {(question.options ?? []).map((option, i) => {
+                const isCorrect = (question.correctIndexes ?? []).includes(i);
                 const isPicked = picked.includes(i);
                 const label = localize(option, lang);
 
@@ -574,13 +769,11 @@ export default function CertificationQuiz() {
           )}
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
-            {(isMulti || question.type === "order") && !submitted && (
+            {needsValidateButton && !submitted && (
               <button
                 type="button"
-                onClick={() =>
-                  commitAnswer(question.type === "order" ? orderArrangement : picked)
-                }
-                disabled={question.type !== "order" && picked.length === 0}
+                onClick={handleValidate}
+                disabled={!canValidate}
                 className="brand-gradient rounded-full px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40"
               >
                 {question.type === "order" ? t.quiz.validateOrder : t.quiz.validate}

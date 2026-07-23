@@ -2,6 +2,7 @@ import type { LocalizedText, Question } from "./types";
 import { SNOWFLAKE_QUESTIONS } from "./snowflakeQuestions";
 import { POWERBI_QUESTIONS } from "./powerbiQuestions";
 import { PL300_QUESTIONS } from "./pl300Questions";
+import { PL300_IMAGE_QUESTIONS } from "./pl300ImageQuestions";
 
 export type { Question, LocalizedText };
 
@@ -20,7 +21,7 @@ export const CERTIFICATIONS: CertificationDef[] = [
       fr: "Entraînement à la certification Microsoft Power BI Data Analyst.",
       en: "Practice for the Microsoft Power BI Data Analyst certification.",
     },
-    questions: [...POWERBI_QUESTIONS, ...PL300_QUESTIONS],
+    questions: [...POWERBI_QUESTIONS, ...PL300_QUESTIONS, ...PL300_IMAGE_QUESTIONS],
   },
   {
     slug: "snowflake",
