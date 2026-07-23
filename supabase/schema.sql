@@ -96,5 +96,5 @@ create policy "users insert own attempts"
 -- Seed the two certifications.
 insert into public.certifications (slug, name, description) values
   ('power-bi', 'Microsoft Power BI (PL-300)', 'Entraînement à la certification Microsoft Power BI Data Analyst.'),
-  ('snowflake', 'Snowflake SnowPro Core COF-C03', 'Entraînement à la certification SnowPro Core de Snowflake.')
+  ('snowflake', 'Snowflake SnowPro Core COF-C03', 'Entraînement à la certification SnowPro Core COF-C03 de Snowflake.')
 on conflict (slug) do nothing;

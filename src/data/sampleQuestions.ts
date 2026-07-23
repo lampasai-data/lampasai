@@ -27,8 +27,8 @@ export const CERTIFICATIONS: CertificationDef[] = [
     slug: "snowflake",
     name: { fr: "Snowflake SnowPro Core COF-C03", en: "Snowflake SnowPro Core COF-C03" },
     description: {
-      fr: "Entraînement à la certification SnowPro Core de Snowflake.",
-      en: "Practice for the Snowflake SnowPro Core certification.",
+      fr: "Entraînement à la certification SnowPro Core COF-C03 de Snowflake.",
+      en: "Practice for the Snowflake SnowPro Core COF-C03 certification.",
     },
     questions: SNOWFLAKE_QUESTIONS,
   },
