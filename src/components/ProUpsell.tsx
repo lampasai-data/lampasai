@@ -15,7 +15,7 @@ export default function ProUpsell({ certName }: { certName: string }) {
         href="mailto:contact@lampasai.com?subject=Passage%20au%20mode%20Pro"
         className="brand-gradient mt-6 inline-block rounded-full px-7 py-3.5 text-sm font-medium text-white transition hover:opacity-90"
       >
-        Contacter Lampas AI pour passer en Pro
+        Contacter Lampas .ai pour passer en Pro
       </a>
       <p className="mt-3 text-xs text-muted">
         Le paiement en ligne arrive bientôt — en attendant, on active ton

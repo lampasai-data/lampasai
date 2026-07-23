@@ -9,7 +9,7 @@ export default function Footer() {
         href="https://www.linkedin.com/company/lampasai"
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Lampas AI sur LinkedIn"
+        aria-label="Lampas .ai sur LinkedIn"
         className="mb-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white text-muted shadow-sm transition hover:border-teal/30 hover:text-teal-dark"
       >
         <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true">

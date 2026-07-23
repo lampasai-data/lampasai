@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lampasai.com/sitemap.xml

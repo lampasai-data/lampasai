@@ -171,8 +171,8 @@ const translations: Record<Lang, Translations> = {
     },
     hero: {
       eyebrow: "Data & Intelligence Artificielle",
-      title: ["Rendre votre projet", "réussi."],
-      sub: "Lampas AI accompagne les organisations dans l'exploitation de leurs données grâce à des solutions d'intelligence artificielle sur-mesure, quantitatives et durables.",
+      title: ["Vos données,", "propulsées par l'IA."],
+      sub: "Lampas .ai accompagne les organisations dans l'exploitation de leurs données grâce à des solutions d'intelligence artificielle sur-mesure, quantitatives et durables.",
       ctaPrimary: "Discutons de votre projet",
       ctaGhost: "En savoir plus",
       highlights: ["KPIs & performance", "IA prédictive", "Cloud & données"],
@@ -181,7 +181,7 @@ const translations: Record<Lang, Translations> = {
     about: {
       tag: "Qui sommes-nous ?",
       title: "Un partenaire pour votre transformation digitale",
-      lead: "Lampas AI est une startup dédiée à la conception de solutions personnalisées, quantitatives et durables pour booster la performance de nos partenaires. Nous exploitons vos données grâce à des algorithmes prédictifs et accompagnons votre transformation digitale, avec l'ambition de propulser la recherche en IA en Afrique vers de nouveaux sommets.",
+      lead: "Lampas .ai est une startup dédiée à la conception de solutions personnalisées, quantitatives et durables pour booster la performance de nos partenaires. Nous exploitons vos données grâce à des algorithmes prédictifs et accompagnons votre transformation digitale, avec l'ambition de propulser la recherche en IA en Afrique vers de nouveaux sommets.",
       cards: [
         { title: "KPIs & performance", desc: "Identifier et optimiser vos indicateurs de performance clés." },
         { title: "Digitalisation", desc: "Transformer vos processus internes grâce à la digitalisation." },
@@ -202,7 +202,7 @@ const translations: Record<Lang, Translations> = {
     team: {
       tag: "Teams",
       title: "Une équipe pluridisciplinaire, à vos côtés",
-      lead: "Travaillant de concert avec des partenaires technologiques, nous nous engageons à simplifier, accélérer et optimiser vos processus de données et d'entreprise. Pour donner un coup de pouce à votre projet, Lampas AI réunit avec enthousiasme Analytics Engineers, AI Scientists, Data Engineers, Data Analysts et Développeurs, tous issus de formations prestigieuses. Notre ouverture à de nouveaux partenariats témoigne de notre quête constante d'innovation pour renforcer votre réussite.",
+      lead: "Travaillant de concert avec des partenaires technologiques, nous nous engageons à simplifier, accélérer et optimiser vos processus de données et d'entreprise. Pour donner un coup de pouce à votre projet, Lampas .ai réunit avec enthousiasme Analytics Engineers, AI Scientists, Data Engineers, Data Analysts et Développeurs, tous issus de formations prestigieuses. Notre ouverture à de nouveaux partenariats témoigne de notre quête constante d'innovation pour renforcer votre réussite.",
       roles: ["Analytics Engineers", "AI Scientists", "Data Engineers", "Data Analysts", "Développeurs"],
     },
     partners: {
@@ -231,7 +231,7 @@ const translations: Record<Lang, Translations> = {
       tooFast: "Merci de patienter quelques secondes avant d'envoyer.",
     },
     footer: {
-      copyright: "Copyright © 2026 Lampas AI",
+      copyright: "Copyright © 2026 Lampas .ai",
     },
     formations: {
       tag: "Formations",
@@ -334,8 +334,8 @@ const translations: Record<Lang, Translations> = {
     },
     hero: {
       eyebrow: "Data & Artificial Intelligence",
-      title: ["Make your project", "succeed with AI."],
-      sub: "Lampas AI helps organizations unlock the value of their data through tailor-made, quantitative and sustainable artificial intelligence solutions.",
+      title: ["Your data,", "powered by AI."],
+      sub: "Lampas .ai helps organizations unlock the value of their data through tailor-made, quantitative and sustainable artificial intelligence solutions.",
       ctaPrimary: "Let's talk about your project",
       ctaGhost: "Learn more",
       highlights: ["KPIs & performance", "Predictive AI", "Cloud & data"],
@@ -344,7 +344,7 @@ const translations: Record<Lang, Translations> = {
     about: {
       tag: "About us",
       title: "A partner for your digital transformation",
-      lead: "Lampas AI is a startup dedicated to designing personalized, quantitative and sustainable solutions to boost the performance of our partners. We leverage your data through predictive algorithms and support your digital transformation, with the ambition of propelling AI research in Africa to new heights.",
+      lead: "Lampas .ai is a startup dedicated to designing personalized, quantitative and sustainable solutions to boost the performance of our partners. We leverage your data through predictive algorithms and support your digital transformation, with the ambition of propelling AI research in Africa to new heights.",
       cards: [
         { title: "KPIs & performance", desc: "Identify and optimize your key performance indicators." },
         { title: "Digitalization", desc: "Transform your internal processes through digitalization." },
@@ -365,7 +365,7 @@ const translations: Record<Lang, Translations> = {
     team: {
       tag: "Team",
       title: "A multidisciplinary team, by your side",
-      lead: "Working closely with technology partners, we are committed to simplifying, accelerating and optimizing your data and business processes. To give your project a boost, Lampas AI enthusiastically brings together Analytics Engineers, AI Scientists, Data Engineers, Data Analysts and Developers, all from prestigious backgrounds. Our openness to new partnerships reflects our constant quest for innovation to strengthen your success.",
+      lead: "Working closely with technology partners, we are committed to simplifying, accelerating and optimizing your data and business processes. To give your project a boost, Lampas .ai enthusiastically brings together Analytics Engineers, AI Scientists, Data Engineers, Data Analysts and Developers, all from prestigious backgrounds. Our openness to new partnerships reflects our constant quest for innovation to strengthen your success.",
       roles: ["Analytics Engineers", "AI Scientists", "Data Engineers", "Data Analysts", "Developers"],
     },
     partners: {
@@ -394,7 +394,7 @@ const translations: Record<Lang, Translations> = {
       tooFast: "Please wait a few seconds before sending.",
     },
     footer: {
-      copyright: "Copyright © 2026 Lampas AI",
+      copyright: "Copyright © 2026 Lampas .ai",
     },
     formations: {
       tag: "Training",
