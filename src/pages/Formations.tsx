@@ -130,8 +130,11 @@ export default function Formations() {
             {certs.map((cert, i) => (
               <Reveal key={cert.slug} delay={i * 80}>
                 <div className="group h-full rounded-2xl border border-black/8 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-teal/30 hover:shadow-md">
-                  <Link to={`/formations/${cert.slug}`}>
-                    <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-black/8 bg-surface">
+                  <div className="flex items-start justify-between gap-3">
+                    <Link
+                      to={`/formations/${cert.slug}`}
+                      className="flex h-16 w-16 items-center justify-center rounded-xl border border-black/8 bg-surface"
+                    >
                       {CERT_LOGOS[cert.slug] ? (
                         <img
                           src={CERT_LOGOS[cert.slug]}
@@ -145,7 +148,15 @@ export default function Formations() {
                       ) : (
                         <span className="brand-gradient h-2.5 w-2.5 rounded-full" />
                       )}
-                    </div>
+                    </Link>
+                    <Link
+                      to={`/formations/${cert.slug}`}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-teal/30 bg-teal/[0.06] px-4 py-1.5 text-xs font-semibold text-teal-dark transition group-hover:border-teal/50 group-hover:bg-teal/10"
+                    >
+                      {t.formations.trainFor}
+                    </Link>
+                  </div>
+                  <Link to={`/formations/${cert.slug}`}>
                     <h3 className="mt-4 font-display text-xl font-medium text-ink">
                       {localize(cert.name, lang)}
                     </h3>
@@ -178,43 +189,35 @@ export default function Formations() {
                     </div>
                   )}
 
-                  <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
-                    <Link
-                      to={`/formations/${cert.slug}`}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-teal/30 bg-teal/[0.06] px-4 py-1.5 text-xs font-semibold text-teal-dark transition group-hover:border-teal/50 group-hover:bg-teal/10"
-                    >
-                      {t.formations.trainFor}
-                    </Link>
-                    {isPro && (
-                      <>
-                        <Link
-                          to={`/formations/${cert.slug}`}
-                          className="brand-gradient rounded-full px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
-                        >
-                          {t.formations.accessQuiz}
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadPdf(cert)}
-                          disabled={downloadingSlug === cert.slug}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-4 py-1.5 text-xs font-medium text-ink transition hover:border-black/20 disabled:opacity-50"
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
-                            <path
-                              d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                          {downloadingSlug === cert.slug
-                            ? t.formations.downloadingPdf
-                            : t.formations.downloadPdf}
-                        </button>
-                      </>
-                    )}
-                  </div>
+                  {isPro && (
+                    <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
+                      <Link
+                        to={`/formations/${cert.slug}`}
+                        className="brand-gradient rounded-full px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+                      >
+                        {t.formations.accessQuiz}
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadPdf(cert)}
+                        disabled={downloadingSlug === cert.slug}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-4 py-1.5 text-xs font-medium text-ink transition hover:border-black/20 disabled:opacity-50"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+                          <path
+                            d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        {downloadingSlug === cert.slug
+                          ? t.formations.downloadingPdf
+                          : t.formations.downloadPdf}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </Reveal>
             ))}

@@ -320,8 +320,8 @@ export const SNOWFLAKE_QUESTIONS: Question[] = [
     ],
     correctIndexes: [0],
     explanation: {
-      fr: "Plusieurs streams PEUVENT être créés sur la même table. Renommer une table ne rend PAS le stream obsolète — il suit la table renommée. Les streams supportent le suivi des changements sur les tables standards, vues, tables externes et directory tables de stages externes.",
-      en: "Multiple streams CAN be created on the same table. Renaming a table does NOT make the stream stale — it continues to track the renamed table. Streams support tracking changes on standard tables, views, external tables, and directory tables of external stages.",
+      fr: "Plusieurs streams PEUVENT être créés sur la même table. Renommer une table ne rend PAS le stream obsolète - il suit la table renommée. Les streams supportent le suivi des changements sur les tables standards, vues, tables externes et directory tables de stages externes.",
+      en: "Multiple streams CAN be created on the same table. Renaming a table does NOT make the stream stale - it continues to track the renamed table. Streams support tracking changes on standard tables, views, external tables, and directory tables of external stages.",
     },
   },
   {
@@ -338,8 +338,8 @@ export const SNOWFLAKE_QUESTIONS: Question[] = [
     ],
     correctIndexes: [3],
     explanation: {
-      fr: "Snowpipe Streaming est conçu pour une ingestion ligne par ligne à faible latence via API — les données deviennent interrogeables en quelques secondes, plus rapide que le Snowpipe classique basé sur des fichiers.",
-      en: "Snowpipe Streaming is designed for low-latency, row-by-row ingestion via API — data becomes queryable within seconds, faster than classic file-based Snowpipe.",
+      fr: "Snowpipe Streaming est conçu pour une ingestion ligne par ligne à faible latence via API - les données deviennent interrogeables en quelques secondes, plus rapide que le Snowpipe classique basé sur des fichiers.",
+      en: "Snowpipe Streaming is designed for low-latency, row-by-row ingestion via API - data becomes queryable within seconds, faster than classic file-based Snowpipe.",
     },
   },
   {
@@ -450,8 +450,8 @@ export const SNOWFLAKE_QUESTIONS: Question[] = [
     ],
     correctIndexes: [1],
     explanation: {
-      fr: "L'édition Standard est plafonnée à 1 jour. Enterprise (et au-delà) permet jusqu'à 90 jours de rétention Time Travel — c'est l'édition minimale requise.",
-      en: "The Standard edition is capped at 1 day. Enterprise (and above) allows up to 90 days of Time Travel retention — it is the minimum edition required.",
+      fr: "L'édition Standard est plafonnée à 1 jour. Enterprise (et au-delà) permet jusqu'à 90 jours de rétention Time Travel - c'est l'édition minimale requise.",
+      en: "The Standard edition is capped at 1 day. Enterprise (and above) allows up to 90 days of Time Travel retention - it is the minimum edition required.",
     },
   },
   {
@@ -541,8 +541,8 @@ export const SNOWFLAKE_QUESTIONS: Question[] = [
     ],
     correctIndexes: [1],
     explanation: {
-      fr: "La politique Economy est conservatrice — elle ne démarre un nouveau cluster que si le système estime qu'il y a assez de charge de requêtes pour occuper ce cluster pendant au moins 6 minutes, minimisant la consommation de crédits.",
-      en: "The Economy policy is conservative — it only starts a new cluster if the system estimates there is enough query load to keep that cluster busy for at least 6 minutes, minimizing credit consumption.",
+      fr: "La politique Economy est conservatrice - elle ne démarre un nouveau cluster que si le système estime qu'il y a assez de charge de requêtes pour occuper ce cluster pendant au moins 6 minutes, minimisant la consommation de crédits.",
+      en: "The Economy policy is conservative - it only starts a new cluster if the system estimates there is enough query load to keep that cluster busy for at least 6 minutes, minimizing credit consumption.",
     },
   },
   {
@@ -1107,8 +1107,8 @@ export const SNOWFLAKE_QUESTIONS: Question[] = [
     ],
     correctIndexes: [1, 2],
     explanation: {
-      fr: "Les deux pré-calculent et stockent les résultats agrégés. Les secure views n'apportent aucun bénéfice de performance — elles exécutent toujours la requête sous-jacente à chaque fois.",
-      en: "Both pre-compute and store aggregated results. Secure views provide no performance benefit — they always execute the underlying query each time.",
+      fr: "Les deux pré-calculent et stockent les résultats agrégés. Les secure views n'apportent aucun bénéfice de performance - elles exécutent toujours la requête sous-jacente à chaque fois.",
+      en: "Both pre-compute and store aggregated results. Secure views provide no performance benefit - they always execute the underlying query each time.",
     },
   },
   {

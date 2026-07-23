@@ -30,7 +30,7 @@ export function exportCertificationPdf(certName: string, questions: Question[], 
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text(`Lampas .ai — ${certName}`, MARGIN, y);
+  doc.text(`Lampas .ai - ${certName}`, MARGIN, y);
   y += 10;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);

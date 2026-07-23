@@ -18,7 +18,7 @@ export default function ProUpsell({ certName }: { certName: string }) {
         Contacter Lampas .ai pour passer en Pro
       </a>
       <p className="mt-3 text-xs text-muted">
-        Le paiement en ligne arrive bientôt — en attendant, on active ton
+        Le paiement en ligne arrive bientôt - en attendant, on active ton
         accès Pro manuellement.
       </p>
     </div>

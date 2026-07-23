@@ -1,4 +1,4 @@
--- Lampas AI — Certifications module schema
+-- Lampas AI - Certifications module schema
 -- Run this once in the Supabase SQL editor (or via `supabase db push`) on a fresh project.
 
 create table if not exists public.certifications (

@@ -6,11 +6,7 @@ import type { LocalizedText, Question } from "../data/types";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n";
 import { localize } from "../lib/i18nText";
-import {
-  FREE_QUESTION_LIMIT,
-  getAnonymousUsage,
-  incrementAnonymousUsage,
-} from "../lib/freeQuota";
+import { FREE_QUESTION_LIMIT } from "../lib/freeQuota";
 import { supabase } from "../lib/supabase";
 import AuthPanel from "../components/AuthPanel";
 import ProUpsell from "../components/ProUpsell";
@@ -52,7 +48,7 @@ function formatTime(totalSeconds: number) {
 
 export default function CertificationQuiz() {
   const { slug = "" } = useParams();
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile } = useAuth();
   const { lang, t } = useLanguage();
 
   const [cert, setCert] = useState<{ name: LocalizedText; questions: Question[] } | null>(
@@ -67,7 +63,6 @@ export default function CertificationQuiz() {
   const [picked, setPicked] = useState<number[]>([]);
   const [orderArrangement, setOrderArrangement] = useState<number[]>([]);
   const [submitted, setSubmitted] = useState(false);
-  const [anonUsed, setAnonUsed] = useState(getAnonymousUsage());
   const [elapsed, setElapsed] = useState(0);
   const startedAt = useRef<number>(Date.now());
 
@@ -95,7 +90,10 @@ export default function CertificationQuiz() {
 
   const answeredCount = Object.keys(results).length;
   const total = cert?.questions.length ?? 0;
-  const finished = (cert !== null && total > 0 && answeredCount >= total) || examEnded;
+  // The number of questions in the current run: capped to the free quota for
+  // non-Pro users, full bank for Pro. Free runs are repeatable and reshuffled.
+  const runSize = queue.length;
+  const finished = (runSize > 0 && answeredCount >= runSize) || examEnded;
 
   useEffect(() => {
     if (!cert || finished || mode === null) return;
@@ -122,17 +120,36 @@ export default function CertificationQuiz() {
     }
   }, [cert, queue, pos]);
 
+  // Build a fresh, reshuffled run. Non-Pro users get a repeatable subset capped
+  // to the free quota; Pro users get the full bank. Called each time a run starts.
+  function buildRunQueue() {
+    const all = shuffledIndexes(cert?.questions.length ?? 0);
+    return profile?.plan === "pro" ? all : all.slice(0, FREE_QUESTION_LIMIT);
+  }
+
+  function resetRun() {
+    setQueue(buildRunQueue());
+    setPos(0);
+    setFlagged(new Set());
+    setResults({});
+    setPicked([]);
+    setSubmitted(false);
+    startedAt.current = Date.now();
+    setElapsed(0);
+  }
+
   function startTraining() {
+    resetRun();
     setMode("training");
   }
 
   function startExam() {
-    const duration = total * EXAM_SECONDS_PER_QUESTION;
+    const queueLength = profile?.plan === "pro" ? total : FREE_QUESTION_LIMIT;
+    const duration = queueLength * EXAM_SECONDS_PER_QUESTION;
+    resetRun();
     setExamEndsAt(Date.now() + duration * 1000);
     setExamRemaining(duration);
     setExamEnded(false);
-    startedAt.current = Date.now();
-    setElapsed(0);
     setMode("exam");
   }
 
@@ -145,40 +162,7 @@ export default function CertificationQuiz() {
   }
 
   const isPro = profile?.plan === "pro";
-  const used = user ? profile?.free_questions_used ?? 0 : anonUsed;
-  const quotaExhausted = !isPro && used >= FREE_QUESTION_LIMIT && !finished;
   const currentScore = Object.values(results).filter(Boolean).length;
-
-  if (quotaExhausted) {
-    const scoreRatio = FREE_QUESTION_LIMIT > 0 ? currentScore / FREE_QUESTION_LIMIT : 0;
-    const doingWell = scoreRatio >= 0.7;
-    return (
-      <section className="mx-auto max-w-3xl px-6 py-24">
-        <BackLink to="/formations" label={t.quiz.back} />
-        <div className="mt-8 rounded-2xl border border-black/8 bg-white p-8 text-center shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted">
-            {t.quiz.quotaScoreLabel}
-          </p>
-          <motion.p
-            className="brand-gradient-text mt-2 font-display text-5xl font-bold"
-            animate={{ opacity: [1, 0.35, 1] }}
-            transition={{ duration: 1.1, repeat: 2, ease: "easeInOut" }}
-          >
-            {currentScore}/{FREE_QUESTION_LIMIT}
-          </motion.p>
-          <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-ink/80">
-            {doingWell ? t.quiz.quotaCongrats : t.quiz.quotaEncourage}
-          </p>
-          <p className="mx-auto mt-2 max-w-md text-sm font-medium text-teal-dark">
-            {t.quiz.quotaUnlockHint}
-          </p>
-        </div>
-        <div className="mt-6">
-          {user ? <ProUpsell certName={localize(cert.name, lang)} /> : <AuthPanel />}
-        </div>
-      </section>
-    );
-  }
 
   if (mode === null) {
     return (
@@ -230,7 +214,17 @@ export default function CertificationQuiz() {
 
   if (finished) {
     const points = currentScore * POINTS_PER_CORRECT;
-    const passed = mode === "exam" && total > 0 && currentScore / total >= PASS_THRESHOLD;
+    const ratio = runSize > 0 ? currentScore / runSize : 0;
+    const passed = mode === "exam" && ratio >= PASS_THRESHOLD;
+    const doingWell = ratio >= 0.7;
+
+    function restartRun() {
+      resetRun();
+      setMode(null);
+      setExamEndsAt(null);
+      setExamEnded(false);
+    }
+
     return (
       <section className="mx-auto max-w-2xl px-6 py-24 text-center">
         <div className="rounded-2xl border border-black/8 bg-white p-10 shadow-sm">
@@ -251,15 +245,25 @@ export default function CertificationQuiz() {
               <p className="mt-2 text-xs text-muted">{t.quiz.passThresholdNote}</p>
             </div>
           )}
-          <div className={`mt-8 grid gap-4 ${isPro ? "grid-cols-3" : "grid-cols-2"}`}>
-            <div>
-              <p className="font-display text-2xl font-semibold text-ink">
-                {currentScore}/{total}
-              </p>
-              <p className="mt-1 text-xs uppercase tracking-wide text-muted">
-                {t.quiz.finishedScore}
-              </p>
-            </div>
+
+          <motion.p
+            className="brand-gradient-text mt-6 font-display text-5xl font-bold"
+            animate={{ opacity: [1, 0.35, 1] }}
+            transition={{ duration: 1.1, repeat: 2, ease: "easeInOut" }}
+          >
+            {currentScore}/{runSize}
+          </motion.p>
+          <p className="mt-2 text-xs uppercase tracking-wide text-muted">
+            {t.quiz.finishedScore}
+          </p>
+
+          {!isPro && (
+            <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-ink/80">
+              {doingWell ? t.quiz.quotaCongrats : t.quiz.quotaEncourage}
+            </p>
+          )}
+
+          <div className={`mt-8 grid gap-4 ${isPro ? "grid-cols-2" : "grid-cols-1"}`}>
             {isPro && (
               <div>
                 <p className="font-display text-2xl font-semibold text-ink">
@@ -279,31 +283,27 @@ export default function CertificationQuiz() {
               </p>
             </div>
           </div>
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <button
               type="button"
-              onClick={() => {
-                setQueue(shuffledIndexes(cert.questions.length));
-                setPos(0);
-                setFlagged(new Set());
-                setResults({});
-                setPicked([]);
-                setSubmitted(false);
-                startedAt.current = Date.now();
-                setElapsed(0);
-                setMode(null);
-                setExamEndsAt(null);
-                setExamEnded(false);
-              }}
+              onClick={restartRun}
               className="brand-gradient rounded-full px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
             >
               {t.quiz.restart}
             </button>
-            <div className="flex justify-center">
-              <BackLink to="/formations" label={t.quiz.backToFormations} />
-            </div>
+            <BackLink to="/formations" label={t.quiz.backToFormations} />
           </div>
         </div>
+
+        {!isPro && (
+          <div className="mt-6 text-left">
+            <p className="mb-4 text-center text-sm font-medium text-teal-dark">
+              {t.quiz.quotaUnlockHint}
+            </p>
+            {user ? <ProUpsell certName={localize(cert.name, lang)} /> : <AuthPanel />}
+          </div>
+        )}
       </section>
     );
   }
@@ -334,19 +334,14 @@ export default function CertificationQuiz() {
         : sameAnswers(answer, question.correctIndexes);
     setResults((prev) => ({ ...prev, [qIndex]: correct }));
 
+    // Record the attempt for signed-in users (analytics only). Free questions are
+    // repeatable per session and independent per certification, so nothing gates.
     if (user && supabase) {
       await supabase.from("attempts").insert({
         user_id: user.id,
         question_id: question.id,
         is_correct: correct,
       });
-      await supabase
-        .from("profiles")
-        .update({ free_questions_used: (profile?.free_questions_used ?? 0) + 1 })
-        .eq("id", user.id);
-      await refreshProfile();
-    } else {
-      setAnonUsed(incrementAnonymousUsage());
     }
   }
 
@@ -440,10 +435,13 @@ export default function CertificationQuiz() {
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
         <span>
-          {isPro
-            ? `${answeredCount}/${total}`
-            : `${Math.min(used, FREE_QUESTION_LIMIT)}/${FREE_QUESTION_LIMIT}`}{" "}
-          · {Math.max(FREE_QUESTION_LIMIT - used, 0)} {t.quiz.remainingFree}
+          {answeredCount}/{runSize}
+          {!isPro && (
+            <>
+              {" "}
+              · {Math.max(runSize - answeredCount, 0)} {t.quiz.remainingFree}
+            </>
+          )}
         </span>
         {remainingFlagged > 0 && (
           <span className="font-medium text-amber">{t.quiz.reviewFlagged(remainingFlagged)}</span>
@@ -453,15 +451,7 @@ export default function CertificationQuiz() {
       <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
         <motion.div
           className="brand-gradient h-full rounded-full"
-          animate={{
-            width: `${
-              isPro
-                ? total > 0
-                  ? (answeredCount / total) * 100
-                  : 0
-                : (Math.min(used, FREE_QUESTION_LIMIT) / FREE_QUESTION_LIMIT) * 100
-            }%`,
-          }}
+          animate={{ width: `${runSize > 0 ? (answeredCount / runSize) * 100 : 0}%` }}
           transition={{ type: "spring", stiffness: 120, damping: 20 }}
         />
       </div>

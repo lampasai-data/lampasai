@@ -423,8 +423,8 @@ export const POWERBI_QUESTIONS: Question[] = [
     ],
     correctIndexes: [0],
     explanation: {
-      fr: "Une clause WHERE dans l'instruction SQL source filtre les données avant même qu'elles n'arrivent dans Power Query, limitant réellement le volume importé — contrairement à un filtre appliqué après coup dans le rapport ou en DAX.",
-      en: "A WHERE clause in the source SQL statement filters the data before it even reaches Power Query, genuinely limiting the volume imported — unlike a filter applied afterward in the report or in DAX.",
+      fr: "Une clause WHERE dans l'instruction SQL source filtre les données avant même qu'elles n'arrivent dans Power Query, limitant réellement le volume importé - contrairement à un filtre appliqué après coup dans le rapport ou en DAX.",
+      en: "A WHERE clause in the source SQL statement filters the data before it even reaches Power Query, genuinely limiting the volume imported - unlike a filter applied afterward in the report or in DAX.",
     },
   },
   {
@@ -439,8 +439,8 @@ export const POWERBI_QUESTIONS: Question[] = [
     ],
     correctIndexes: [1],
     explanation: {
-      fr: "Une seule table Date reliée trois fois (une relation active + deux inactives) nécessite ensuite des mesures DAX avec USERELATIONSHIP pour activer chaque relation à la demande — cette étape manque ici, donc l'objectif n'est pas complètement atteint tel quel.",
-      en: "A single Date table related three times (one active relationship + two inactive) then requires DAX measures with USERELATIONSHIP to activate each relationship on demand — this step is missing here, so the goal is not fully achieved as described.",
+      fr: "Une seule table Date reliée trois fois (une relation active + deux inactives) nécessite ensuite des mesures DAX avec USERELATIONSHIP pour activer chaque relation à la demande - cette étape manque ici, donc l'objectif n'est pas complètement atteint tel quel.",
+      en: "A single Date table related three times (one active relationship + two inactive) then requires DAX measures with USERELATIONSHIP to activate each relationship on demand - this step is missing here, so the goal is not fully achieved as described.",
     },
   },
   {
@@ -455,8 +455,8 @@ export const POWERBI_QUESTIONS: Question[] = [
     ],
     correctIndexes: [0],
     explanation: {
-      fr: "Créer trois tables de dates distinctes (une par clé étrangère) permet de créer trois relations actives simples, une par table, sans avoir besoin de USERELATIONSHIP — cela répond bien à l'objectif.",
-      en: "Creating three separate date tables (one per foreign key) allows creating three simple active relationships, one per table, without needing USERELATIONSHIP — this properly meets the goal.",
+      fr: "Créer trois tables de dates distinctes (une par clé étrangère) permet de créer trois relations actives simples, une par table, sans avoir besoin de USERELATIONSHIP - cela répond bien à l'objectif.",
+      en: "Creating three separate date tables (one per foreign key) allows creating three simple active relationships, one per table, without needing USERELATIONSHIP - this properly meets the goal.",
     },
   },
   {
@@ -471,8 +471,8 @@ export const POWERBI_QUESTIONS: Question[] = [
     ],
     correctIndexes: [1],
     explanation: {
-      fr: "USERELATIONSHIP sert justement à activer temporairement une relation inactive dans une mesure — utiliser cette fonction pour filtrer sur la relation déjà active n'a aucun effet et ne résout pas le besoin d'analyser via les relations inactives.",
-      en: "USERELATIONSHIP exists precisely to temporarily activate an inactive relationship within a measure — using it to filter on the relationship that is already active has no effect and does not address the need to analyze via the inactive relationships.",
+      fr: "USERELATIONSHIP sert justement à activer temporairement une relation inactive dans une mesure - utiliser cette fonction pour filtrer sur la relation déjà active n'a aucun effet et ne résout pas le besoin d'analyser via les relations inactives.",
+      en: "USERELATIONSHIP exists precisely to temporarily activate an inactive relationship within a measure - using it to filter on the relationship that is already active has no effect and does not address the need to analyze via the inactive relationships.",
     },
   },
   {
@@ -754,8 +754,8 @@ export const POWERBI_QUESTIONS: Question[] = [
     ],
     correctIndexes: [0],
     explanation: {
-      fr: "Les commentaires sur un tableau de bord permettent de mentionner (taguer) des utilisateurs, dont les administrateurs, et sont visibles par tous les utilisateurs ayant accès au tableau de bord — y compris les invités externes.",
-      en: "Comments on a dashboard let you mention (tag) users, including administrators, and are visible to all users with access to the dashboard — including external guests.",
+      fr: "Les commentaires sur un tableau de bord permettent de mentionner (taguer) des utilisateurs, dont les administrateurs, et sont visibles par tous les utilisateurs ayant accès au tableau de bord - y compris les invités externes.",
+      en: "Comments on a dashboard let you mention (tag) users, including administrators, and are visible to all users with access to the dashboard - including external guests.",
     },
   },
   {
@@ -936,7 +936,7 @@ export const POWERBI_QUESTIONS: Question[] = [
     correctIndexes: [1],
     explanation: {
       fr: "Les règles permettent de définir des seuils numériques précis (≥100, <100) associés chacun à une couleur de police fixe, exactement ce que demande le besoin.",
-      en: "Rules let you define precise numeric thresholds (≥100, <100), each associated with a fixed font color — exactly what the requirement calls for.",
+      en: "Rules let you define precise numeric thresholds (≥100, <100), each associated with a fixed font color - exactly what the requirement calls for.",
     },
   },
   {
@@ -991,7 +991,7 @@ export const POWERBI_QUESTIONS: Question[] = [
     correctIndexes: [2],
     explanation: {
       fr: "Un groupe de type Liste permet d'assigner manuellement chaque valeur d'état à une catégorie personnalisée (ici une région), le moyen le plus rapide sans modifier le modèle de données sous-jacent.",
-      en: "A List-type group lets you manually assign each state value to a custom category (here, a region) — the fastest way without modifying the underlying data model.",
+      en: "A List-type group lets you manually assign each state value to a custom category (here, a region) - the fastest way without modifying the underlying data model.",
     },
   },
   {
@@ -1026,8 +1026,8 @@ export const POWERBI_QUESTIONS: Question[] = [
     ],
     correctIndexes: [3],
     explanation: {
-      fr: "La synchronisation de segments permet de choisir précisément quelles pages partagent la même sélection (ici 1, 2 et 3), tout en laissant la page 4 indépendante — sans passer par des filtres globaux qui toucheraient toutes les pages.",
-      en: "Slicer synchronization lets you precisely choose which pages share the same selection (here, 1, 2, and 3), while leaving page 4 independent — without resorting to global filters that would affect every page.",
+      fr: "La synchronisation de segments permet de choisir précisément quelles pages partagent la même sélection (ici 1, 2 et 3), tout en laissant la page 4 indépendante - sans passer par des filtres globaux qui toucheraient toutes les pages.",
+      en: "Slicer synchronization lets you precisely choose which pages share the same selection (here, 1, 2, and 3), while leaving page 4 independent - without resorting to global filters that would affect every page.",
     },
   },
   {

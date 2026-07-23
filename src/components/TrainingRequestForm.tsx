@@ -138,7 +138,7 @@ export default function TrainingRequestForm() {
             className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink focus:border-teal focus:outline-none"
           >
             <option value="" disabled>
-              —
+              -
             </option>
             <option value={t.formations.levelBeginner}>{t.formations.levelBeginner}</option>
             <option value={t.formations.levelIntermediate}>
@@ -159,7 +159,7 @@ export default function TrainingRequestForm() {
             className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink focus:border-teal focus:outline-none"
           >
             <option value="" disabled>
-              —
+              -
             </option>
             <option value={t.formations.formatOnsite}>{t.formations.formatOnsite}</option>
             <option value={t.formations.formatRemote}>{t.formations.formatRemote}</option>

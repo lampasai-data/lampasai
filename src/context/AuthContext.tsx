@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (newSession) loadProfile(newSession.user.id);
         else setProfile(null);
         // Supabase parses the recovery link's URL fragment automatically and
-        // fires this event — used to route the user to a "set new password" screen.
+        // fires this event - used to route the user to a "set new password" screen.
         if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
       }
     );
