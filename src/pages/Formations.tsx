@@ -131,12 +131,12 @@ export default function Formations() {
               <Reveal key={cert.slug} delay={i * 80}>
                 <div className="group h-full rounded-2xl border border-black/8 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-teal/30 hover:shadow-md">
                   <Link to={`/formations/${cert.slug}`}>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-black/8 bg-surface">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-black/8 bg-surface">
                       {CERT_LOGOS[cert.slug] ? (
                         <img
                           src={CERT_LOGOS[cert.slug]}
                           alt=""
-                          className="h-7 w-7 object-contain"
+                          className="h-11 w-11 object-contain"
                         />
                       ) : (
                         <span className="brand-gradient h-2.5 w-2.5 rounded-full" />
