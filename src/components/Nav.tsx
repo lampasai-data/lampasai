@@ -72,7 +72,7 @@ export default function Nav() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 lg:hidden">
+        <div className="ml-auto flex items-center gap-3 lg:hidden">
           <LangSwitch lang={lang} setLang={setLang} />
           <button
             type="button"
