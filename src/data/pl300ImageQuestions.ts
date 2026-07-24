@@ -34,6 +34,7 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
   },
   {
     id: "pl300-img-2",
+    image: "/quiz-exhibits/pl300-img-2.jpg",
     type: "match",
     question: {
       fr: "Un modèle contient les tables Country, Sales et Human Resources. La table Country a les colonnes Country, Manager et Email (ex. USA / CFO / cfo@msn.com). Vous créez des rôles RLS. Exigences : chaque manager ne voit que les données de son pays (rôle Manager) ; le CFO ne doit voir aucune donnée RH (rôle CFO). Faites glisser l'expression de filtre de table correcte vers chaque cible.",
@@ -113,6 +114,7 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
   },
   {
     id: "pl300-img-5",
+    image: "/quiz-exhibits/pl300-img-5.jpg",
     type: "hotspot",
     question: {
       fr: "Un modèle contient les tables Product (ProductCategory, ProductID, ProductName), Sales (InvoiceNumber, ProductID, SaleDate, SalesAmount, SalesQuantity) et Date, avec Product 1-* Sales et Date 1-* Sales. Vous devez créer une mesure comptant le nombre de catégories de produits ayant eu des ventes sur une période sélectionnée. Complétez l'expression DAX.",
@@ -722,6 +724,7 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
   },
   {
     id: "pl300-img-23",
+    image: "/quiz-exhibits/pl300-img-23.jpg",
     type: "hotspot",
     question: {
       fr: "La colonne UnitsInStock a le type Nombre entier, « Résumer par » (Summarize by) = Aucun, et contient 75 valeurs non vides dont 51 uniques. Complétez les affirmations.",
@@ -755,6 +758,7 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
   },
   {
     id: "pl300-img-24",
+    image: "/quiz-exhibits/pl300-img-24.jpg",
     type: "hotspot",
     question: {
       fr: "Vous importez une table Sales (SalesRowID, ProductKey, OrderDateKey, OrderDate, CustomerKey, SalesTerritoryKey, SalesOrderNumber, SalesOrderLineNumber, OrderQuantity, LineTotal, TaxAmt, Freight, LastModified, AuditID) ainsi que ses dimensions liées, pour réaliser une analyse de panier (basket analysis). Vous évaluez comment optimiser le modèle. Pour chaque affirmation, indiquez Oui si elle est vraie, sinon Non.",
@@ -793,6 +797,7 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
   },
   {
     id: "pl300-img-25",
+    image: "/quiz-exhibits/pl300-img-25.jpg",
     type: "hotspot",
     question: {
       fr: "Vous profilez des données dans Power Query Editor. Une table Reports contient une colonne State. La statistique de colonne indique : Count 75, Distinct 69, Unique 4 (aucune valeur vide). Complétez les affirmations.",
@@ -827,6 +832,7 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
   },
   {
     id: "pl300-img-26",
+    image: "/quiz-exhibits/pl300-img-26.jpg",
     type: "hotspot",
     question: {
       fr: "Un modèle Power BI a les tables Sales (SalesID, ProductID, DateKey, SalesAmount), Products (ProductID, ProductName, ProductCategoryID) et ProductCategory (ProductCategoryID, CategoryName). Products est reliée à ProductCategory par ProductCategoryID ; chaque produit a une seule catégorie. Vous devez pouvoir analyser les ventes par catégorie de produit. Configurez la relation de ProductCategory vers Products.",
@@ -858,6 +864,7 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
   },
   {
     id: "pl300-img-27",
+    image: "/quiz-exhibits/pl300-img-27.jpg",
     type: "hotspot",
     question: {
       fr: "Un visuel Power BI utilise des indicateurs pour signaler les valeurs hors plage, comme le montre un graphique « Revenue by Date » avec des triangles marquant des pics au-delà d'une plage attendue. Complétez les affirmations.",
@@ -891,6 +898,7 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
   },
   {
     id: "pl300-img-28",
+    image: "/quiz-exhibits/pl300-img-28.jpg",
     type: "hotspot",
     question: {
       fr: "Vous créez un graphique en courbe « Prior Year Employee Count By Month », avec une ligne pointillée horizontale indiquant « Year Average Employee Count: 9 315 » qui traverse tout le graphique. Complétez les affirmations.",
@@ -925,6 +933,7 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
   },
   {
     id: "pl300-img-29",
+    image: "/quiz-exhibits/pl300-img-29.jpg",
     type: "hotspot",
     question: {
       fr: "Un modèle contient Sales (sales_id, sales_date, Customer_id, sales_amount, employee_id, sales_ship_date, store_id) et Employee (employee_id, first_name, last_name, employee_photo). Une relation existe entre les tables. Il n'y a aucune exigence de reporting sur employee_id ni employee_photo. Vous devez optimiser le modèle de données. Configurez employee_id et employee_photo.",
@@ -959,6 +968,7 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
   },
   {
     id: "pl300-img-30",
+    image: "/quiz-exhibits/pl300-img-30.jpg",
     type: "hotspot",
     question: {
       fr: "Dans Power BI Desktop, vous vous connectez à une base Azure SQL en laissant les options par défaut : Server = mydb.database.windows.net, Database = db1, Data Connectivity mode = Import, « Command timeout in minutes » laissé vide, « Include relationship columns » coché, « Navigate using full hierarchy » décoché. Complétez les affirmations.",
@@ -991,6 +1001,7 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
   },
   {
     id: "pl300-img-31",
+    image: "/quiz-exhibits/pl300-img-31.jpg",
     type: "hotspot",
     question: {
       fr: "Vous créez un dataset Power BI qui contient une table Business Unit (colonnes : Cost Center, Headcount, ID, Name). Vous devez rendre cette table disponible comme type de données organisationnel dans Microsoft Excel. Configurez les propriétés de la table.",
@@ -1077,6 +1088,7 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
   },
   {
     id: "pl300-img-33",
+    image: "/quiz-exhibits/pl300-img-33.jpg",
     type: "hotspot",
     question: {
       fr: "Un visuel « Key influencers » répond à « What influences Attrition to increase? » avec pour seul facteur « Explain by » OverTime. Il montre : OverTime is Yes → +0,2 en moyenne d'Attrition. Le graphique compare la moyenne d'Attrition entre OverTime = Yes (≈0,31) et No (≈0,10). Complétez les affirmations.",
@@ -1111,6 +1123,7 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
   },
   {
     id: "pl300-img-34",
+    image: "/quiz-exhibits/pl300-img-34.jpg",
     type: "hotspot",
     question: {
       fr: "Une table contient City, Total Sales et Occupation. Vous créez un visuel « Key influencers » répondant à « What influences Total Sales to increase? », avec un seul facteur trouvé : Occupation is Professional → +3,41 k£ en moyenne de Total Sales (le plus haut des 5 catégories du graphique). Configurez le visuel.",
@@ -1143,6 +1156,7 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
   },
   {
     id: "pl300-img-35",
+    image: "/quiz-exhibits/pl300-img-35.jpg",
     type: "hotspot",
     question: {
       fr: "Un rapport Orders doit permettre : ventes totales dans le temps, nombre de commandes dans le temps, nombre de clients nouveaux/récurrents. La taille du modèle approche la limite de la capacité partagée. Orders (OrderID, CustomerID, OrderDate, ProductID, UnitPrice, Quantity, Discount, SalesTotal) est reliée à Customers par CustomerID et à Date par OrderDate. Pour chaque affirmation, indiquez Oui si elle est vraie, sinon Non.",
