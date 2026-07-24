@@ -42,4 +42,6 @@ export interface Question {
   /** For "hotspot" questions: the ordered list of dropdown blanks. */
   blanks?: HotspotBlank[];
   explanation?: LocalizedText;
+  /** Optional path to an exhibit image (table/diagram/screenshot) shown above the question. */
+  image?: string;
 }

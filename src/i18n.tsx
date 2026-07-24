@@ -10,8 +10,8 @@ interface Translations {
     team: string;
     clients: string;
     services: string;
-    contact: string;
     formations: string;
+    login: string;
   };
   hero: {
     eyebrow: string;
@@ -67,6 +67,9 @@ interface Translations {
   };
   footer: {
     copyright: string;
+    contactLink: string;
+    navTitle: string;
+    contactTitle: string;
   };
   formations: {
     tag: string;
@@ -83,9 +86,27 @@ interface Translations {
     skipFreeTitle: string;
     skipFreeDesc: string;
     createAccountCta: string;
+    upgradeTitle: string;
+    upgradeDesc: string;
     upgradeCta: string;
+    dashboardWelcome: string;
+    dashboardPlanFree: string;
+    dashboardPlanPro: string;
+    dashboardProgress: string;
+    dashboardNotStarted: string;
+    dashboardContinue: string;
+    dashboardGoPro: string;
+    upgradeModalTitle: string;
+    upgradeModalDesc: string;
+    upgradeModalEmpty: string;
+    upgradeModalTotal: string;
+    upgradeModalSubmit: string;
+    upgradeModalLoading: string;
+    upgradeModalError: string;
+    checkoutSuccessBanner: string;
     comingSoonTitle: string;
     comingSoonDesc: string;
+    comingSoonCta: string;
     requestTitle: string;
     requestLead: string;
     requestName: string;
@@ -113,6 +134,8 @@ interface Translations {
     domainsLabel: string;
     downloadPdf: string;
     downloadingPdf: string;
+    pdfCountPrompt: string;
+    pdfCountMax: string;
   };
   quiz: {
     back: string;
@@ -141,6 +164,8 @@ interface Translations {
     modeExamTitle: string;
     modeExamDesc: string;
     modeExamLocked: string;
+    questionCountLabel: string;
+    questionCountAll: string;
     startTraining: string;
     startExam: string;
     endExam: string;
@@ -170,8 +195,8 @@ const translations: Record<Lang, Translations> = {
       team: "Teams",
       clients: "Partenaires",
       services: "Services",
-      contact: "Contact",
       formations: "Formations",
+      login: "Se connecter",
     },
     hero: {
       eyebrow: "Data & Intelligence Artificielle",
@@ -185,7 +210,7 @@ const translations: Record<Lang, Translations> = {
     about: {
       tag: "Qui sommes-nous ?",
       title: "Un partenaire pour votre transformation digitale",
-      lead: "Lampas .ai est une startup dédiée à la conception de solutions personnalisées, quantitatives et durables pour booster la performance de nos partenaires. Nous exploitons vos données grâce à des algorithmes prédictifs et accompagnons votre transformation digitale, avec l'ambition de propulser la recherche en IA en Afrique vers de nouveaux sommets.",
+      lead: "Lampas .ai est une startup dédiée à la conception de solutions personnalisées, quantitatives et durables pour booster la performance de nos partenaires. Nous exploitons vos données grâce à des algorithmes prédictifs et accompagnons votre transformation digitale, avec l'ambition de propulser la recherche en IA vers de nouveaux sommets.",
       cards: [
         { title: "KPIs & performance", desc: "Identifier et optimiser vos indicateurs de performance clés." },
         { title: "Digitalisation", desc: "Transformer vos processus internes grâce à la digitalisation." },
@@ -236,6 +261,9 @@ const translations: Record<Lang, Translations> = {
     },
     footer: {
       copyright: "Copyright © 2026 Lampas .ai",
+      contactLink: "Nous contacter",
+      navTitle: "Navigation",
+      contactTitle: "Contact",
     },
     formations: {
       tag: "Formations",
@@ -252,9 +280,27 @@ const translations: Record<Lang, Translations> = {
       skipFreeTitle: "Pas envie de passer par les questions gratuites ?",
       skipFreeDesc: "Tu peux créer ton compte dès maintenant et passer directement en accès illimité, sans faire les 20 questions gratuites.",
       createAccountCta: "Créer mon compte",
+      upgradeTitle: "Envie de t'entraîner sans limite ?",
+      upgradeDesc: "Passe en mode Pro pour accéder à toutes les questions de certification, sans les 20 questions gratuites.",
       upgradeCta: "Passer en illimité",
+      dashboardWelcome: "Ton espace d'entraînement",
+      dashboardPlanFree: "Compte Free",
+      dashboardPlanPro: "Compte Pro",
+      dashboardProgress: "de réussite sur",
+      dashboardNotStarted: "Pas encore commencé",
+      dashboardContinue: "S'entraîner en mode Exam",
+      dashboardGoPro: "Passer en mode Pro",
+      upgradeModalTitle: "Débloquer des certifications",
+      upgradeModalDesc: "Choisis une ou plusieurs certifications pour un accès illimité pendant 3 mois (9,99 € / certification).",
+      upgradeModalEmpty: "Toutes tes certifications sont déjà débloquées.",
+      upgradeModalTotal: "Total",
+      upgradeModalSubmit: "Continuer vers le paiement",
+      upgradeModalLoading: "Redirection vers le paiement...",
+      upgradeModalError: "Impossible de démarrer le paiement. Réessaie dans un instant.",
+      checkoutSuccessBanner: "Paiement confirmé, ton accès a été débloqué 🎉",
       comingSoonTitle: "Nos formations arrivent bientôt",
       comingSoonDesc: "Nous préparons des parcours de formation complets (Power BI, Snowflake, IA appliquée...). Reviens bientôt ou contacte-nous pour être informé en priorité.",
+      comingSoonCta: "Voir les certifications",
       requestTitle: "Demande de formation sur-mesure",
       requestLead: "Envie d'une formation Power BI, Snowflake ou dbt adaptée à ton niveau ? Pour aller plus loin et renforcer tes compétences pratiques sur ces outils, n'hésite pas à nous faire une demande de formation : nous te répondons sous 24h avec un devis.",
       requestName: "Nom complet*",
@@ -282,6 +328,8 @@ const translations: Record<Lang, Translations> = {
       domainsLabel: "Nos questions couvrent les blocs réellement évalués à l'examen :",
       downloadPdf: "Télécharger en PDF",
       downloadingPdf: "Génération...",
+      pdfCountPrompt: "Combien de questions veux-tu exporter ?",
+      pdfCountMax: "max",
     },
     quiz: {
       back: "Retour aux formations",
@@ -308,8 +356,10 @@ const translations: Record<Lang, Translations> = {
       modeTrainingTitle: "Entraînement libre",
       modeTrainingDesc: "Avance à ton rythme, avec explications après chaque question.",
       modeExamTitle: "Mode examen chronométré",
-      modeExamDesc: "Simule l'examen réel : temps limité, résultat réussi/échoué à la fin.",
-      modeExamLocked: "Réservé aux comptes en accès illimité.",
+      modeExamDesc: "Évalue-toi à l'examen réel : temps limité, résultat réussi/échoué à la fin. Réservé aux comptes en accès illimité.",
+      modeExamLocked: "Clique pour débloquer",
+      questionCountLabel: "Nombre de questions",
+      questionCountAll: "Toutes",
       startTraining: "Commencer l'entraînement",
       startExam: "Démarrer l'examen",
       endExam: "Terminer l'examen",
@@ -337,8 +387,8 @@ const translations: Record<Lang, Translations> = {
       team: "Team",
       clients: "Partners",
       services: "Services",
-      contact: "Contact",
       formations: "Training",
+      login: "Sign in",
     },
     hero: {
       eyebrow: "Data & Artificial Intelligence",
@@ -352,7 +402,7 @@ const translations: Record<Lang, Translations> = {
     about: {
       tag: "About us",
       title: "A partner for your digital transformation",
-      lead: "Lampas .ai is a startup dedicated to designing personalized, quantitative and sustainable solutions to boost the performance of our partners. We leverage your data through predictive algorithms and support your digital transformation, with the ambition of propelling AI research in Africa to new heights.",
+      lead: "Lampas .ai is a startup dedicated to designing personalized, quantitative and sustainable solutions to boost the performance of our partners. We leverage your data through predictive algorithms and support your digital transformation, with the ambition of propelling AI research to new heights.",
       cards: [
         { title: "KPIs & performance", desc: "Identify and optimize your key performance indicators." },
         { title: "Digitalization", desc: "Transform your internal processes through digitalization." },
@@ -403,6 +453,9 @@ const translations: Record<Lang, Translations> = {
     },
     footer: {
       copyright: "Copyright © 2026 Lampas .ai",
+      contactLink: "Contact us",
+      navTitle: "Navigation",
+      contactTitle: "Contact",
     },
     formations: {
       tag: "Training",
@@ -419,9 +472,27 @@ const translations: Record<Lang, Translations> = {
       skipFreeTitle: "Don't want to go through the free questions?",
       skipFreeDesc: "You can create your account right away and go straight to unlimited access, without doing the 20 free questions.",
       createAccountCta: "Create my account",
+      upgradeTitle: "Want to practice without limits?",
+      upgradeDesc: "Switch to Pro to access every certification question, without the 20 free questions.",
       upgradeCta: "Go unlimited",
+      dashboardWelcome: "Your training space",
+      dashboardPlanFree: "Free account",
+      dashboardPlanPro: "Pro account",
+      dashboardProgress: "correct out of",
+      dashboardNotStarted: "Not started yet",
+      dashboardContinue: "Practice in Exam mode",
+      dashboardGoPro: "Go Pro",
+      upgradeModalTitle: "Unlock certifications",
+      upgradeModalDesc: "Pick one or more certifications for unlimited access for 3 months (€9.99 / certification).",
+      upgradeModalEmpty: "All your certifications are already unlocked.",
+      upgradeModalTotal: "Total",
+      upgradeModalSubmit: "Continue to payment",
+      upgradeModalLoading: "Redirecting to payment...",
+      upgradeModalError: "Couldn't start the payment. Please try again in a moment.",
+      checkoutSuccessBanner: "Payment confirmed, your access has been unlocked 🎉",
       comingSoonTitle: "Our training paths are coming soon",
       comingSoonDesc: "We're building complete training paths (Power BI, Snowflake, applied AI...). Check back soon or contact us to be notified first.",
+      comingSoonCta: "See certifications",
       requestTitle: "Request tailor-made training",
       requestLead: "Want Power BI, Snowflake or dbt training tailored to your level? To go further and strengthen your practical skills on these tools, feel free to request a training - we reply within 24h with a quote.",
       requestName: "Full name*",
@@ -449,6 +520,8 @@ const translations: Record<Lang, Translations> = {
       domainsLabel: "Our questions cover the skill blocks actually assessed on the exam:",
       downloadPdf: "Download as PDF",
       downloadingPdf: "Generating...",
+      pdfCountPrompt: "How many questions do you want to export?",
+      pdfCountMax: "max",
     },
     quiz: {
       back: "Back to training",
@@ -475,8 +548,10 @@ const translations: Record<Lang, Translations> = {
       modeTrainingTitle: "Free practice",
       modeTrainingDesc: "Go at your own pace, with explanations after each question.",
       modeExamTitle: "Timed exam mode",
-      modeExamDesc: "Simulate the real exam: limited time, pass/fail result at the end.",
-      modeExamLocked: "Reserved for unlimited access accounts.",
+      modeExamDesc: "Test yourself on the real exam: limited time, pass/fail result at the end. Reserved for unlimited access accounts.",
+      modeExamLocked: "Click to unlock",
+      questionCountLabel: "Number of questions",
+      questionCountAll: "All",
       startTraining: "Start practice",
       startExam: "Start exam",
       endExam: "End exam",

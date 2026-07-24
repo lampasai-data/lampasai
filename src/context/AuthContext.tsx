@@ -9,6 +9,9 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { mapAuthError, validatePassword } from "../lib/authErrors";
 
+const PENDING_UPGRADE_KEY = "lampasai_pending_upgrade_slug";
+export const HAS_LOGGED_IN_KEY = "lampasai_has_logged_in_before";
+
 interface Profile {
   id: string;
   email: string | null;
@@ -22,6 +25,14 @@ interface AuthState {
   user: User | null;
   profile: Profile | null;
   passwordRecovery: boolean;
+  authModalOpen: boolean;
+  openAuthModal: () => void;
+  openAuthModalForUpgrade: (preselectSlug: string) => void;
+  closeAuthModal: () => void;
+  upgradeModalOpen: boolean;
+  upgradeModalPreselect: string | null;
+  openUpgradeModal: (preselectSlug?: string) => void;
+  closeUpgradeModal: () => void;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<string | null>;
   signUpWithEmail: (email: string, password: string, firstName?: string) => Promise<string | null>;
@@ -38,6 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeModalPreselect, setUpgradeModalPreselect] = useState<string | null>(null);
 
   async function loadProfile(userId: string) {
     if (!supabase) return;
@@ -71,6 +85,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!session) return;
+    setAuthModalOpen(false);
+    // Remembered so the auth panel can default to "sign in" instead of
+    // "sign up" for a browser that has already logged in before.
+    localStorage.setItem(HAS_LOGGED_IN_KEY, "1");
+    // Google sign-in does a full page redirect, which wipes all in-memory
+    // state - sessionStorage is what actually survives to re-open the
+    // upgrade modal once the session comes back.
+    const pending = sessionStorage.getItem(PENDING_UPGRADE_KEY);
+    if (pending) {
+      sessionStorage.removeItem(PENDING_UPGRADE_KEY);
+      setUpgradeModalPreselect(pending);
+      setUpgradeModalOpen(true);
+    }
+  }, [session]);
+
+  function openAuthModal() {
+    setAuthModalOpen(true);
+  }
+
+  // Opens the sign-in/sign-up modal; once the user is authenticated, the
+  // upgrade modal opens automatically with this certification preselected.
+  function openAuthModalForUpgrade(preselectSlug: string) {
+    sessionStorage.setItem(PENDING_UPGRADE_KEY, preselectSlug);
+    setAuthModalOpen(true);
+  }
+
+  function closeAuthModal() {
+    setAuthModalOpen(false);
+  }
+
+  function openUpgradeModal(preselectSlug?: string) {
+    setUpgradeModalPreselect(preselectSlug ?? null);
+    setUpgradeModalOpen(true);
+  }
+
+  function closeUpgradeModal() {
+    setUpgradeModalOpen(false);
+  }
 
   async function signInWithGoogle() {
     if (!supabase) return;
@@ -131,6 +186,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: session?.user ?? null,
         profile,
         passwordRecovery,
+        authModalOpen,
+        openAuthModal,
+        openAuthModalForUpgrade,
+        closeAuthModal,
+        upgradeModalOpen,
+        upgradeModalPreselect,
+        openUpgradeModal,
+        closeUpgradeModal,
         signInWithGoogle,
         signInWithEmail,
         signUpWithEmail,

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, Reorder } from "motion/react";
-import { loadQuestions } from "../lib/quizData";
+import { loadQuestions, getPurchasedCertificationIds } from "../lib/quizData";
 import type { LocalizedText, Question } from "../data/types";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n";
@@ -13,6 +13,7 @@ import ProUpsell from "../components/ProUpsell";
 import BackLink from "../components/BackLink";
 import lampasLogo from "../assets/Logo_Lampas_AI_flavicon.png";
 import { CERT_LOGOS } from "../data/certLogos";
+import CustomSelect from "../components/CustomSelect";
 
 const POINTS_PER_CORRECT = 10;
 const EXAM_SECONDS_PER_QUESTION = 90;
@@ -48,12 +49,16 @@ function formatTime(totalSeconds: number) {
 
 export default function CertificationQuiz() {
   const { slug = "" } = useParams();
-  const { user, profile } = useAuth();
+  const { user, profile, openAuthModalForUpgrade, openUpgradeModal } = useAuth();
   const { lang, t } = useLanguage();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [cert, setCert] = useState<{ name: LocalizedText; questions: Question[] } | null>(
+  const [cert, setCert] = useState<{ id: string; name: LocalizedText; questions: Question[] } | null>(
     null
   );
+  const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
+  // Pro users can cap how many questions a run draws from; null = use them all.
+  const [customCount, setCustomCount] = useState<number | null>(null);
 
   // Quiz session state
   const [queue, setQueue] = useState<number[]>([]);
@@ -79,7 +84,7 @@ export default function CertificationQuiz() {
   useEffect(() => {
     loadQuestions(slug).then((data) => {
       if (data) {
-        setCert({ name: data.name, questions: data.questions });
+        setCert({ id: data.id, name: data.name, questions: data.questions });
         setQueue(shuffledIndexes(data.questions.length));
         setPos(0);
         setFlagged(new Set());
@@ -92,6 +97,28 @@ export default function CertificationQuiz() {
       }
     });
   }, [slug]);
+
+  useEffect(() => {
+    if (user) getPurchasedCertificationIds(user.id).then(setPurchasedIds);
+  }, [user]);
+
+  useEffect(() => {
+    if (!user || searchParams.get("checkout") !== "success") return;
+    let attempts = 0;
+    const interval = setInterval(async () => {
+      attempts += 1;
+      const ids = await getPurchasedCertificationIds(user.id);
+      setPurchasedIds(ids);
+      if (attempts >= 5) clearInterval(interval);
+    }, 2000);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("checkout");
+      return next;
+    }, { replace: true });
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const answeredCount = Object.keys(results).length;
   const total = cert?.questions.length ?? 0;
@@ -132,11 +159,19 @@ export default function CertificationQuiz() {
     setDragPool(null);
   }, [cert, queue, pos]);
 
+  // Pro access is granted either by the legacy account-wide admin override
+  // (profile.plan) or by a per-certification Stripe purchase.
+  function hasProAccess() {
+    return profile?.plan === "pro" || (cert ? purchasedIds.has(cert.id) : false);
+  }
+
   // Build a fresh, reshuffled run. Non-Pro users get a repeatable subset capped
-  // to the free quota; Pro users get the full bank. Called each time a run starts.
+  // to the free quota; Pro users get the full bank, optionally capped to their
+  // chosen question count. Called each time a run starts.
   function buildRunQueue() {
     const all = shuffledIndexes(cert?.questions.length ?? 0);
-    return profile?.plan === "pro" ? all : all.slice(0, FREE_QUESTION_LIMIT);
+    if (!hasProAccess()) return all.slice(0, FREE_QUESTION_LIMIT);
+    return customCount ? all.slice(0, customCount) : all;
   }
 
   function resetRun() {
@@ -156,7 +191,7 @@ export default function CertificationQuiz() {
   }
 
   function startExam() {
-    const queueLength = profile?.plan === "pro" ? total : FREE_QUESTION_LIMIT;
+    const queueLength = hasProAccess() ? (customCount ?? total) : FREE_QUESTION_LIMIT;
     const duration = queueLength * EXAM_SECONDS_PER_QUESTION;
     resetRun();
     setExamEndsAt(Date.now() + duration * 1000);
@@ -173,7 +208,7 @@ export default function CertificationQuiz() {
     );
   }
 
-  const isPro = profile?.plan === "pro";
+  const isPro = hasProAccess();
   const currentScore = Object.values(results).filter(Boolean).length;
 
   if (mode === null) {
@@ -183,6 +218,39 @@ export default function CertificationQuiz() {
         <h1 className="mt-6 font-display text-2xl font-semibold text-ink">
           {t.quiz.modeSelectTitle}
         </h1>
+
+        {isPro && (
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <span className="text-xs font-medium text-muted">{t.quiz.questionCountLabel}</span>
+            <div className="inline-flex gap-1 rounded-full border border-black/8 bg-surface p-1">
+              {(
+                [
+                  { label: t.quiz.questionCountAll, value: null },
+                  { label: "20", value: 20 },
+                  { label: "50", value: 50 },
+                  { label: "100", value: 100 },
+                ] as const
+              )
+                .filter((option) => option.value === null || option.value < total)
+                .map((option) => {
+                  const active = customCount === option.value;
+                  return (
+                    <button
+                      key={option.label}
+                      type="button"
+                      onClick={() => setCustomCount(option.value)}
+                      className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                        active ? "brand-gradient text-white shadow-sm" : "text-muted hover:text-ink"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
         <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div className="flex h-full flex-col rounded-2xl border border-black/8 bg-white p-6 shadow-sm">
             <h3 className="font-display text-lg font-medium text-ink">
@@ -214,9 +282,13 @@ export default function CertificationQuiz() {
                 {t.quiz.startExam}
               </button>
             ) : (
-              <p className="mt-5 rounded-xl border border-amber/30 bg-amber/10 px-4 py-2.5 text-xs text-amber">
+              <button
+                type="button"
+                onClick={() => (user ? openUpgradeModal(slug) : openAuthModalForUpgrade(slug))}
+                className="brand-gradient mt-5 rounded-full px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+              >
                 {t.quiz.modeExamLocked}
-              </p>
+              </button>
             )}
           </div>
         </div>
@@ -313,7 +385,11 @@ export default function CertificationQuiz() {
             <p className="mb-4 text-center text-sm font-medium text-teal-dark">
               {t.quiz.quotaUnlockHint}
             </p>
-            {user ? <ProUpsell certName={localize(cert.name, lang)} /> : <AuthPanel />}
+            {user ? (
+              <ProUpsell certName={localize(cert.name, lang)} certSlug={slug} />
+            ) : (
+              <AuthPanel />
+            )}
           </div>
         )}
       </section>
@@ -513,6 +589,13 @@ export default function CertificationQuiz() {
           transition={{ duration: 0.25, ease: "easeOut" }}
           className="mt-6 rounded-2xl border border-black/8 bg-white p-7 shadow-sm"
         >
+          {question.image && (
+            <img
+              src={question.image}
+              alt=""
+              className="mb-4 w-full max-w-xl rounded-xl border border-black/8"
+            />
+          )}
           <div className="flex items-start justify-between gap-4">
             <p className="font-display text-lg font-medium text-ink">
               {localize(question.question, lang)}
@@ -659,31 +742,23 @@ export default function CertificationQuiz() {
                       </span>
                     )}
                     <div className="flex flex-1 items-center gap-2">
-                      <select
-                        value={pick ?? ""}
+                      <CustomSelect
+                        options={blank.options.map((opt) => localize(opt, lang))}
+                        value={pick}
                         disabled={submitted}
-                        onChange={(e) =>
-                          setHotspotPicks((prev) =>
-                            prev.map((v, i) => (i === bi ? Number(e.target.value) : v))
-                          )
+                        placeholder={t.quiz.choosePlaceholder}
+                        onChange={(index) =>
+                          setHotspotPicks((prev) => prev.map((v, i) => (i === bi ? index : v)))
                         }
-                        className={`w-full rounded-lg border px-3 py-2 text-sm transition ${
+                        className="w-full"
+                        triggerClassName={
                           submitted
                             ? isRight
                               ? "border-green/40 bg-green/10 text-green"
                               : "border-red-400/50 bg-red-50 text-red-600"
-                            : "border-black/15 bg-white text-ink focus:border-teal focus:outline-none"
-                        }`}
-                      >
-                        <option value="" disabled>
-                          {t.quiz.choosePlaceholder}
-                        </option>
-                        {blank.options.map((opt, oi) => (
-                          <option key={oi} value={oi}>
-                            {localize(opt, lang)}
-                          </option>
-                        ))}
-                      </select>
+                            : "border-black/15 bg-white text-ink"
+                        }
+                      />
                     </div>
                     {isWrong && (
                       <span className="text-xs font-medium text-green sm:w-1/4">

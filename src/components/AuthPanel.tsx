@@ -1,20 +1,22 @@
 import { useState, type FormEvent } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth, HAS_LOGGED_IN_KEY } from "../context/AuthContext";
 import { isSupabaseConfigured } from "../lib/supabase";
 import googleLogo from "../assets/google-logo.png";
 
 type Mode = "signin" | "signup" | "forgot";
 
 export default function AuthPanel({
-  title = "Crée ton compte pour continuer",
-  subtitle = "Tu as terminé les questions gratuites. Connecte-toi pour poursuivre ton entraînement.",
+  title,
+  subtitle,
 }: {
   title?: string;
   subtitle?: string;
 }) {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, sendPasswordReset } =
     useAuth();
-  const [mode, setMode] = useState<Mode>("signup");
+  const [mode, setMode] = useState<Mode>(() =>
+    localStorage.getItem(HAS_LOGGED_IN_KEY) ? "signin" : "signup"
+  );
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -62,10 +64,23 @@ export default function AuthPanel({
     );
   }
 
+  const defaultTitle =
+    mode === "signin"
+      ? "Bon retour !"
+      : mode === "forgot"
+        ? "Mot de passe oublié ?"
+        : "Crée ton compte pour continuer";
+  const defaultSubtitle =
+    mode === "signin"
+      ? "Connecte-toi pour continuer ton entraînement."
+      : mode === "forgot"
+        ? "On t'envoie un lien de réinitialisation par email."
+        : "Tu as terminé les questions gratuites. Connecte-toi pour poursuivre ton entraînement.";
+
   return (
     <div className="mx-auto max-w-md rounded-2xl border border-black/8 bg-white p-7 shadow-sm">
-      <h3 className="font-display text-lg font-medium text-ink">{title}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-muted">{subtitle}</p>
+      <h3 className="font-display text-lg font-medium text-ink">{title ?? defaultTitle}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-muted">{subtitle ?? defaultSubtitle}</p>
 
       {mode !== "forgot" && (
         <>
@@ -148,7 +163,7 @@ export default function AuthPanel({
                 setError(null);
                 setMode("forgot");
               }}
-              className="text-xs text-muted hover:text-ink"
+              className="text-sm font-medium text-teal-dark underline-offset-2 hover:underline"
             >
               Mot de passe oublié ?
             </button>
@@ -160,13 +175,27 @@ export default function AuthPanel({
               setError(null);
               setMode(mode === "signin" ? "signup" : "signin");
             }}
-            className="text-xs text-muted hover:text-ink"
+            className="text-sm text-muted"
           >
-            {mode === "forgot"
-              ? "Retour à la connexion"
-              : mode === "signin"
-                ? "Pas encore de compte ? Inscris-toi"
-                : "Déjà un compte ? Connecte-toi"}
+            {mode === "forgot" ? (
+              <span className="font-medium text-teal-dark underline-offset-2 hover:underline">
+                Retour à la connexion
+              </span>
+            ) : mode === "signin" ? (
+              <>
+                Pas encore de compte ?{" "}
+                <span className="font-medium text-teal-dark underline-offset-2 hover:underline">
+                  Inscris-toi
+                </span>
+              </>
+            ) : (
+              <>
+                Déjà un compte ?{" "}
+                <span className="font-medium text-teal-dark underline-offset-2 hover:underline">
+                  Connecte-toi
+                </span>
+              </>
+            )}
           </button>
         </form>
       )}

@@ -753,4 +753,468 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
       en: "With Summarize by = None, the column is not aggregated: the table visual shows every row, i.e. the 75 non-null values. Changing Summarize by to an aggregation (e.g. Sum) groups the values, which reduces the number of displayed rows.",
     },
   },
+  {
+    id: "pl300-img-24",
+    type: "hotspot",
+    question: {
+      fr: "Vous importez une table Sales (SalesRowID, ProductKey, OrderDateKey, OrderDate, CustomerKey, SalesTerritoryKey, SalesOrderNumber, SalesOrderLineNumber, OrderQuantity, LineTotal, TaxAmt, Freight, LastModified, AuditID) ainsi que ses dimensions liées, pour réaliser une analyse de panier (basket analysis). Vous évaluez comment optimiser le modèle. Pour chaque affirmation, indiquez Oui si elle est vraie, sinon Non.",
+      en: "You import a Sales table (SalesRowID, ProductKey, OrderDateKey, OrderDate, CustomerKey, SalesTerritoryKey, SalesOrderNumber, SalesOrderLineNumber, OrderQuantity, LineTotal, TaxAmt, Freight, LastModified, AuditID) along with its related dimension tables, to perform basket analysis. You are evaluating how to optimize the model. For each statement, select Yes if true, otherwise No.",
+    },
+    blanks: [
+      {
+        label: { fr: "Les colonnes SalesRowID et AuditID peuvent être retirées du modèle sans nuire aux objectifs d'analyse.", en: "The SalesRowID and AuditID columns can be removed from the model without impeding the analysis goals." },
+        options: [
+          { fr: "Oui", en: "Yes" },
+          { fr: "Non", en: "No" },
+        ],
+        correctIndex: 0,
+      },
+      {
+        label: { fr: "OrderDateKey et OrderDate sont tous deux nécessaires pour l'analyse de panier.", en: "Both the OrderDateKey and OrderDate columns are necessary to perform the basket analysis." },
+        options: [
+          { fr: "Oui", en: "Yes" },
+          { fr: "Non", en: "No" },
+        ],
+        correctIndex: 1,
+      },
+      {
+        label: { fr: "La colonne TaxAmt doit conserver son nombre actuel de décimales pour l'analyse de panier.", en: "The TaxAmt column must retain the current number of decimal places to perform the basket analysis." },
+        options: [
+          { fr: "Oui", en: "Yes" },
+          { fr: "Non", en: "No" },
+        ],
+        correctIndex: 1,
+      },
+    ],
+    explanation: {
+      fr: "SalesRowID (clé technique source) et AuditID (traçabilité de charge) ne servent pas à l'analyse de panier → suppression possible. OrderDateKey sert de clé de relation vers la table Date ; OrderDate est redondant pour ce besoin → un seul suffit. La précision décimale de TaxAmt n'affecte pas l'identification des associations de produits achetés ensemble → elle peut être réduite.",
+      en: "SalesRowID (source technical key) and AuditID (load traceability) are not used by basket analysis → they can be removed. OrderDateKey is the relationship key to the Date table; OrderDate is redundant for this need → only one is required. TaxAmt's decimal precision doesn't affect identifying which products are bought together → it can be reduced.",
+    },
+  },
+  {
+    id: "pl300-img-25",
+    type: "hotspot",
+    question: {
+      fr: "Vous profilez des données dans Power Query Editor. Une table Reports contient une colonne State. La statistique de colonne indique : Count 75, Distinct 69, Unique 4 (aucune valeur vide). Complétez les affirmations.",
+      en: "You are profiling data in Power Query Editor. A Reports table has a State column. Column statistics show: Count 75, Distinct 69, Unique 4 (no empty values). Complete the statements.",
+    },
+    blanks: [
+      {
+        label: { fr: "Il y a ⬚ valeurs différentes dans State, nulls compris.", en: "There are ⬚ different values in State including nulls." },
+        options: [
+          { fr: "4", en: "4" },
+          { fr: "65", en: "65" },
+          { fr: "69", en: "69" },
+          { fr: "73", en: "73" },
+        ],
+        correctIndex: 2,
+      },
+      {
+        label: { fr: "Il y a ⬚ valeurs non nulles qui n'apparaissent qu'une seule fois dans State.", en: "There are ⬚ non-null values that occur only once in State." },
+        options: [
+          { fr: "4", en: "4" },
+          { fr: "65", en: "65" },
+          { fr: "69", en: "69" },
+          { fr: "73", en: "73" },
+        ],
+        correctIndex: 0,
+      },
+    ],
+    explanation: {
+      fr: "« Distinct » compte les valeurs différentes (y compris une valeur nulle si elle existe) : ici 69. « Unique » compte les valeurs n'apparaissant qu'une seule fois dans toute la colonne : ici 4. Ne pas confondre les deux métriques du profilage Power Query.",
+      en: "\"Distinct\" counts different values (including a null if present): here 69. \"Unique\" counts values that occur exactly once across the whole column: here 4. Don't confuse the two Power Query profiling metrics.",
+    },
+  },
+  {
+    id: "pl300-img-26",
+    type: "hotspot",
+    question: {
+      fr: "Un modèle Power BI a les tables Sales (SalesID, ProductID, DateKey, SalesAmount), Products (ProductID, ProductName, ProductCategoryID) et ProductCategory (ProductCategoryID, CategoryName). Products est reliée à ProductCategory par ProductCategoryID ; chaque produit a une seule catégorie. Vous devez pouvoir analyser les ventes par catégorie de produit. Configurez la relation de ProductCategory vers Products.",
+      en: "A Power BI model has Sales (SalesID, ProductID, DateKey, SalesAmount), Products (ProductID, ProductName, ProductCategoryID) and ProductCategory (ProductCategoryID, CategoryName). Products relates to ProductCategory via ProductCategoryID; each product has one category. You must be able to analyze sales by product category. Configure the relationship from ProductCategory to Products.",
+    },
+    blanks: [
+      {
+        label: { fr: "Cardinalité :", en: "Cardinality:" },
+        options: [
+          { fr: "Un-à-plusieurs", en: "One-to-many" },
+          { fr: "Un-à-un", en: "One-to-one" },
+          { fr: "Plusieurs-à-plusieurs", en: "Many-to-many" },
+        ],
+        correctIndex: 0,
+      },
+      {
+        label: { fr: "Direction du filtre croisé :", en: "Cross-filter direction:" },
+        options: [
+          { fr: "Simple", en: "Single" },
+          { fr: "Les deux", en: "Both" },
+        ],
+        correctIndex: 0,
+      },
+    ],
+    explanation: {
+      fr: "Chaque produit ayant une seule catégorie, la relation est un-à-plusieurs (une catégorie, plusieurs produits). Un filtre croisé Simple (de ProductCategory vers Products) suffit pour filtrer les ventes par catégorie, sans besoin du mode Les deux.",
+      en: "Since each product has exactly one category, the relationship is one-to-many (one category, many products). A Single cross-filter direction (from ProductCategory to Products) is enough to filter sales by category, without needing Both.",
+    },
+  },
+  {
+    id: "pl300-img-27",
+    type: "hotspot",
+    question: {
+      fr: "Un visuel Power BI utilise des indicateurs pour signaler les valeurs hors plage, comme le montre un graphique « Revenue by Date » avec des triangles marquant des pics au-delà d'une plage attendue. Complétez les affirmations.",
+      en: "A Power BI visual uses indicators to flag out-of-range values, as shown in a \"Revenue by Date\" chart with triangle markers on spikes beyond an expected range. Complete the statements.",
+    },
+    blanks: [
+      {
+        label: { fr: "Le type de visuel est un graphique ⬚.", en: "The visual type is ⬚ chart." },
+        options: [
+          { fr: "en courbe (line)", en: "a line" },
+          { fr: "courbe et histogramme groupé", en: "a line and clustered column" },
+          { fr: "en aire (area)", en: "an area" },
+        ],
+        correctIndex: 0,
+      },
+      {
+        label: { fr: "Les indicateurs de valeurs hors plage sont créés en utilisant ⬚.", en: "The visual indicators that show values out of range are created by using ⬚." },
+        options: [
+          { fr: "un visuel personnalisé", en: "a custom visual" },
+          { fr: "une ligne de tendance", en: "a trendline" },
+          { fr: "la détection d'anomalies", en: "anomaly detection" },
+          { fr: "des marqueurs de courbe", en: "line chart markers" },
+        ],
+        correctIndex: 2,
+      },
+    ],
+    explanation: {
+      fr: "Le graphique est une simple courbe (line chart). Les triangles signalant les pics hors plage attendue proviennent de la fonctionnalité « Détection d'anomalies » du volet Analyses, qui calcule une plage attendue et marque les écarts.",
+      en: "The chart is a simple line chart. The triangles flagging spikes beyond the expected range come from the Analytics pane's \"Anomaly detection\" feature, which computes an expected range and marks deviations.",
+    },
+  },
+  {
+    id: "pl300-img-28",
+    type: "hotspot",
+    question: {
+      fr: "Vous créez un graphique en courbe « Prior Year Employee Count By Month », avec une ligne pointillée horizontale indiquant « Year Average Employee Count: 9 315 » qui traverse tout le graphique. Complétez les affirmations.",
+      en: "You create a \"Prior Year Employee Count By Month\" line chart, with a horizontal dashed line showing \"Year Average Employee Count: 9,315\" running across the whole chart. Complete the statements.",
+    },
+    blanks: [
+      {
+        label: { fr: "La ligne pointillée représentant la moyenne annuelle a été créée en utilisant ⬚.", en: "The dashed line representing the Year Average Employee Count was created by using ⬚." },
+        options: [
+          { fr: "une ligne de tendance", en: "a trend line" },
+          { fr: "un axe secondaire", en: "a secondary axis" },
+          { fr: "une ligne de référence moyenne", en: "an average reference line" },
+          { fr: "deux mesures dans le compartiment Valeurs", en: "two measures in the Values bucket" },
+        ],
+        correctIndex: 2,
+      },
+      {
+        label: { fr: "Pour permettre l'exploration par semaine ou par jour, ajoutez le champ Weeks and Days au compartiment ⬚.", en: "To enable users to drill down to weeks or days, add the Weeks and Days field to the ⬚ bucket." },
+        options: [
+          { fr: "Axe", en: "Axis" },
+          { fr: "Valeurs", en: "Values" },
+          { fr: "Légende", en: "Legend" },
+          { fr: "Valeurs secondaires", en: "Secondary values" },
+        ],
+        correctIndex: 0,
+      },
+    ],
+    explanation: {
+      fr: "Une ligne de référence Moyenne (du volet Analyses) trace automatiquement la moyenne de la mesure sous forme de ligne horizontale. Pour activer l'exploration (drill-down) vers des niveaux plus fins, on ajoute les champs de hiérarchie temporelle dans le compartiment Axe, pas Valeurs.",
+      en: "An Average reference line (from the Analytics pane) automatically draws the measure's average as a horizontal line. To enable drill-down to finer levels, the time-hierarchy fields are added to the Axis bucket, not Values.",
+    },
+  },
+  {
+    id: "pl300-img-29",
+    type: "hotspot",
+    question: {
+      fr: "Un modèle contient Sales (sales_id, sales_date, Customer_id, sales_amount, employee_id, sales_ship_date, store_id) et Employee (employee_id, first_name, last_name, employee_photo). Une relation existe entre les tables. Il n'y a aucune exigence de reporting sur employee_id ni employee_photo. Vous devez optimiser le modèle de données. Configurez employee_id et employee_photo.",
+      en: "A model has Sales (sales_id, sales_date, Customer_id, sales_amount, employee_id, sales_ship_date, store_id) and Employee (employee_id, first_name, last_name, employee_photo). A relationship exists between the tables. There are no reporting requirements on employee_id or employee_photo. You must optimize the data model. Configure employee_id and employee_photo.",
+    },
+    blanks: [
+      {
+        label: { fr: "employee_id :", en: "employee_id:" },
+        options: [
+          { fr: "Changer le type", en: "Change Type" },
+          { fr: "Supprimer", en: "Delete" },
+          { fr: "Masquer", en: "Hide" },
+          { fr: "Trier", en: "Sort" },
+        ],
+        correctIndex: 2,
+      },
+      {
+        label: { fr: "employee_photo :", en: "employee_photo:" },
+        options: [
+          { fr: "Changer le type", en: "Change Type" },
+          { fr: "Supprimer", en: "Delete" },
+          { fr: "Masquer", en: "Hide" },
+          { fr: "Trier", en: "Sort" },
+        ],
+        correctIndex: 1,
+      },
+    ],
+    explanation: {
+      fr: "employee_id sert de clé à la relation entre Sales et Employee : elle doit rester dans le modèle mais peut être masquée (Hide) puisqu'aucun reporting ne la requiert directement. employee_photo (binaire, volumineuse) n'est utilisée dans aucune relation ni aucun reporting : elle peut être supprimée pour réduire la taille du modèle.",
+      en: "employee_id serves as the key for the Sales–Employee relationship: it must stay in the model but can be hidden since no reporting needs it directly. employee_photo (binary, large) isn't used by any relationship or reporting: it can be deleted to reduce model size.",
+    },
+  },
+  {
+    id: "pl300-img-30",
+    type: "hotspot",
+    question: {
+      fr: "Dans Power BI Desktop, vous vous connectez à une base Azure SQL en laissant les options par défaut : Server = mydb.database.windows.net, Database = db1, Data Connectivity mode = Import, « Command timeout in minutes » laissé vide, « Include relationship columns » coché, « Navigate using full hierarchy » décoché. Complétez les affirmations.",
+      en: "In Power BI Desktop, you connect to an Azure SQL database leaving the default options: Server = mydb.database.windows.net, Database = db1, Data Connectivity mode = Import, \"Command timeout in minutes\" left blank, \"Include relationship columns\" checked, \"Navigate using full hierarchy\" unchecked. Complete the statements.",
+    },
+    blanks: [
+      {
+        label: { fr: "Le délai d'expiration par défaut de la connexion sera de ⬚.", en: "The default timeout for the connection will be ⬚." },
+        options: [
+          { fr: "illimité", en: "unlimited" },
+          { fr: "une minute", en: "one minute" },
+          { fr: "10 minutes", en: "10 minutes" },
+        ],
+        correctIndex: 0,
+      },
+      {
+        label: { fr: "Le Navigateur affichera ⬚.", en: "The Navigator will display ⬚." },
+        options: [
+          { fr: "toutes les tables", en: "all the tables" },
+          { fr: "uniquement les tables contenant des données", en: "only tables that contain data" },
+          { fr: "uniquement les tables contenant des hiérarchies", en: "only tables that contain hierarchies" },
+        ],
+        correctIndex: 0,
+      },
+    ],
+    explanation: {
+      fr: "Laisser « Command timeout in minutes » vide signifie qu'aucun délai n'est appliqué (illimité). Sans cocher « Navigate using full hierarchy », le Navigateur liste toutes les tables de la base à plat, sans filtrage ni regroupement hiérarchique.",
+      en: "Leaving \"Command timeout in minutes\" blank means no timeout is applied (unlimited). Without checking \"Navigate using full hierarchy\", the Navigator lists all the database's tables flat, without filtering or hierarchical grouping.",
+    },
+  },
+  {
+    id: "pl300-img-31",
+    type: "hotspot",
+    question: {
+      fr: "Vous créez un dataset Power BI qui contient une table Business Unit (colonnes : Cost Center, Headcount, ID, Name). Vous devez rendre cette table disponible comme type de données organisationnel dans Microsoft Excel. Configurez les propriétés de la table.",
+      en: "You create a Power BI dataset containing a Business Unit table (columns: Cost Center, Headcount, ID, Name). You must make the table available as an organizational data type in Microsoft Excel. Configure the table's properties.",
+    },
+    blanks: [
+      {
+        label: { fr: "Row label (étiquette de ligne) :", en: "Row label:" },
+        options: [
+          { fr: "Cost Center", en: "Cost Center" },
+          { fr: "Headcount", en: "Headcount" },
+          { fr: "ID", en: "ID" },
+          { fr: "Name", en: "Name" },
+        ],
+        correctIndex: 0,
+      },
+      {
+        label: { fr: "Key column (colonne clé) :", en: "Key column:" },
+        options: [
+          { fr: "Cost Center", en: "Cost Center" },
+          { fr: "Headcount", en: "Headcount" },
+          { fr: "ID", en: "ID" },
+          { fr: "Name", en: "Name" },
+        ],
+        correctIndex: 2,
+      },
+      {
+        label: { fr: "Is featured table (table en vedette) :", en: "Is featured table:" },
+        options: [
+          { fr: "Non", en: "No" },
+          { fr: "Oui", en: "Yes" },
+        ],
+        correctIndex: 1,
+      },
+    ],
+    explanation: {
+      fr: "Pour publier une table comme type de données organisationnel dans Excel, il faut activer « Is featured table » (Oui), définir la colonne clé unique (ID) et choisir le texte affiché comme étiquette de ligne (Cost Center, le libellé le plus parlant pour l'utilisateur).",
+      en: "To publish a table as an organizational data type in Excel, you enable \"Is featured table\" (Yes), set the unique key column (ID), and choose the text shown as the row label (Cost Center, the most meaningful label for the user).",
+    },
+  },
+  {
+    id: "pl300-img-32",
+    type: "hotspot",
+    question: {
+      fr: "Vous améliorez un modèle Power BI avec des calculs DAX. Vous devez créer une mesure renvoyant le cumul annuel (year-to-date) des ventes, calculé à la même date de l'année civile précédente. Complétez l'expression DAX :\n\nSales PYTD =\nVAR startyear = STARTOFYEAR(PREVIOUSYEAR('Calendar'[Date]))\nVAR enddate = LASTDATE(Sales[Date]) - 365\nRETURN\n① ( ② (Sales[sales]), ③ ('Calendar'[Date], startyear, enddate) )",
+      en: "You are enhancing a Power BI model with DAX calculations. You must create a measure returning the year-to-date total sales, computed at the same date of the previous calendar year. Complete the DAX expression:\n\nSales PYTD =\nVAR startyear = STARTOFYEAR(PREVIOUSYEAR('Calendar'[Date]))\nVAR enddate = LASTDATE(Sales[Date]) - 365\nRETURN\n① ( ② (Sales[sales]), ③ ('Calendar'[Date], startyear, enddate) )",
+    },
+    blanks: [
+      {
+        label: { fr: "①", en: "①" },
+        options: [
+          { fr: "CALCULATE", en: "CALCULATE" },
+          { fr: "DATESBETWEEN", en: "DATESBETWEEN" },
+          { fr: "SAMEPERIODLASTYEAR", en: "SAMEPERIODLASTYEAR" },
+          { fr: "SUM", en: "SUM" },
+        ],
+        correctIndex: 0,
+      },
+      {
+        label: { fr: "②", en: "②" },
+        options: [
+          { fr: "CALCULATE", en: "CALCULATE" },
+          { fr: "DATESBETWEEN", en: "DATESBETWEEN" },
+          { fr: "SAMEPERIODLASTYEAR", en: "SAMEPERIODLASTYEAR" },
+          { fr: "SUM", en: "SUM" },
+        ],
+        correctIndex: 3,
+      },
+      {
+        label: { fr: "③", en: "③" },
+        options: [
+          { fr: "CALCULATE", en: "CALCULATE" },
+          { fr: "DATESBETWEEN", en: "DATESBETWEEN" },
+          { fr: "SAMEPERIODLASTYEAR", en: "SAMEPERIODLASTYEAR" },
+          { fr: "SUM", en: "SUM" },
+        ],
+        correctIndex: 1,
+      },
+    ],
+    explanation: {
+      fr: "CALCULATE recalcule SUM(Sales[sales]) dans le contexte de dates défini par DATESBETWEEN('Calendar'[Date], startyear, enddate), soit du début de l'année précédente jusqu'à la même date décalée d'un an - le cumul YTD de l'an dernier.",
+      en: "CALCULATE recomputes SUM(Sales[sales]) within the date context defined by DATESBETWEEN('Calendar'[Date], startyear, enddate) - from the start of last year to the same date shifted one year back - i.e. last year's YTD total.",
+    },
+  },
+  {
+    id: "pl300-img-33",
+    type: "hotspot",
+    question: {
+      fr: "Un visuel « Key influencers » répond à « What influences Attrition to increase? » avec pour seul facteur « Explain by » OverTime. Il montre : OverTime is Yes → +0,2 en moyenne d'Attrition. Le graphique compare la moyenne d'Attrition entre OverTime = Yes (≈0,31) et No (≈0,10). Complétez les affirmations.",
+      en: "A \"Key influencers\" visual answers \"What influences Attrition to increase?\" with OverTime as the only \"Explain by\" factor. It shows: OverTime is Yes → +0.2 average Attrition. The chart compares average Attrition between OverTime = Yes (≈0.31) and No (≈0.10). Complete the statements.",
+    },
+    blanks: [
+      {
+        label: { fr: "Identifier des facteurs supplémentaires qui augmentent l'attrition peut être obtenu en ⬚.", en: "Identifying additional factors that increase attrition can be achieved by ⬚." },
+        options: [
+          { fr: "activant Cross-report", en: "turning on Cross-report" },
+          { fr: "ajoutant des champs à Explain by", en: "adding more fields to Explain by" },
+          { fr: "ajoutant des champs à Expand by", en: "adding more fields to Expand by" },
+          { fr: "déplaçant des champs de Explain by vers Expand by", en: "moving fields from Explain by to Expand by" },
+        ],
+        correctIndex: 1,
+      },
+      {
+        label: { fr: "L'attrition des employés est ⬚ fois plus élevée quand ils font des heures supplémentaires.", en: "Employee attrition is ⬚ times greater when employees work overtime." },
+        options: [
+          { fr: "0,11", en: "0.11" },
+          { fr: "0,2", en: "0.2" },
+          { fr: "1", en: "1" },
+          { fr: "3", en: "3" },
+        ],
+        correctIndex: 3,
+      },
+    ],
+    explanation: {
+      fr: "Ajouter davantage de champs dans « Explain by » élargit l'analyse à d'autres facteurs candidats à l'influence. Numériquement, 0,31 / 0,10 ≈ 3 : l'attrition est environ 3 fois plus élevée avec heures supplémentaires que sans.",
+      en: "Adding more fields to \"Explain by\" widens the analysis to more candidate influencing factors. Numerically, 0.31 / 0.10 ≈ 3: attrition is roughly 3 times higher with overtime than without.",
+    },
+  },
+  {
+    id: "pl300-img-34",
+    type: "hotspot",
+    question: {
+      fr: "Une table contient City, Total Sales et Occupation. Vous créez un visuel « Key influencers » répondant à « What influences Total Sales to increase? », avec un seul facteur trouvé : Occupation is Professional → +3,41 k£ en moyenne de Total Sales (le plus haut des 5 catégories du graphique). Configurez le visuel.",
+      en: "A table contains City, Total Sales and Occupation. You create a \"Key influencers\" visual answering \"What influences Total Sales to increase?\", with one factor found: Occupation is Professional → +£3.41K average Total Sales (the highest of the chart's 5 categories). Configure the visual.",
+    },
+    blanks: [
+      {
+        label: { fr: "Analyze (Analyser) :", en: "Analyze:" },
+        options: [
+          { fr: "City", en: "City" },
+          { fr: "Occupation", en: "Occupation" },
+          { fr: "Total Sales", en: "Total Sales" },
+        ],
+        correctIndex: 2,
+      },
+      {
+        label: { fr: "Explain by (Expliquer par) :", en: "Explain by:" },
+        options: [
+          { fr: "City", en: "City" },
+          { fr: "Occupation", en: "Occupation" },
+          { fr: "Total Sales", en: "Total Sales" },
+        ],
+        correctIndex: 1,
+      },
+    ],
+    explanation: {
+      fr: "Le champ « Analyser » (Analyze) est la mesure dont on cherche les facteurs d'influence : Total Sales. Le champ « Expliquer par » (Explain by) contient les variables candidates à l'explication : ici Occupation, dont la catégorie Professional ressort comme facteur.",
+      en: "The \"Analyze\" field is the measure whose drivers are being sought: Total Sales. The \"Explain by\" field holds the candidate explanatory variables: here Occupation, whose Professional category stands out as the driver.",
+    },
+  },
+  {
+    id: "pl300-img-35",
+    type: "hotspot",
+    question: {
+      fr: "Un rapport Orders doit permettre : ventes totales dans le temps, nombre de commandes dans le temps, nombre de clients nouveaux/récurrents. La taille du modèle approche la limite de la capacité partagée. Orders (OrderID, CustomerID, OrderDate, ProductID, UnitPrice, Quantity, Discount, SalesTotal) est reliée à Customers par CustomerID et à Date par OrderDate. Pour chaque affirmation, indiquez Oui si elle est vraie, sinon Non.",
+      en: "An Orders report must support: total sales over time, count of orders over time, new/repeat customer counts. The model size is nearing the shared-capacity limit. Orders (OrderID, CustomerID, OrderDate, ProductID, UnitPrice, Quantity, Discount, SalesTotal) relates to Customers via CustomerID and to Date via OrderDate. For each statement, select Yes if true, otherwise No.",
+    },
+    blanks: [
+      {
+        label: { fr: "Résumer Orders par les colonnes CustomerID, OrderID et OrderDate réduira la taille du modèle tout en conservant l'analyse actuelle possible.", en: "Summarizing Orders by the CustomerID, OrderID, and OrderDate columns will reduce the model size while still supporting the current analysis." },
+        options: [
+          { fr: "Oui", en: "Yes" },
+          { fr: "Non", en: "No" },
+        ],
+        correctIndex: 1,
+      },
+      {
+        label: { fr: "Supprimer la colonne CustomerID d'Orders réduira la taille du modèle tout en conservant l'analyse actuelle possible.", en: "Removing the CustomerID column from Orders will reduce the model size while still supporting the current analysis." },
+        options: [
+          { fr: "Oui", en: "Yes" },
+          { fr: "Non", en: "No" },
+        ],
+        correctIndex: 1,
+      },
+      {
+        label: { fr: "Supprimer les colonnes UnitPrice et Discount d'Orders réduira la taille du modèle tout en conservant l'analyse actuelle possible.", en: "Removing the UnitPrice and Discount columns from Orders will reduce the model size while still supporting the current analysis." },
+        options: [
+          { fr: "Oui", en: "Yes" },
+          { fr: "Non", en: "No" },
+        ],
+        correctIndex: 0,
+      },
+    ],
+    explanation: {
+      fr: "Résumer par CustomerID/OrderID/OrderDate ferait perdre le détail nécessaire au comptage des nouveaux/anciens clients : impossible sans casser l'analyse. CustomerID est indispensable comme clé de relation vers Customers (clients nouveaux/récurrents) : on ne peut pas la retirer. En revanche, UnitPrice et Discount ne sont utilisés par aucune des trois analyses requises (SalesTotal suffit) : ils peuvent être supprimés sans impact.",
+      en: "Summarizing by CustomerID/OrderID/OrderDate would lose the row-level detail needed to count new/repeat customers: not possible without breaking the analysis. CustomerID is essential as the relationship key to Customers (new/repeat customers): it cannot be removed. UnitPrice and Discount, however, aren't used by any of the three required analyses (SalesTotal suffices): they can be removed with no impact.",
+    },
+  },
+  {
+    id: "pl300-img-36",
+    type: "hotspot",
+    question: {
+      fr: "Un tenant Power BI héberge trois datasets : Sales (cibles de vente, données de vente, salaires - sert aux rapports quotidiens et aux bonus trimestriels), Operations (données de capteurs environnementaux - moyennes dans le temps), Finance (transactions financières - planification budgétaire et rapports mensuels au conseil). Exigences : empêcher l'export de rapports contenant des données personnelles (PII) ; les données utilisées pour les décisions financières doivent être revues et approuvées avant usage. Pour chaque affirmation, indiquez Oui si elle est vraie, sinon Non.",
+      en: "A Power BI tenant hosts three datasets: Sales (sales targets, sales data, salary data - used for daily performance reports and quarterly bonus reports), Operations (environmental sensor data - average readings over time), Finance (financial transaction data - budget planning and monthly board reports). Requirements: exporting reports containing PII must be prevented; data used for financial decisions must be reviewed and approved before use. For each statement, select Yes if true, otherwise No.",
+    },
+    blanks: [
+      {
+        label: { fr: "Le dataset Sales nécessite une étiquette de confidentialité (sensitivity label).", en: "The Sales dataset requires a sensitivity label." },
+        options: [
+          { fr: "Oui", en: "Yes" },
+          { fr: "Non", en: "No" },
+        ],
+        correctIndex: 0,
+      },
+      {
+        label: { fr: "Le dataset Operations nécessite une étiquette de confidentialité et doit être certifié.", en: "The Operations dataset requires a sensitivity label and must be certified." },
+        options: [
+          { fr: "Oui", en: "Yes" },
+          { fr: "Non", en: "No" },
+        ],
+        correctIndex: 1,
+      },
+      {
+        label: { fr: "Le dataset Finance nécessite une étiquette de confidentialité et doit être certifié.", en: "The Finance dataset requires a sensitivity label and must be certified." },
+        options: [
+          { fr: "Oui", en: "Yes" },
+          { fr: "Non", en: "No" },
+        ],
+        correctIndex: 0,
+      },
+    ],
+    explanation: {
+      fr: "Sales contient des données de salaire (PII) : une étiquette de confidentialité est nécessaire pour empêcher son export. Operations (capteurs environnementaux) ne contient aucune donnée personnelle ni financière : ni étiquette ni certification requises. Finance contient des données personnelles potentielles ET sert à des décisions financières devant être revues/approuvées : il faut à la fois une étiquette de confidentialité et une certification (qui signale un contenu revu et fiable).",
+      en: "Sales contains salary data (PII): a sensitivity label is required to prevent its export. Operations (environmental sensor data) contains no personal or financial data: neither a label nor certification is required. Finance contains potential personal data AND feeds financial decisions that must be reviewed/approved: it needs both a sensitivity label and certification (which signals reviewed, trustworthy content).",
+    },
+  },
 ];
