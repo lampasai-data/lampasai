@@ -170,9 +170,9 @@ interface Translations {
     startExam: string;
     endExam: string;
     examTimeLeft: string;
-    passResult: string;
-    failResult: string;
     passThresholdNote: string;
+    trainingSuccess: string;
+    trainingFail: string;
     dragHint: string;
     validateOrder: string;
     matchHint: string;
@@ -345,7 +345,7 @@ const translations: Record<Lang, Translations> = {
       flaggedNotice: "Marquée pour plus tard",
       reviewFlagged: (n) => `Revoir les questions marquées (${n})`,
       timeElapsed: "Temps",
-      finishedTitle: "Certification terminée 🎉",
+      finishedTitle: "C'est terminé",
       finishedScore: "Bonnes réponses",
       finishedTime: "Temps total",
       finishedPoints: "Points obtenus",
@@ -364,9 +364,9 @@ const translations: Record<Lang, Translations> = {
       startExam: "Démarrer l'examen",
       endExam: "Terminer l'examen",
       examTimeLeft: "Temps restant",
-      passResult: "Examen réussi 🎉",
-      failResult: "Examen non réussi",
       passThresholdNote: "Seuil de réussite : 70% de bonnes réponses.",
+      trainingSuccess: "Succès 🎉",
+      trainingFail: "Échec",
       dragHint: "Fais glisser pour réordonner",
       validateOrder: "Valider mon classement",
       matchHint: "Fais glisser chaque élément vers la bonne cible",
@@ -537,7 +537,7 @@ const translations: Record<Lang, Translations> = {
       flaggedNotice: "Flagged for later",
       reviewFlagged: (n) => `Review flagged questions (${n})`,
       timeElapsed: "Time",
-      finishedTitle: "Certification complete 🎉",
+      finishedTitle: "All done",
       finishedScore: "Correct answers",
       finishedTime: "Total time",
       finishedPoints: "Points earned",
@@ -556,9 +556,9 @@ const translations: Record<Lang, Translations> = {
       startExam: "Start exam",
       endExam: "End exam",
       examTimeLeft: "Time left",
-      passResult: "Exam passed 🎉",
-      failResult: "Exam not passed",
       passThresholdNote: "Pass threshold: 70% correct answers.",
+      trainingSuccess: "Success 🎉",
+      trainingFail: "Failure",
       dragHint: "Drag to reorder",
       validateOrder: "Submit my ranking",
       matchHint: "Drag each item onto the correct target",

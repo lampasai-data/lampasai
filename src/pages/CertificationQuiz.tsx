@@ -75,6 +75,7 @@ export default function CertificationQuiz() {
   const [submitted, setSubmitted] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const startedAt = useRef<number>(Date.now());
+  const qIndexRef = useRef<number | undefined>(undefined);
 
   const [mode, setMode] = useState<"training" | "exam" | null>(null);
   const [examEndsAt, setExamEndsAt] = useState<number | null>(null);
@@ -144,20 +145,6 @@ export default function CertificationQuiz() {
     }, 1000);
     return () => clearInterval(id);
   }, [mode, examEndsAt, examEnded, finished]);
-
-  useEffect(() => {
-    const activeQuestion = cert?.questions[queue[pos]];
-    if (activeQuestion?.type === "order") {
-      setOrderArrangement(shuffledIndexes(activeQuestion.options?.length ?? 0));
-    }
-    if (activeQuestion?.type === "match") {
-      setMatchAssign(new Array(activeQuestion.targets?.length ?? 0).fill(null));
-    }
-    if (activeQuestion?.type === "hotspot") {
-      setHotspotPicks(new Array(activeQuestion.blanks?.length ?? 0).fill(null));
-    }
-    setDragPool(null);
-  }, [cert, queue, pos]);
 
   // Pro access is granted either by the legacy account-wide admin override
   // (profile.plan) or by a per-certification Stripe purchase.
@@ -300,7 +287,7 @@ export default function CertificationQuiz() {
     const points = currentScore * POINTS_PER_CORRECT;
     const ratio = runSize > 0 ? currentScore / runSize : 0;
     const passed = mode === "exam" && ratio >= PASS_THRESHOLD;
-    const doingWell = ratio >= 0.7;
+    const doingWell = ratio >= 0.75;
 
     function restartRun() {
       resetRun();
@@ -315,7 +302,7 @@ export default function CertificationQuiz() {
           <h1 className="font-display text-2xl font-semibold text-ink">
             {t.quiz.finishedTitle}
           </h1>
-          {mode === "exam" && (
+          {mode === "exam" ? (
             <div className="mt-4">
               <span
                 className={`inline-flex rounded-full px-4 py-1.5 text-sm font-medium ${
@@ -324,9 +311,21 @@ export default function CertificationQuiz() {
                     : "border border-red-300 bg-red-50 text-red-600"
                 }`}
               >
-                {passed ? t.quiz.passResult : t.quiz.failResult}
+                {passed ? t.quiz.trainingSuccess : t.quiz.trainingFail}
               </span>
               <p className="mt-2 text-xs text-muted">{t.quiz.passThresholdNote}</p>
+            </div>
+          ) : (
+            <div className="mt-4">
+              <span
+                className={`inline-flex rounded-full px-4 py-1.5 text-sm font-medium ${
+                  doingWell
+                    ? "border border-green/30 bg-green/10 text-green"
+                    : "border border-red-300 bg-red-50 text-red-600"
+                }`}
+              >
+                {doingWell ? t.quiz.trainingSuccess : t.quiz.trainingFail}
+              </span>
             </div>
           )}
 
@@ -398,6 +397,36 @@ export default function CertificationQuiz() {
 
   const qIndex = queue[pos];
   const question = cert.questions[qIndex];
+
+  // Reset the per-type interaction state (order/match/hotspot) the instant
+  // the current question changes, synchronously during render rather than
+  // in a useEffect. An effect-based reset only takes effect *after* this
+  // render already ran with the *previous* question's leftover state, which
+  // crashes as soon as it indexes past the new question's (shorter) options/
+  // targets/blanks - e.g. two "order" questions back-to-back with different
+  // lengths. Local `current*` variables (not the bare state) are what the
+  // JSX below reads, so this render is correct immediately; the setters
+  // additionally persist it so later interactions/re-renders stay in sync.
+  let currentOrderArrangement = orderArrangement;
+  let currentMatchAssign = matchAssign;
+  let currentHotspotPicks = hotspotPicks;
+  if (qIndexRef.current !== qIndex) {
+    qIndexRef.current = qIndex;
+    if (question.type === "order") {
+      currentOrderArrangement = shuffledIndexes(question.options?.length ?? 0);
+    }
+    if (question.type === "match") {
+      currentMatchAssign = new Array(question.targets?.length ?? 0).fill(null);
+    }
+    if (question.type === "hotspot") {
+      currentHotspotPicks = new Array(question.blanks?.length ?? 0).fill(null);
+    }
+    setOrderArrangement(currentOrderArrangement);
+    setMatchAssign(currentMatchAssign);
+    setHotspotPicks(currentHotspotPicks);
+    setDragPool(null);
+  }
+
   const isMulti = (question.correctIndexes?.length ?? 0) > 1;
   const isFlagged = flagged.has(qIndex);
   const remainingFlagged = flagged.size;
@@ -666,7 +695,7 @@ export default function CertificationQuiz() {
               </div>
               <div className="space-y-3">
                 {(question.targets ?? []).map((target, ti) => {
-                  const assigned = matchAssign[ti];
+                  const assigned = currentMatchAssign[ti];
                   const isRight = submitted && assigned === target.correctPoolIndex;
                   const isWrong = submitted && !isRight;
                   return (
@@ -728,7 +757,7 @@ export default function CertificationQuiz() {
           ) : question.type === "hotspot" ? (
             <div className="mt-6 space-y-3">
               {(question.blanks ?? []).map((blank, bi) => {
-                const pick = hotspotPicks[bi];
+                const pick = currentHotspotPicks[bi];
                 const isRight = submitted && pick === blank.correctIndex;
                 const isWrong = submitted && !isRight;
                 return (
@@ -772,11 +801,11 @@ export default function CertificationQuiz() {
           ) : question.type === "order" ? (
             <Reorder.Group
               axis="y"
-              values={orderArrangement}
+              values={currentOrderArrangement}
               onReorder={setOrderArrangement}
               className="mt-6 flex flex-col gap-3"
             >
-              {orderArrangement.map((optIdx, position) => {
+              {currentOrderArrangement.map((optIdx, position) => {
                 const isCorrectPos = submitted && question.correctOrder?.[position] === optIdx;
                 const isWrongPos = submitted && !isCorrectPos;
                 const label = localize((question.options ?? [])[optIdx], lang);
