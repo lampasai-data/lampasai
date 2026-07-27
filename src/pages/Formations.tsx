@@ -41,7 +41,7 @@ export default function Formations() {
 
   if (user) {
     return (
-      <section className="mx-auto max-w-6xl px-6 pt-12 pb-24">
+      <section className="mx-auto max-w-6xl px-6 pt-4 pb-24">
         <Dashboard certs={certs} />
       </section>
     );
@@ -54,7 +54,7 @@ export default function Formations() {
   ];
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-24">
+    <section className="mx-auto max-w-6xl px-6 pt-10 pb-24">
       <motion.h1
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -168,9 +168,9 @@ export default function Formations() {
                 <button
                   type="button"
                   onClick={openAuthModal}
-                  className="brand-gradient inline-flex shrink-0 items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white shadow-md shadow-teal/20 transition hover:opacity-90 active:scale-95"
+                  className="brand-gradient inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-95"
                 >
-                  <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
                     <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="2" />
                     <path
                       d="M5 20c0-3.5 3.13-6 7-6s7 2.5 7 6"

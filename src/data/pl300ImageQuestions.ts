@@ -483,8 +483,8 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
     id: "pl300-img-17",
     type: "hotspot",
     question: {
-      fr: "Une table Balances contient les soldes de clôture quotidiens de chaque compte bancaire actif (une ligne par jour où le compte est actif, dernier jour inclus). Une table Date a une ligne par jour (2000-2025) avec une hiérarchie année/trimestre/mois/jour. La mesure est : Accounts := CALCULATE( DISTINCTCOUNT(Balances[AccountID]), LASTDATE('Date'[Date]) ). Pour chaque affirmation, indiquez Oui si elle est vraie, sinon Non.",
-      en: "A Balances table holds daily closing balances for each active bank account (one row per day the account is live, including the last day). A Date table has one row per day (2000-2025) with a year/quarter/month/day hierarchy. The measure is: Accounts := CALCULATE( DISTINCTCOUNT(Balances[AccountID]), LASTDATE('Date'[Date]) ). For each statement, select Yes if true, otherwise No.",
+      fr: "Une table Balances contient les soldes de clôture quotidiens de chaque compte bancaire actif (une ligne par jour où le compte est actif, dernier jour inclus). Une table Date a une ligne par jour (2000-2025) avec une hiérarchie année/trimestre/mois/jour.\n\nLa mesure est :\nAccounts = CALCULATE( DISTINCTCOUNT(Balances[AccountID]), LASTDATE('Date'[Date]) )\n\nPour chaque affirmation, indiquez Oui si elle est vraie, sinon Non.",
+      en: "A Balances table holds daily closing balances for each active bank account (one row per day the account is live, including the last day). A Date table has one row per day (2000-2025) with a year/quarter/month/day hierarchy.\n\nThe measure is:\nAccounts = CALCULATE( DISTINCTCOUNT(Balances[AccountID]), LASTDATE('Date'[Date]) )\n\nFor each statement, select Yes if true, otherwise No.",
     },
     blanks: [
       {

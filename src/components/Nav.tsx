@@ -25,7 +25,7 @@ export default function Nav() {
           Lampas <span className="brand-gradient-text">.ai</span>
         </Link>
 
-        <div className="ml-10 hidden items-center gap-10 lg:flex">
+        <div className="ml-auto hidden items-center gap-6 lg:flex">
           <ul className="flex items-center gap-8 text-sm text-muted">
             {links.map((link) => (
               <li key={link.href}>
@@ -40,20 +40,19 @@ export default function Nav() {
               </Link>
             </li>
           </ul>
-        </div>
 
-        <div className="ml-auto hidden items-center gap-4 lg:flex">
           {user ? (
             <div className="flex items-center gap-3">
               {profile?.first_name && (
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-teal/15 text-sm font-semibold text-teal-dark">
+                <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-teal/15 text-sm font-semibold text-teal-dark">
                   {profile.first_name.charAt(0).toUpperCase()}
+                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-green" />
                 </span>
               )}
               <button
                 type="button"
                 onClick={signOut}
-                className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-muted transition hover:border-black/20 hover:text-ink"
+                className="rounded-full border border-black/10 px-3 py-1.5 text-sm text-muted transition hover:border-black/20 hover:text-ink"
               >
                 Déconnexion
               </button>
@@ -62,12 +61,12 @@ export default function Nav() {
             <button
               type="button"
               onClick={openAuthModal}
-              className="brand-gradient rounded-full px-5 py-2 text-sm font-medium text-white shadow-sm transition hover:opacity-90"
+              className="brand-gradient rounded-full px-4 py-1.5 text-sm text-white shadow-sm transition hover:opacity-90"
             >
               {t.nav.login}
             </button>
           )}
-          <div className="ml-2 border-l border-black/10 pl-4">
+          <div className="border-l border-black/10 pl-4">
             <LangSwitch lang={lang} setLang={setLang} />
           </div>
         </div>

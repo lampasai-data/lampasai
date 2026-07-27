@@ -8,6 +8,7 @@ export default function CustomSelect({
   placeholder,
   className = "",
   triggerClassName = "border-black/15 bg-white",
+  optionsClassName = "",
 }: {
   options: string[];
   value: number | null;
@@ -16,6 +17,7 @@ export default function CustomSelect({
   placeholder: string;
   className?: string;
   triggerClassName?: string;
+  optionsClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -35,6 +37,7 @@ export default function CustomSelect({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
+        title={value !== null ? options[value] : undefined}
         className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left font-sans text-sm transition disabled:cursor-default ${triggerClassName} ${
           value === null ? "text-muted" : ""
         }`}
@@ -53,7 +56,9 @@ export default function CustomSelect({
       </button>
 
       {open && !disabled && (
-        <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-auto rounded-lg border border-black/10 bg-white py-1 font-sans text-sm shadow-lg">
+        <div
+          className={`absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-auto rounded-lg border border-black/10 bg-white py-1 font-sans text-sm shadow-lg ${optionsClassName}`}
+        >
           {options.map((opt, i) => (
             <button
               key={i}

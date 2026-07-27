@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n";
 import { localize } from "../lib/i18nText";
@@ -11,6 +11,7 @@ import {
   type CertificationProgress,
   type CertificationSummary,
 } from "../lib/quizData";
+import type { LocalizedText, Question } from "../data/types";
 import { CERT_LOGOS } from "../data/certLogos";
 import { CERTIFICATION_DOMAINS } from "../data/certificationDomains";
 
@@ -18,8 +19,13 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
   const { user, profile, openUpgradeModal } = useAuth();
   const { t, lang } = useLanguage();
   const [progress, setProgress] = useState<Record<string, CertificationProgress>>({});
-  const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
+  const [purchasedIds, setPurchasedIds] = useState<Map<string, string>>(new Map());
   const [downloadingSlug, setDownloadingSlug] = useState<string | null>(null);
+  const [pdfModal, setPdfModal] = useState<{
+    certName: LocalizedText;
+    questions: Question[];
+    count: number;
+  } | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
   const isPro = profile?.plan === "pro";
@@ -54,21 +60,22 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
 
   async function handleDownloadPdf(cert: CertificationSummary) {
     setDownloadingSlug(cert.slug);
-    const [data, { exportCertificationPdf }] = await Promise.all([
-      loadQuestions(cert.slug),
-      import("../lib/pdfExport"),
-    ]);
+    const data = await loadQuestions(cert.slug);
     if (data) {
-      const answer = window.prompt(
-        `${t.formations.pdfCountPrompt} (${t.formations.pdfCountMax}: ${data.questions.length})`,
-        `${data.questions.length}`
-      );
-      if (answer !== null) {
-        const count = Math.min(Math.max(parseInt(answer, 10) || data.questions.length, 1), data.questions.length);
-        exportCertificationPdf(localize(data.name, lang), data.questions.slice(0, count), lang);
-      }
+      setPdfModal({ certName: data.name, questions: data.questions, count: data.questions.length });
     }
     setDownloadingSlug(null);
+  }
+
+  async function confirmDownloadPdf() {
+    if (!pdfModal) return;
+    const { exportCertificationPdf } = await import("../lib/pdfExport");
+    exportCertificationPdf(
+      localize(pdfModal.certName, lang),
+      pdfModal.questions.slice(0, pdfModal.count),
+      lang
+    );
+    setPdfModal(null);
   }
 
   return (
@@ -87,20 +94,17 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        {profile?.first_name && (
-          <p className="text-lg font-medium text-ink">Bienvenue {profile.first_name} 👋</p>
-        )}
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="font-display text-2xl font-semibold text-ink">
-            {t.formations.dashboardWelcome}
+            {profile?.first_name
+              ? t.formations.dashboardGreeting(profile.first_name)
+              : t.formations.dashboardWelcome}
           </p>
-          <span
-            className={`inline-flex items-center rounded-full px-4 py-1.5 text-xs font-semibold ${
-              isPro ? "brand-gradient text-white" : "border border-black/10 text-muted"
-            }`}
-          >
-            {isPro ? t.formations.dashboardPlanPro : t.formations.dashboardPlanFree}
-          </span>
+          {isPro && (
+            <span className="brand-gradient inline-flex items-center rounded-full px-4 py-1.5 text-xs font-semibold text-white">
+              {t.formations.dashboardPlanPro}
+            </span>
+          )}
         </div>
       </motion.div>
 
@@ -132,7 +136,8 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
       <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
         {certs.map((cert, i) => {
           const stats = progress[cert.slug];
-          const unlocked = isPro || purchasedIds.has(cert.id);
+          const expiresAt = purchasedIds.get(cert.id);
+          const unlocked = isPro || expiresAt !== undefined;
           return (
             <motion.div
               key={cert.slug}
@@ -158,14 +163,23 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                   )}
                 </div>
                 <div>
-                  <h3 className="font-display text-lg font-medium text-ink">
-                    {localize(cert.name, lang)}
-                  </h3>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-display text-lg font-medium text-ink">
+                      {localize(cert.name, lang)}
+                    </h3>
+                    {!isPro && expiresAt && (
+                      <span className="inline-flex items-center rounded-full border border-green/30 bg-green/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-green">
+                        {t.formations.dashboardPaidBadge}
+                      </span>
+                    )}
+                  </div>
                   <p className="mt-1 text-sm leading-relaxed text-muted">
-                    {stats
-                      ? `${Math.round((stats.correct / stats.answered) * 100)}% ${
-                          t.formations.dashboardProgress
-                        } ${stats.answered}`
+                    {stats && stats.answered > 0
+                      ? t.formations.dashboardProgress(
+                          Math.round((stats.correct / stats.answered) * 100),
+                          stats.correct,
+                          stats.answered
+                        )
                       : t.formations.dashboardNotStarted}
                   </p>
                 </div>
@@ -194,8 +208,8 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
               <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-black/5 pt-5">
                 {unlocked ? (
                   <Link
-                    to={`/formations/${cert.slug}`}
-                    className="brand-gradient rounded-full px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+                    to={`/formations/${cert.slug}?mode=exam`}
+                    className="rounded-full border border-teal/40 px-4 py-1.5 text-xs font-medium text-teal-dark transition hover:bg-teal/5"
                   >
                     {t.formations.dashboardContinue}
                   </Link>
@@ -213,7 +227,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                     type="button"
                     onClick={() => handleDownloadPdf(cert)}
                     disabled={downloadingSlug === cert.slug}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-4 py-1.5 text-xs font-medium text-ink transition hover:border-black/20 disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-4 py-1.5 text-xs font-medium text-ink transition hover:bg-teal/5 disabled:opacity-50"
                   >
                     {downloadingSlug === cert.slug
                       ? t.formations.downloadingPdf
@@ -221,10 +235,112 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                   </button>
                 )}
               </div>
+
+              {!isPro && expiresAt && (
+                <div className="mt-auto flex items-center justify-center gap-2 pt-4 text-xs text-muted">
+                  <span>
+                    {t.formations.dashboardAccessUntil(
+                      new Date(expiresAt).toLocaleDateString(lang === "fr" ? "fr-FR" : "en-US", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    )}
+                  </span>
+                  <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-green text-white">
+                    <svg viewBox="0 0 24 24" fill="none" className="h-2 w-2">
+                      <path
+                        d="M5 13l4 4L19 7"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                </div>
+              )}
             </motion.div>
           );
         })}
       </div>
+
+      <AnimatePresence>
+        {pdfModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-6"
+            onClick={() => setPdfModal(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-2xl border border-black/8 bg-white p-6 shadow-xl"
+            >
+              <h3 className="font-display text-base font-semibold text-ink">
+                {t.formations.pdfCountPrompt}
+              </h3>
+
+              {(() => {
+                const total = pdfModal.questions.length;
+                const stepValues = Array.from(
+                  { length: Math.ceil(total / 20) },
+                  (_, i) => Math.min((i + 1) * 20, total)
+                );
+                const sliderIndex = Math.max(
+                  0,
+                  stepValues.findIndex((v) => v === pdfModal.count)
+                );
+                return (
+                  <div className="mt-5">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted">
+                        {t.quiz.questionCountLabel}
+                      </span>
+                      <span className="text-sm font-semibold text-ink">{pdfModal.count}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={Math.max(stepValues.length - 1, 0)}
+                      step={1}
+                      value={sliderIndex}
+                      onChange={(e) =>
+                        setPdfModal((prev) =>
+                          prev ? { ...prev, count: stepValues[Number(e.target.value)] } : prev
+                        )
+                      }
+                      className="w-full accent-teal"
+                    />
+                  </div>
+                );
+              })()}
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPdfModal(null)}
+                  className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-ink transition hover:border-black/20"
+                >
+                  {t.formations.pdfCountCancel}
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDownloadPdf}
+                  className="brand-gradient rounded-full px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+                >
+                  {t.formations.pdfCountConfirm}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

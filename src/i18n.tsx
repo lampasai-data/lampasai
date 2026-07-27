@@ -90,9 +90,11 @@ interface Translations {
     upgradeDesc: string;
     upgradeCta: string;
     dashboardWelcome: string;
-    dashboardPlanFree: string;
+    dashboardGreeting: (name: string) => string;
     dashboardPlanPro: string;
-    dashboardProgress: string;
+    dashboardPaidBadge: string;
+    dashboardAccessUntil: (date: string) => string;
+    dashboardProgress: (pct: number, correct: number, answered: number) => string;
     dashboardNotStarted: string;
     dashboardContinue: string;
     dashboardGoPro: string;
@@ -135,10 +137,13 @@ interface Translations {
     downloadPdf: string;
     downloadingPdf: string;
     pdfCountPrompt: string;
-    pdfCountMax: string;
+    pdfCountConfirm: string;
+    pdfCountCancel: string;
+    pdfCountAll: string;
   };
   quiz: {
     back: string;
+    backDashboard: string;
     score: string;
     points: string;
     remainingFree: string;
@@ -156,18 +161,20 @@ interface Translations {
     finishedTime: string;
     finishedPoints: string;
     restart: string;
-    backToFormations: string;
     explanationLabel: string;
     modeSelectTitle: string;
     modeTrainingTitle: string;
     modeTrainingDesc: string;
     modeExamTitle: string;
     modeExamDesc: string;
+    modeExamDescShort: string;
     modeExamLocked: string;
     questionCountLabel: string;
     questionCountAll: string;
     startTraining: string;
     startExam: string;
+    preparingTraining: string;
+    preparingExam: string;
     endExam: string;
     examTimeLeft: string;
     passThresholdNote: string;
@@ -183,6 +190,9 @@ interface Translations {
     quotaCongrats: string;
     quotaEncourage: string;
     quotaUnlockHint: string;
+    reviewTitle: string;
+    reviewErrorsOnly: string;
+    reviewAll: string;
   };
 }
 
@@ -272,7 +282,7 @@ const translations: Record<Lang, Translations> = {
       tabCertifications: "Certifications",
       tabFormations: "Formations",
       tabPricing: "Pricing",
-      trainFor: "S'entraîner >",
+      trainFor: "S'entraîner",
       accessQuiz: "Accéder au quiz",
       remainingFree: "question(s) gratuite(s) restante(s)",
       valueProp: "Nos questions vont droit à l'essentiel : pas de superflu, seulement ce qu'il faut pour réussir ta certification.",
@@ -284,11 +294,14 @@ const translations: Record<Lang, Translations> = {
       upgradeDesc: "Passe en mode Pro pour accéder à toutes les questions de certification, sans les 20 questions gratuites.",
       upgradeCta: "Passer en illimité",
       dashboardWelcome: "Ton espace d'entraînement",
-      dashboardPlanFree: "Compte Free",
+      dashboardGreeting: (name) => `Bienvenue ${name}`,
       dashboardPlanPro: "Compte Pro",
-      dashboardProgress: "de réussite sur",
+      dashboardPaidBadge: "Payé",
+      dashboardAccessUntil: (date) => `Accès jusqu'au ${date}`,
+      dashboardProgress: (pct, correct, answered) =>
+        `${correct}/${answered} (${pct}%) à ta dernière session`,
       dashboardNotStarted: "Pas encore commencé",
-      dashboardContinue: "S'entraîner en mode Exam",
+      dashboardContinue: "Démarrer l'examen",
       dashboardGoPro: "Passer en mode Pro",
       upgradeModalTitle: "Débloquer des certifications",
       upgradeModalDesc: "Choisis une ou plusieurs certifications pour un accès illimité pendant 3 mois (9,99 € / certification).",
@@ -297,7 +310,7 @@ const translations: Record<Lang, Translations> = {
       upgradeModalSubmit: "Continuer vers le paiement",
       upgradeModalLoading: "Redirection vers le paiement...",
       upgradeModalError: "Impossible de démarrer le paiement. Réessaie dans un instant.",
-      checkoutSuccessBanner: "Paiement confirmé, ton accès a été débloqué 🎉",
+      checkoutSuccessBanner: "Paiement confirmé, ton accès illimité est débloqué pour 3 mois 🎉",
       comingSoonTitle: "Nos formations arrivent bientôt",
       comingSoonDesc: "Nous préparons des parcours de formation complets (Power BI, Snowflake, IA appliquée...). Reviens bientôt ou contacte-nous pour être informé en priorité.",
       comingSoonCta: "Voir les certifications",
@@ -329,10 +342,13 @@ const translations: Record<Lang, Translations> = {
       downloadPdf: "Télécharger en PDF",
       downloadingPdf: "Génération...",
       pdfCountPrompt: "Combien de questions veux-tu exporter ?",
-      pdfCountMax: "max",
+      pdfCountConfirm: "Télécharger",
+      pdfCountCancel: "Annuler",
+      pdfCountAll: "Toutes",
     },
     quiz: {
       back: "Retour aux formations",
+      backDashboard: "Retour à mon espace",
       score: "Score",
       points: "Points",
       remainingFree: "gratuite(s) restante(s)",
@@ -345,23 +361,25 @@ const translations: Record<Lang, Translations> = {
       flaggedNotice: "Marquée pour plus tard",
       reviewFlagged: (n) => `Revoir les questions marquées (${n})`,
       timeElapsed: "Temps",
-      finishedTitle: "C'est terminé",
+      finishedTitle: "C'est terminé !",
       finishedScore: "Bonnes réponses",
       finishedTime: "Temps total",
       finishedPoints: "Points obtenus",
       restart: "Recommencer",
-      backToFormations: "Retour aux formations",
       explanationLabel: "💡 Explication",
       modeSelectTitle: "Choisis ton mode d'entraînement",
       modeTrainingTitle: "Entraînement libre",
       modeTrainingDesc: "Avance à ton rythme, avec explications après chaque question.",
       modeExamTitle: "Mode examen chronométré",
       modeExamDesc: "Évalue-toi à l'examen réel : temps limité, résultat réussi/échoué à la fin. Réservé aux comptes en accès illimité.",
+      modeExamDescShort: "Évalue-toi à l'examen réel : temps limité, résultat réussi/échoué à la fin.",
       modeExamLocked: "Clique pour débloquer",
       questionCountLabel: "Nombre de questions",
       questionCountAll: "Toutes",
       startTraining: "Commencer l'entraînement",
       startExam: "Démarrer l'examen",
+      preparingTraining: "Préparation de l'entraînement…",
+      preparingExam: "Préparation de l'examen…",
       endExam: "Terminer l'examen",
       examTimeLeft: "Temps restant",
       passThresholdNote: "Seuil de réussite : 70% de bonnes réponses.",
@@ -377,6 +395,9 @@ const translations: Record<Lang, Translations> = {
       quotaCongrats: "Bravo, de très bons résultats ! Tu es sur la bonne voie pour réussir ta certification.",
       quotaEncourage: "C'est un bon début, encore un peu d'entraînement et tu vas y arriver - ne lâche rien !",
       quotaUnlockHint: "Dans tous les cas, débloque l'accès illimité pour t'entraîner sur toutes les questions et arriver serein le jour J.",
+      reviewTitle: "Revoir les questions",
+      reviewErrorsOnly: "Voir seulement mes erreurs",
+      reviewAll: "Voir toutes les questions",
     },
   },
   en: {
@@ -464,7 +485,7 @@ const translations: Record<Lang, Translations> = {
       tabCertifications: "Certifications",
       tabFormations: "Training",
       tabPricing: "Pricing",
-      trainFor: "Practice >",
+      trainFor: "Practice",
       accessQuiz: "Go to quiz",
       remainingFree: "free question(s) left",
       valueProp: "Our questions go straight to the point: nothing superfluous, only what you need to pass your certification.",
@@ -476,11 +497,14 @@ const translations: Record<Lang, Translations> = {
       upgradeDesc: "Switch to Pro to access every certification question, without the 20 free questions.",
       upgradeCta: "Go unlimited",
       dashboardWelcome: "Your training space",
-      dashboardPlanFree: "Free account",
+      dashboardGreeting: (name) => `Welcome ${name} 👋, your training space`,
       dashboardPlanPro: "Pro account",
-      dashboardProgress: "correct out of",
+      dashboardPaidBadge: "Paid",
+      dashboardAccessUntil: (date) => `Access until ${date}`,
+      dashboardProgress: (pct, correct, answered) =>
+        `${pct}% correct out of ${answered} questions (${correct}/${answered}) in your last session`,
       dashboardNotStarted: "Not started yet",
-      dashboardContinue: "Practice in Exam mode",
+      dashboardContinue: "Start the exam",
       dashboardGoPro: "Go Pro",
       upgradeModalTitle: "Unlock certifications",
       upgradeModalDesc: "Pick one or more certifications for unlimited access for 3 months (€9.99 / certification).",
@@ -489,7 +513,7 @@ const translations: Record<Lang, Translations> = {
       upgradeModalSubmit: "Continue to payment",
       upgradeModalLoading: "Redirecting to payment...",
       upgradeModalError: "Couldn't start the payment. Please try again in a moment.",
-      checkoutSuccessBanner: "Payment confirmed, your access has been unlocked 🎉",
+      checkoutSuccessBanner: "Payment confirmed, your unlimited access is unlocked for 3 months 🎉",
       comingSoonTitle: "Our training paths are coming soon",
       comingSoonDesc: "We're building complete training paths (Power BI, Snowflake, applied AI...). Check back soon or contact us to be notified first.",
       comingSoonCta: "See certifications",
@@ -521,10 +545,13 @@ const translations: Record<Lang, Translations> = {
       downloadPdf: "Download as PDF",
       downloadingPdf: "Generating...",
       pdfCountPrompt: "How many questions do you want to export?",
-      pdfCountMax: "max",
+      pdfCountConfirm: "Download",
+      pdfCountCancel: "Cancel",
+      pdfCountAll: "All",
     },
     quiz: {
       back: "Back to training",
+      backDashboard: "Back to my dashboard",
       score: "Score",
       points: "Points",
       remainingFree: "free left",
@@ -542,18 +569,20 @@ const translations: Record<Lang, Translations> = {
       finishedTime: "Total time",
       finishedPoints: "Points earned",
       restart: "Restart",
-      backToFormations: "Back to training",
       explanationLabel: "💡 Explanation",
       modeSelectTitle: "Choose your practice mode",
       modeTrainingTitle: "Free practice",
       modeTrainingDesc: "Go at your own pace, with explanations after each question.",
       modeExamTitle: "Timed exam mode",
       modeExamDesc: "Test yourself on the real exam: limited time, pass/fail result at the end. Reserved for unlimited access accounts.",
+      modeExamDescShort: "Test yourself on the real exam: limited time, pass/fail result at the end.",
       modeExamLocked: "Click to unlock",
       questionCountLabel: "Number of questions",
       questionCountAll: "All",
       startTraining: "Start practice",
       startExam: "Start exam",
+      preparingTraining: "Preparing your practice session…",
+      preparingExam: "Preparing your exam…",
       endExam: "End exam",
       examTimeLeft: "Time left",
       passThresholdNote: "Pass threshold: 70% correct answers.",
@@ -569,6 +598,9 @@ const translations: Record<Lang, Translations> = {
       quotaCongrats: "Great job, solid results! You're on track to pass your certification.",
       quotaEncourage: "That's a good start - a bit more practice and you'll get there, don't give up!",
       quotaUnlockHint: "Either way, unlock unlimited access to train on every question and feel ready on exam day.",
+      reviewTitle: "Review the questions",
+      reviewErrorsOnly: "Show only my mistakes",
+      reviewAll: "Show all questions",
     },
   },
 };

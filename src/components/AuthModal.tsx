@@ -37,7 +37,7 @@ export default function AuthModal() {
               type="button"
               aria-label="Fermer"
               onClick={closeAuthModal}
-              className="absolute -top-3 -right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-ink shadow-sm transition hover:bg-black/[0.03]"
+              className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-ink shadow-sm transition hover:bg-black/[0.03]"
             >
               ✕
             </button>

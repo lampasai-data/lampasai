@@ -70,7 +70,7 @@ export async function loadQuestions(slug: string): Promise<{
       const { data: rows } = await supabase
         .from("quiz_questions")
         .select(
-          "id, type, question, question_en, options, options_en, correct_indexes, correct_order, pool, pool_en, targets, targets_en, blanks, blanks_en, explanation, explanation_en"
+          "id, type, question, question_en, options, options_en, correct_indexes, correct_order, pool, pool_en, targets, targets_en, blanks, blanks_en, explanation, explanation_en, exam_only"
         )
         .eq("certification_id", cert.id)
         .order("position", { ascending: true });
@@ -89,6 +89,7 @@ export async function loadQuestions(slug: string): Promise<{
               explanation: r.explanation
                 ? toLocalizedPair(r.explanation, r.explanation_en)
                 : undefined,
+              examOnly: Boolean(r.exam_only),
             };
             if (type === "match") {
               const poolEn = r.pool_en as string[] | null;
@@ -154,11 +155,17 @@ export async function getUserProgress(
 
   const { data: attempts, error } = await supabase
     .from("attempts")
-    .select("is_correct, quiz_questions(certification_id)")
-    .eq("user_id", userId);
+    .select("is_correct, answered_at, quiz_questions(certification_id)")
+    .eq("user_id", userId)
+    .order("answered_at", { ascending: true });
   if (error || !attempts) return {};
 
-  const progress: Record<string, CertificationProgress> = {};
+  // Group attempts per certification, then split them into runs: a new run
+  // starts whenever there's a gap of more than 20 minutes since the previous
+  // attempt. Only the most recent run is kept, so the dashboard reflects the
+  // last quiz taken rather than a lifetime cumulative average.
+  const RUN_GAP_MS = 20 * 60 * 1000;
+  const bySlug: Record<string, { is_correct: boolean; answered_at: string }[]> = {};
   for (const row of attempts) {
     const nested = row.quiz_questions as unknown as
       | { certification_id: string }
@@ -167,27 +174,42 @@ export async function getUserProgress(
     const certId = Array.isArray(nested) ? nested[0]?.certification_id : nested?.certification_id;
     const slug = certId ? slugById.get(certId) : undefined;
     if (!slug) continue;
-    progress[slug] ??= { answered: 0, correct: 0 };
-    progress[slug].answered += 1;
-    if (row.is_correct) progress[slug].correct += 1;
+    (bySlug[slug] ??= []).push({ is_correct: row.is_correct, answered_at: row.answered_at });
+  }
+
+  const progress: Record<string, CertificationProgress> = {};
+  for (const [slug, rows] of Object.entries(bySlug)) {
+    let runStart = 0;
+    for (let i = 1; i < rows.length; i++) {
+      const gap = new Date(rows[i].answered_at).getTime() - new Date(rows[i - 1].answered_at).getTime();
+      if (gap > RUN_GAP_MS) runStart = i;
+    }
+    const lastRun = rows.slice(runStart);
+    progress[slug] = {
+      answered: lastRun.length,
+      correct: lastRun.filter((r) => r.is_correct).length,
+    };
   }
   return progress;
 }
 
 // Certification ids the user has paid for and that are still within their
 // 3-month validity window. Independent from the legacy profiles.plan flag.
-export async function getPurchasedCertificationIds(userId: string): Promise<Set<string>> {
-  if (!isSupabaseConfigured || !supabase) return new Set();
+// Maps each purchased+still-valid certification id to its expiry date (ISO
+// string), so the UI can both gate access (.has()) and show the user when
+// their 3-month window runs out.
+export async function getPurchasedCertificationIds(userId: string): Promise<Map<string, string>> {
+  if (!isSupabaseConfigured || !supabase) return new Map();
 
   const { data, error } = await supabase
     .from("certification_purchases")
-    .select("certification_id")
+    .select("certification_id, expires_at")
     .eq("user_id", userId)
     .eq("status", "paid")
     .gte("expires_at", new Date().toISOString());
 
-  if (error || !data) return new Set();
-  return new Set(data.map((row) => row.certification_id as string));
+  if (error || !data) return new Map();
+  return new Map(data.map((row) => [row.certification_id as string, row.expires_at as string]));
 }
 
 export async function createCheckoutSession(

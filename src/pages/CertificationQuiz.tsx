@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { Fragment, useEffect, useRef, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, Reorder } from "motion/react";
 import { loadQuestions, getPurchasedCertificationIds } from "../lib/quizData";
 import type { LocalizedText, Question } from "../data/types";
@@ -15,8 +15,18 @@ import lampasLogo from "../assets/Logo_Lampas_AI_flavicon.png";
 import { CERT_LOGOS } from "../data/certLogos";
 import CustomSelect from "../components/CustomSelect";
 
+function ClockIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="9" fill="currentColor" fillOpacity="0.12" />
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M12 7v5l3.5 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 const POINTS_PER_CORRECT = 10;
-const EXAM_SECONDS_PER_QUESTION = 90;
+const EXAM_SECONDS_PER_QUESTION = 60;
 const PASS_THRESHOLD = 0.7;
 
 function sameAnswers(a: number[], b: number[]) {
@@ -39,16 +49,125 @@ function shuffledIndexes(length: number) {
   return arr;
 }
 
+type AnswerLog = {
+  picked?: number[];
+  order?: number[];
+  match?: (number | null)[];
+  hotspot?: (number | null)[];
+};
+
+interface PersistedRun {
+  slug: string;
+  totalQuestions: number;
+  mode: "training" | "exam" | null;
+  quickExamSetup: boolean;
+  customCount: number | null;
+  queue: number[];
+  pos: number;
+  flagged: number[];
+  results: Record<number, boolean>;
+  picked: number[];
+  orderArrangement: number[];
+  matchAssign: (number | null)[];
+  hotspotPicks: (number | null)[];
+  submitted: boolean;
+  answerLog: Record<number, AnswerLog>;
+  examEndsAt: number | null;
+  examEnded: boolean;
+  elapsed: number;
+}
+
+function runStorageKey(slug: string) {
+  return `lampasai_quiz_run:${slug}`;
+}
+
+function loadPersistedRun(slug: string, totalQuestions: number): PersistedRun | null {
+  try {
+    const raw = sessionStorage.getItem(runStorageKey(slug));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedRun;
+    if (parsed.slug !== slug || parsed.totalQuestions !== totalQuestions || parsed.mode === null) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function savePersistedRun(run: PersistedRun) {
+  try {
+    sessionStorage.setItem(runStorageKey(run.slug), JSON.stringify(run));
+  } catch {
+    // ignore storage errors (private browsing, quota, etc.)
+  }
+}
+
+function clearPersistedRun(slug: string) {
+  try {
+    sessionStorage.removeItem(runStorageKey(slug));
+  } catch {
+    // ignore
+  }
+}
+
+// Options that look like code/formula snippets (DAX, SQL, ...) read much
+// better in a monospace font than the default prose font.
+function looksLikeCode(text: string) {
+  // Square/curly brackets ([Column], {values}) or an UPPERCASE function call
+  // (USERNAME(), CALCULATE(...)) are strong DAX/SQL signals. Plain
+  // parenthesised words like "(ribbon)" or "(scatter)" are not.
+  return /[[\]{}]/.test(text) || /\b[A-Z][A-Z0-9_]*\(/.test(text);
+}
+
+// Renders question/blank text line by line, switching to monospace only for
+// lines that look like an actual DAX/SQL snippet (e.g. a formula on its own
+// line), so a prose question with an embedded formula doesn't render as one
+// uniform font.
+// Circled-digit glyphs (①②③...) render illegibly small/inconsistent across
+// fonts (especially monospace). Replace each with a proper styled badge
+// instead of relying on the glyph.
+const CIRCLED_DIGIT_RE = /([①-⑳])/;
+
+function withCircledNumbers(text: string) {
+  return text.split(CIRCLED_DIGIT_RE).map((part, i) => {
+    const cp = part.codePointAt(0);
+    if (part.length === 1 && cp !== undefined && cp >= 0x2460 && cp <= 0x2473) {
+      return (
+        <span
+          key={i}
+          className="mx-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-teal/15 align-middle text-[10px] font-semibold text-teal-dark"
+        >
+          {cp - 0x2460 + 1}
+        </span>
+      );
+    }
+    return part;
+  });
+}
+
+function renderQuestionText(text: string) {
+  const lines = text.split("\n");
+  return lines.map((line, i) => (
+    <span key={i} className={looksLikeCode(line) ? "font-mono text-[13px] tracking-tight" : undefined}>
+      {withCircledNumbers(line)}
+      {i < lines.length - 1 ? "\n" : ""}
+    </span>
+  ));
+}
+
 function formatTime(totalSeconds: number) {
-  const m = Math.floor(totalSeconds / 60)
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60)
     .toString()
-    .padStart(2, "0");
+    .padStart(h > 0 ? 2 : 1, "0");
   const s = (totalSeconds % 60).toString().padStart(2, "0");
-  return `${m}:${s}`;
+  return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
 }
 
 export default function CertificationQuiz() {
   const { slug = "" } = useParams();
+  const navigate = useNavigate();
   const { user, profile, openAuthModalForUpgrade, openUpgradeModal } = useAuth();
   const { lang, t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -56,7 +175,7 @@ export default function CertificationQuiz() {
   const [cert, setCert] = useState<{ id: string; name: LocalizedText; questions: Question[] } | null>(
     null
   );
-  const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
+  const [purchasedIds, setPurchasedIds] = useState<Map<string, string>>(new Map());
   // Pro users can cap how many questions a run draws from; null = use them all.
   const [customCount, setCustomCount] = useState<number | null>(null);
 
@@ -73,35 +192,138 @@ export default function CertificationQuiz() {
   // "hotspot": hotspotPicks[blankIndex] = chosen option index for that dropdown (or null).
   const [hotspotPicks, setHotspotPicks] = useState<(number | null)[]>([]);
   const [submitted, setSubmitted] = useState(false);
+  const [answerLog, setAnswerLog] = useState<Record<number, AnswerLog>>({});
+  const [expandedReview, setExpandedReview] = useState<Set<number>>(new Set());
+  const [reviewErrorsOnly, setReviewErrorsOnly] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const startedAt = useRef<number>(Date.now());
   const qIndexRef = useRef<number | undefined>(undefined);
 
   const [mode, setMode] = useState<"training" | "exam" | null>(null);
+  const [quickExamSetup, setQuickExamSetup] = useState(false);
+  const [launching, setLaunching] = useState<"training" | "exam" | null>(null);
   const [examEndsAt, setExamEndsAt] = useState<number | null>(null);
   const [examRemaining, setExamRemaining] = useState(0);
   const [examEnded, setExamEnded] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     loadQuestions(slug).then((data) => {
-      if (data) {
-        setCert({ id: data.id, name: data.name, questions: data.questions });
-        setQueue(shuffledIndexes(data.questions.length));
-        setPos(0);
-        setFlagged(new Set());
-        setResults({});
-        startedAt.current = Date.now();
-        setElapsed(0);
-        setMode(null);
-        setExamEndsAt(null);
-        setExamEnded(false);
+      if (cancelled || !data) return;
+      setCert({ id: data.id, name: data.name, questions: data.questions });
+
+      // An explicit ?mode=exam link (e.g. the Dashboard's quick-start button)
+      // always wins over a stale in-progress run for this slug - otherwise a
+      // forgotten training session would silently resume instead of opening
+      // the exam quick-start screen the user just clicked into.
+      const wantsFreshExam = searchParams.get("mode") === "exam";
+      const saved = wantsFreshExam ? null : loadPersistedRun(slug, data.questions.length);
+      if (saved) {
+        setQueue(saved.queue);
+        setPos(saved.pos);
+        setFlagged(new Set(saved.flagged));
+        setResults(saved.results);
+        setPicked(saved.picked);
+        setOrderArrangement(saved.orderArrangement);
+        setMatchAssign(saved.matchAssign);
+        setHotspotPicks(saved.hotspotPicks);
+        setSubmitted(saved.submitted);
+        setAnswerLog(saved.answerLog);
+        setCustomCount(saved.customCount);
+        qIndexRef.current = saved.queue[saved.pos];
+        startedAt.current = Date.now() - saved.elapsed * 1000;
+        setElapsed(saved.elapsed);
+        setExamEndsAt(saved.examEndsAt);
+        setExamEnded(saved.examEnded);
+        setQuickExamSetup(saved.quickExamSetup);
+        setMode(saved.mode);
+        return;
       }
+
+      setQueue(shuffledIndexes(data.questions.length));
+      setPos(0);
+      setFlagged(new Set());
+      setResults({});
+      startedAt.current = Date.now();
+      setElapsed(0);
+      setMode(null);
+      setQuickExamSetup(false);
+      setExamEndsAt(null);
+      setExamEnded(false);
     });
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
+
+  // Persist the in-progress run so a page refresh (or accidental tab close)
+  // resumes exactly where the user left off instead of dropping back to the
+  // training/exam choice screen.
+  useEffect(() => {
+    if (!cert) return;
+    if (mode === null) {
+      clearPersistedRun(slug);
+      return;
+    }
+    savePersistedRun({
+      slug,
+      totalQuestions: cert.questions.length,
+      mode,
+      quickExamSetup,
+      customCount,
+      queue,
+      pos,
+      flagged: Array.from(flagged),
+      results,
+      picked,
+      orderArrangement,
+      matchAssign,
+      hotspotPicks,
+      submitted,
+      answerLog,
+      examEndsAt,
+      examEnded,
+      elapsed,
+    });
+  }, [
+    cert,
+    slug,
+    mode,
+    quickExamSetup,
+    customCount,
+    queue,
+    pos,
+    flagged,
+    results,
+    picked,
+    orderArrangement,
+    matchAssign,
+    hotspotPicks,
+    submitted,
+    answerLog,
+    examEndsAt,
+    examEnded,
+    elapsed,
+  ]);
 
   useEffect(() => {
     if (user) getPurchasedCertificationIds(user.id).then(setPurchasedIds);
   }, [user]);
+
+  // Direct-to-exam entry point (e.g. from the Dashboard's "Démarrer l'examen"
+  // card button, which links here with ?mode=exam): skip the training/exam
+  // choice screen, but still let the user pick the question count.
+  useEffect(() => {
+    if (!cert || mode !== null || searchParams.get("mode") !== "exam") return;
+    if (!hasProAccess()) return;
+    setQuickExamSetup(true);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("mode");
+      return next;
+    }, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cert, mode, profile, purchasedIds, searchParams]);
 
   useEffect(() => {
     if (!user || searchParams.get("checkout") !== "success") return;
@@ -152,40 +374,85 @@ export default function CertificationQuiz() {
     return profile?.plan === "pro" || (cert ? purchasedIds.has(cert.id) : false);
   }
 
-  // Build a fresh, reshuffled run. Non-Pro users get a repeatable subset capped
-  // to the free quota; Pro users get the full bank, optionally capped to their
-  // chosen question count. Called each time a run starts.
-  function buildRunQueue() {
-    const all = shuffledIndexes(cert?.questions.length ?? 0);
-    if (!hasProAccess()) return all.slice(0, FREE_QUESTION_LIMIT);
-    return customCount ? all.slice(0, customCount) : all;
+  // Build a fresh, reshuffled run. Training/free runs never draw questions
+  // flagged "exam only"; exam runs draw from the full bank. Non-Pro users get
+  // a repeatable subset capped to the free quota; Pro users get the full
+  // eligible pool, optionally capped to their chosen question count.
+  function buildRunQueue(targetMode: "training" | "exam") {
+    const eligible = (cert?.questions ?? [])
+      .map((_, i) => i)
+      .filter((i) => targetMode === "exam" || !cert?.questions[i].examOnly);
+    const shuffled = eligible
+      .map((i) => ({ i, r: Math.random() }))
+      .sort((a, b) => a.r - b.r)
+      .map(({ i }) => i);
+    if (!hasProAccess()) return shuffled.slice(0, FREE_QUESTION_LIMIT);
+    return customCount ? shuffled.slice(0, customCount) : shuffled;
   }
 
-  function resetRun() {
-    setQueue(buildRunQueue());
+  function resetRun(targetMode: "training" | "exam") {
+    setQueue(buildRunQueue(targetMode));
     setPos(0);
     setFlagged(new Set());
     setResults({});
     setPicked([]);
     setSubmitted(false);
+    setAnswerLog({});
+    setExpandedReview(new Set());
+    setReviewErrorsOnly(false);
     startedAt.current = Date.now();
     setElapsed(0);
   }
 
+  function logAnswer(qi: number, data: AnswerLog) {
+    setAnswerLog((prev) => ({ ...prev, [qi]: data }));
+  }
+
   function startTraining() {
-    resetRun();
+    resetRun("training");
+    setQuickExamSetup(false);
     setMode("training");
   }
 
   function startExam() {
     const queueLength = hasProAccess() ? (customCount ?? total) : FREE_QUESTION_LIMIT;
     const duration = queueLength * EXAM_SECONDS_PER_QUESTION;
-    resetRun();
+    resetRun("exam");
     setExamEndsAt(Date.now() + duration * 1000);
     setExamRemaining(duration);
     setExamEnded(false);
+    setQuickExamSetup(false);
     setMode("exam");
   }
+
+  // Show a brief loading modal before the quiz view appears, so the switch
+  // from the setup screen to question 1 doesn't feel like an abrupt jump cut.
+  function launchTraining() {
+    setLaunching("training");
+    setTimeout(() => {
+      startTraining();
+      setLaunching(null);
+    }, 450);
+  }
+
+  function launchExam() {
+    setLaunching("exam");
+    setTimeout(() => {
+      startExam();
+      setLaunching(null);
+    }, 450);
+  }
+
+  const loadingModal = launching && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-6 backdrop-blur-sm">
+      <div className="flex flex-col items-center gap-3 rounded-2xl bg-white px-8 py-6 shadow-xl">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal/30 border-t-teal" />
+        <p className="text-sm font-medium text-ink">
+          {launching === "exam" ? t.quiz.preparingExam : t.quiz.preparingTraining}
+        </p>
+      </div>
+    </div>
+  );
 
   if (!cert) {
     return (
@@ -197,89 +464,294 @@ export default function CertificationQuiz() {
 
   const isPro = hasProAccess();
   const currentScore = Object.values(results).filter(Boolean).length;
+  // Logged-in users land back on their Dashboard at /formations, not the
+  // public marketing page, so the back link should say so.
+  const backLabel = user ? t.quiz.backDashboard : t.quiz.back;
 
-  if (mode === null) {
+  function renderAnswerSummary(q: Question, log: AnswerLog | undefined) {
+    const rowClass = (isRight: boolean) =>
+      `rounded-lg border px-3 py-2 ${
+        isRight ? "border-green/30 bg-green/5 text-ink/80" : "border-red-300 bg-red-50 text-red-600"
+      }`;
+
+    if (q.type === "order") {
+      const order = log?.order ?? [];
+      return (
+        <div className="mt-3 space-y-1.5 text-sm">
+          {(q.correctOrder ?? []).map((correctOptIdx, i) => {
+            const userOptIdx = order[i];
+            const isRight = userOptIdx === correctOptIdx;
+            return (
+              <div key={i} className={rowClass(isRight)}>
+                <span className="font-medium text-ink/60">{i + 1}.</span>{" "}
+                {userOptIdx !== undefined ? localize((q.options ?? [])[userOptIdx], lang) : "—"}
+                {!isRight && (
+                  <span className="mt-1 block text-xs font-medium text-green">
+                    ✓ {localize((q.options ?? [])[correctOptIdx], lang)}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    if (q.type === "match") {
+      return (
+        <div className="mt-3 space-y-1.5 text-sm">
+          {(q.targets ?? []).map((target, ti) => {
+            const assigned = log?.match?.[ti] ?? null;
+            const isRight = assigned === target.correctPoolIndex;
+            return (
+              <div key={ti} className={rowClass(isRight)}>
+                <span className="font-medium text-ink/70">
+                  {withCircledNumbers(localize(target.label, lang))}
+                </span>
+                {" -> "}
+                {assigned !== null ? localize((q.pool ?? [])[assigned], lang) : t.quiz.dropHere}
+                {!isRight && (
+                  <span className="mt-1 block text-xs font-medium text-green">
+                    ✓ {localize((q.pool ?? [])[target.correctPoolIndex], lang)}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    if (q.type === "hotspot") {
+      return (
+        <div className="mt-3 space-y-1.5 text-sm">
+          {(q.blanks ?? []).map((blank, bi) => {
+            const pick = log?.hotspot?.[bi] ?? null;
+            const isRight = pick === blank.correctIndex;
+            const labelText = blank.label ? localize(blank.label, lang) : "";
+            const answerText = pick !== null ? localize(blank.options[pick], lang) : "…";
+            const filled = labelText.includes("⬚")
+              ? labelText.replace("⬚", answerText)
+              : `${labelText} ${answerText}`.trim();
+            return (
+              <div key={bi} className={`${rowClass(isRight)} ${looksLikeCode(labelText) ? "font-mono text-[13px]" : ""}`}>
+                {withCircledNumbers(filled)}
+                {!isRight && (
+                  <span className="mt-1 block text-xs font-medium text-green">
+                    ✓ {localize(blank.options[blank.correctIndex], lang)}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    const picked = log?.picked ?? [];
     return (
-      <section className="mx-auto max-w-3xl px-6 py-24">
-        <BackLink to="/formations" label={t.quiz.back} />
-        <h1 className="mt-6 font-display text-2xl font-semibold text-ink">
-          {t.quiz.modeSelectTitle}
-        </h1>
-
-        {isPro && (
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <span className="text-xs font-medium text-muted">{t.quiz.questionCountLabel}</span>
-            <div className="inline-flex gap-1 rounded-full border border-black/8 bg-surface p-1">
-              {(
-                [
-                  { label: t.quiz.questionCountAll, value: null },
-                  { label: "20", value: 20 },
-                  { label: "50", value: 50 },
-                  { label: "100", value: 100 },
-                ] as const
-              )
-                .filter((option) => option.value === null || option.value < total)
-                .map((option) => {
-                  const active = customCount === option.value;
-                  return (
-                    <button
-                      key={option.label}
-                      type="button"
-                      onClick={() => setCustomCount(option.value)}
-                      className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
-                        active ? "brand-gradient text-white shadow-sm" : "text-muted hover:text-ink"
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  );
-                })}
-            </div>
-          </div>
-        )}
-
-        <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <div className="flex h-full flex-col rounded-2xl border border-black/8 bg-white p-6 shadow-sm">
-            <h3 className="font-display text-lg font-medium text-ink">
-              {t.quiz.modeTrainingTitle}
-            </h3>
-            <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
-              {t.quiz.modeTrainingDesc}
-            </p>
-            <button
-              type="button"
-              onClick={startTraining}
-              className="brand-gradient mt-5 rounded-full px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+      <div className="mt-3 space-y-1.5 text-sm">
+        {(q.options ?? []).map((option, i) => {
+          const isCorrect = (q.correctIndexes ?? []).includes(i);
+          const isPicked = picked.includes(i);
+          return (
+            <div
+              key={i}
+              className={`rounded-lg border px-3 py-2 ${
+                isCorrect
+                  ? "border-green/30 bg-green/5 text-green"
+                  : isPicked
+                    ? "border-red-300 bg-red-50 text-red-600"
+                    : "border-black/10 text-ink/70"
+              }`}
             >
-              {t.quiz.startTraining}
-            </button>
+              {localize(option, lang)}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  const questionCountSlider = isPro
+    ? (() => {
+        const stepValues = Array.from(
+          { length: Math.ceil(total / 20) },
+          (_, i) => Math.min((i + 1) * 20, total)
+        );
+        if (stepValues.length <= 1) return null;
+        const sliderIndex =
+          customCount === null
+            ? stepValues.length - 1
+            : Math.max(0, stepValues.findIndex((v) => v === customCount));
+        return (
+          <div className="mt-5 max-w-sm">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-medium text-muted">{t.quiz.questionCountLabel}</span>
+              <span className="text-sm font-semibold text-ink">
+                {customCount === null ? total : customCount}
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={stepValues.length - 1}
+              step={1}
+              value={sliderIndex}
+              onChange={(e) => {
+                const v = stepValues[Number(e.target.value)];
+                setCustomCount(v >= total ? null : v);
+              }}
+              className="w-full accent-teal"
+            />
+          </div>
+        );
+      })()
+    : null;
+
+  if (mode === null && quickExamSetup) {
+    const previewQuestion = cert.questions[queue[0] ?? 0];
+    return (
+      <>
+        <section className="mx-auto max-w-3xl px-6 py-24">
+          <BackLink to="/formations" label={backLabel} />
+          <div className="mt-6 flex items-center gap-3">
+            <img src={CERT_LOGOS[slug] ?? lampasLogo} alt="" className="h-9 w-9 object-contain" />
+            <h1 className="font-display text-2xl font-semibold text-ink">
+              {localize(cert.name, lang)}
+            </h1>
           </div>
 
-          <div className="flex h-full flex-col rounded-2xl border border-teal/25 bg-white p-6 shadow-sm">
-            <h3 className="font-display text-lg font-medium text-ink">{t.quiz.modeExamTitle}</h3>
-            <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
-              {t.quiz.modeExamDesc}
-            </p>
-            {isPro ? (
-              <button
-                type="button"
-                onClick={startExam}
-                className="mt-5 rounded-full border border-teal/40 px-5 py-2.5 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
-              >
-                {t.quiz.startExam}
-              </button>
+          {previewQuestion && (
+            <div className="mt-6 rounded-2xl border border-black/8 bg-white p-7 shadow-sm">
+              <p className="whitespace-pre-line text-justify font-display text-base font-medium text-ink">
+                {renderQuestionText(localize(previewQuestion.question, lang))}
+              </p>
+              {(previewQuestion.options ?? []).length > 0 && (
+                <div className="mt-6 flex flex-col gap-3">
+                  {(previewQuestion.options ?? []).map((option, i) => (
+                    <div
+                      key={i}
+                      className="rounded-xl border border-black/10 px-4 py-3 text-left text-sm text-ink/80"
+                    >
+                      {localize(option, lang)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-6 backdrop-blur-sm"
+          onClick={() => {
+            if (launching) return;
+            navigate("/formations");
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-sm rounded-2xl border border-black/8 bg-white p-6 shadow-xl"
+          >
+            {launching === "exam" ? (
+              <div className="flex flex-col items-center gap-3 py-4">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal/30 border-t-teal" />
+                <p className="text-sm font-medium text-ink">{t.quiz.preparingExam}</p>
+              </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => (user ? openUpgradeModal(slug) : openAuthModalForUpgrade(slug))}
-                className="brand-gradient mt-5 rounded-full px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
-              >
-                {t.quiz.modeExamLocked}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => navigate("/formations")}
+                  aria-label={backLabel}
+                  className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-ink shadow-sm transition hover:bg-black/[0.03]"
+                >
+                  ✕
+                </button>
+                <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
+                  {t.quiz.modeExamTitle}
+                  <ClockIcon className="h-4 w-4 text-teal-dark" />
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">{t.quiz.modeExamDescShort}</p>
+
+                {questionCountSlider}
+
+                <button
+                  type="button"
+                  onClick={launchExam}
+                  aria-label={t.quiz.startExam}
+                  title={t.quiz.startExam}
+                  className="brand-gradient mx-auto mt-6 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-sm transition hover:opacity-90"
+                >
+                  <span className="ml-0.5 text-2xl leading-none">▶</span>
+                </button>
+              </>
             )}
           </div>
         </div>
-      </section>
+      </>
+    );
+  }
+
+  if (mode === null) {
+    return (
+      <>
+        <section className="mx-auto max-w-3xl px-6 py-24">
+          <BackLink to="/formations" label={backLabel} />
+          <h1 className="mt-6 font-display text-2xl font-semibold text-ink">
+            {t.quiz.modeSelectTitle}
+          </h1>
+
+          {questionCountSlider}
+
+          <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div className="flex h-full flex-col rounded-2xl border border-black/8 bg-white p-6 shadow-sm">
+              <h3 className="font-display text-lg font-medium text-ink">
+                {t.quiz.modeTrainingTitle}
+              </h3>
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
+                {t.quiz.modeTrainingDesc}
+              </p>
+              <button
+                type="button"
+                onClick={launchTraining}
+                className="brand-gradient mt-5 rounded-full px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+              >
+                {t.quiz.startTraining}
+              </button>
+            </div>
+
+            <div className="flex h-full flex-col rounded-2xl border border-teal/25 bg-white p-6 shadow-sm">
+              <h3 className="flex items-center gap-2 font-display text-lg font-medium text-ink">
+                {t.quiz.modeExamTitle}
+                <ClockIcon className="h-4 w-4 text-teal-dark" />
+              </h3>
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
+                {t.quiz.modeExamDesc}
+              </p>
+              {isPro ? (
+                <button
+                  type="button"
+                  onClick={launchExam}
+                  className="mt-5 rounded-full border border-teal/40 px-5 py-2.5 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
+                >
+                  {t.quiz.startExam}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => (user ? openUpgradeModal(slug) : openAuthModalForUpgrade(slug))}
+                  className="brand-gradient mt-5 rounded-full px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+                >
+                  {t.quiz.modeExamLocked}
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+        {loadingModal}
+      </>
     );
   }
 
@@ -290,8 +762,9 @@ export default function CertificationQuiz() {
     const doingWell = ratio >= 0.75;
 
     function restartRun() {
-      resetRun();
+      resetRun("training");
       setMode(null);
+      setQuickExamSetup(false);
       setExamEndsAt(null);
       setExamEnded(false);
     }
@@ -299,7 +772,10 @@ export default function CertificationQuiz() {
     return (
       <section className="mx-auto max-w-2xl px-6 py-24 text-center">
         <div className="rounded-2xl border border-black/8 bg-white p-10 shadow-sm">
-          <h1 className="font-display text-2xl font-semibold text-ink">
+          <div className="text-left">
+            <BackLink to="/formations" label={backLabel} />
+          </div>
+          <h1 className="mt-6 font-display text-2xl font-semibold text-ink">
             {t.quiz.finishedTitle}
           </h1>
           {mode === "exam" ? (
@@ -367,7 +843,7 @@ export default function CertificationQuiz() {
             </div>
           </div>
 
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="mt-8 flex justify-center">
             <button
               type="button"
               onClick={restartRun}
@@ -375,9 +851,80 @@ export default function CertificationQuiz() {
             >
               {t.quiz.restart}
             </button>
-            <BackLink to="/formations" label={t.quiz.backToFormations} />
           </div>
         </div>
+
+        {mode === "exam" && (
+          <div className="mt-8 text-left">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-display text-lg font-semibold text-ink">{t.quiz.reviewTitle}</h2>
+              <button
+                type="button"
+                onClick={() => setReviewErrorsOnly((v) => !v)}
+                className="rounded-full border border-black/10 px-4 py-1.5 text-xs font-medium text-ink transition hover:border-black/20"
+              >
+                {reviewErrorsOnly ? t.quiz.reviewAll : t.quiz.reviewErrorsOnly}
+              </button>
+            </div>
+            <div className="space-y-2">
+              {Object.keys(results)
+                .map(Number)
+                .sort((a, b) => a - b)
+                .filter((qi) => !reviewErrorsOnly || !results[qi])
+                .map((qi) => {
+                  const q = cert.questions[qi];
+                  const correct = results[qi];
+                  const isExpanded = expandedReview.has(qi);
+                  return (
+                    <div key={qi} className="rounded-xl border border-black/8 bg-white">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedReview((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(qi)) next.delete(qi);
+                            else next.add(qi);
+                            return next;
+                          })
+                        }
+                        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm"
+                      >
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span
+                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                              correct ? "bg-green/15 text-green" : "bg-red-100 text-red-600"
+                            }`}
+                          >
+                            {correct ? "✓" : "✕"}
+                          </span>
+                          {flagged.has(qi) && <span className="shrink-0">🚩</span>}
+                          <span className="truncate font-medium text-ink">
+                            {localize(q.question, lang)}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-muted">{isExpanded ? "−" : "+"}</span>
+                      </button>
+                      {isExpanded && (
+                        <div className="border-t border-black/8 px-4 py-4">
+                          {renderAnswerSummary(q, answerLog[qi])}
+                          {q.explanation && (
+                            <div className="mt-4 rounded-xl border border-teal/25 bg-teal/[0.06] p-4">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-teal-dark">
+                                {t.quiz.explanationLabel}
+                              </p>
+                              <p className="mt-2 text-sm leading-relaxed text-ink/80">
+                                {localize(q.explanation, lang)}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        )}
 
         {!isPro && (
           <div className="mt-6 text-left">
@@ -439,6 +986,7 @@ export default function CertificationQuiz() {
       );
     } else {
       setPicked([i]);
+      logAnswer(qIndex, { picked: [i] });
       commitAnswer([i]);
     }
   }
@@ -465,16 +1013,20 @@ export default function CertificationQuiz() {
   // Validate the current question according to its type.
   function handleValidate() {
     if (question.type === "order") {
+      logAnswer(qIndex, { order: orderArrangement });
       commitResult(arraysEqualInOrder(orderArrangement, question.correctOrder ?? []));
     } else if (question.type === "match") {
+      logAnswer(qIndex, { match: matchAssign });
       commitResult(
         (question.targets ?? []).every((tg, i) => matchAssign[i] === tg.correctPoolIndex)
       );
     } else if (question.type === "hotspot") {
+      logAnswer(qIndex, { hotspot: hotspotPicks });
       commitResult(
         (question.blanks ?? []).every((bl, i) => hotspotPicks[i] === bl.correctIndex)
       );
     } else {
+      logAnswer(qIndex, { picked });
       commitAnswer(picked);
     }
   }
@@ -532,8 +1084,8 @@ export default function CertificationQuiz() {
   }
 
   return (
-    <section className="mx-auto max-w-3xl px-6 py-24">
-      <BackLink to="/formations" label={t.quiz.back} />
+    <section className="mx-auto max-w-3xl px-6 pt-4 pb-24">
+      <BackLink to="/formations" label={backLabel} />
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -578,7 +1130,7 @@ export default function CertificationQuiz() {
             <button
               type="button"
               onClick={() => setExamEnded(true)}
-              className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-ink transition hover:border-black/20"
+              className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-ink transition hover:bg-teal/5"
             >
               {t.quiz.endExam}
             </button>
@@ -626,15 +1178,15 @@ export default function CertificationQuiz() {
             />
           )}
           <div className="flex items-start justify-between gap-4">
-            <p className="font-display text-lg font-medium text-ink">
-              {localize(question.question, lang)}
+            <p className="whitespace-pre-line text-justify font-display text-base font-medium text-ink">
+              {renderQuestionText(localize(question.question, lang))}
             </p>
             <button
               type="button"
               onClick={toggleFlag}
               title={isFlagged ? t.quiz.unflag : t.quiz.flag}
               aria-pressed={isFlagged}
-              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-sm font-medium transition ${
+              className={`-mr-4 flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-sm font-medium transition ${
                 isFlagged
                   ? "border-amber/40 bg-amber/10 text-amber"
                   : "border-black/10 text-muted hover:border-black/20 hover:text-ink"
@@ -660,7 +1212,15 @@ export default function CertificationQuiz() {
           )}
           {question.type === "match" && (
             <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-teal/25 bg-teal/[0.08] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-teal-dark">
-              <span className="text-sm">⇥</span>
+              <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+                <path
+                  d="M4 12h13M13 7l4 5-4 5"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
               {t.quiz.matchHint}
             </div>
           )}
@@ -689,7 +1249,7 @@ export default function CertificationQuiz() {
                         : "border-black/10 bg-white text-ink/80 hover:border-teal/30"
                     } ${submitted ? "opacity-60" : "cursor-grab active:cursor-grabbing"}`}
                   >
-                    {localize(item, lang)}
+                    {withCircledNumbers(localize(item, lang))}
                   </button>
                 ))}
               </div>
@@ -729,7 +1289,7 @@ export default function CertificationQuiz() {
                       }`}
                     >
                       <span className="text-sm font-medium text-ink/70 sm:w-1/3">
-                        {localize(target.label, lang)}
+                        {withCircledNumbers(localize(target.label, lang))}
                       </span>
                       <span
                         className={`flex-1 rounded-lg border px-3 py-2 text-sm ${
@@ -755,49 +1315,117 @@ export default function CertificationQuiz() {
               </div>
             </div>
           ) : question.type === "hotspot" ? (
-            <div className="mt-6 space-y-3">
-              {(question.blanks ?? []).map((blank, bi) => {
+            (() => {
+              const blanks = question.blanks ?? [];
+              const renderSelect = (bi: number, code: boolean) => {
                 const pick = currentHotspotPicks[bi];
-                const isRight = submitted && pick === blank.correctIndex;
-                const isWrong = submitted && !isRight;
+                const isRight = submitted && pick === blanks[bi].correctIndex;
                 return (
-                  <div
-                    key={bi}
-                    className="flex flex-col gap-1.5 rounded-xl border border-black/8 bg-white px-4 py-3 sm:flex-row sm:items-center sm:gap-4"
-                  >
-                    {blank.label && (
-                      <span className="font-mono text-xs text-ink/70 sm:w-2/5">
-                        {localize(blank.label, lang)}
-                      </span>
-                    )}
-                    <div className="flex flex-1 items-center gap-2">
-                      <CustomSelect
-                        options={blank.options.map((opt) => localize(opt, lang))}
-                        value={pick}
-                        disabled={submitted}
-                        placeholder={t.quiz.choosePlaceholder}
-                        onChange={(index) =>
-                          setHotspotPicks((prev) => prev.map((v, i) => (i === bi ? index : v)))
-                        }
-                        className="w-full"
-                        triggerClassName={
-                          submitted
-                            ? isRight
-                              ? "border-green/40 bg-green/10 text-green"
-                              : "border-red-400/50 bg-red-50 text-red-600"
-                            : "border-black/15 bg-white text-ink"
-                        }
-                      />
+                  <CustomSelect
+                    options={blanks[bi].options.map((opt) => localize(opt, lang))}
+                    value={pick}
+                    disabled={submitted}
+                    placeholder={t.quiz.choosePlaceholder}
+                    onChange={(index) =>
+                      setHotspotPicks((prev) => prev.map((v, i) => (i === bi ? index : v)))
+                    }
+                    className="inline-block w-auto min-w-[10rem] max-w-full align-middle"
+                    triggerClassName={`${code ? "font-mono text-[12px]" : ""} ${
+                      submitted
+                        ? isRight
+                          ? "border-green/40 bg-green/10 text-green"
+                          : "border-red-400/50 bg-red-50 text-red-600"
+                        : "border-black/15 bg-white text-ink"
+                    }`}
+                    optionsClassName={code ? "font-mono text-[12px]" : ""}
+                  />
+                );
+              };
+
+              // When every blank is a fragment of the same formula (e.g. a
+              // DAX expression split across several dropdowns), render them
+              // all on one continuous line instead of one boxed row each.
+              // Fragments are short and don't end with a sentence period;
+              // full statements (even ones that reference a bracketed
+              // column, like "[Accounts] montre ... l'année.") do, so they
+              // keep their own row instead of being merged together.
+              const blankLabels = blanks.map((b) => (b.label ? localize(b.label, lang) : ""));
+              const allFormula =
+                blanks.length > 1 &&
+                blankLabels.every((text) => !text.trim().endsWith(".")) &&
+                blankLabels.some((text) => looksLikeCode(text));
+
+              if (allFormula) {
+                const anyWrong = submitted && blanks.some((b, bi) => currentHotspotPicks[bi] !== b.correctIndex);
+                return (
+                  <div className="mt-6 rounded-xl border border-black/8 bg-white px-4 py-4">
+                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 font-mono text-[13px] tracking-tight text-ink/80">
+                      {blanks.map((blank, bi) => {
+                        const labelText = blank.label ? localize(blank.label, lang) : "";
+                        const [before, after] = labelText.includes("⬚")
+                          ? labelText.split("⬚")
+                          : [labelText, null];
+                        return (
+                          <Fragment key={bi}>
+                            {before && <span>{withCircledNumbers(before)}</span>}
+                            {renderSelect(bi, true)}
+                            {after && <span>{withCircledNumbers(after)}</span>}
+                          </Fragment>
+                        );
+                      })}
                     </div>
-                    {isWrong && (
-                      <span className="text-xs font-medium text-green sm:w-1/4">
-                        ✓ {localize(blank.options[blank.correctIndex], lang)}
-                      </span>
+                    {anyWrong && (
+                      <div className="mt-3 space-y-1">
+                        {blanks.map(
+                          (blank, bi) =>
+                            currentHotspotPicks[bi] !== blank.correctIndex && (
+                              <p key={bi} className="text-xs font-medium text-green">
+                                ✓ {localize(blank.options[blank.correctIndex], lang)}
+                              </p>
+                            )
+                        )}
+                      </div>
                     )}
                   </div>
                 );
-              })}
-            </div>
+              }
+
+              return (
+                <div className="mt-6 space-y-3">
+                  {blanks.map((blank, bi) => {
+                    const pick = currentHotspotPicks[bi];
+                    const isRight = submitted && pick === blank.correctIndex;
+                    const isWrong = submitted && !isRight;
+                    const labelText = blank.label ? localize(blank.label, lang) : "";
+                    const code = looksLikeCode(labelText);
+                    const [before, after] = labelText.includes("⬚")
+                      ? labelText.split("⬚")
+                      : [labelText, null];
+                    return (
+                      <div
+                        key={bi}
+                        className="flex flex-col gap-1.5 rounded-xl border border-black/8 bg-white px-4 py-3"
+                      >
+                        <div
+                          className={`flex flex-wrap items-center gap-2 ${
+                            code ? "font-mono text-[13px] tracking-tight" : "text-sm"
+                          } text-ink/80`}
+                        >
+                          {before && <span>{withCircledNumbers(before)}</span>}
+                          {renderSelect(bi, code)}
+                          {after && <span>{withCircledNumbers(after)}</span>}
+                        </div>
+                        {isWrong && (
+                          <span className="text-xs font-medium text-green">
+                            ✓ {localize(blank.options[blank.correctIndex], lang)}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()
           ) : question.type === "order" ? (
             <Reorder.Group
               axis="y"
@@ -831,7 +1459,9 @@ export default function CertificationQuiz() {
                     >
                       {position + 1}
                     </span>
-                    <span className="flex-1">{label}</span>
+                    <span className={`flex-1 ${looksLikeCode(label) ? "font-mono text-[13px] tracking-tight" : ""}`}>
+                      {label}
+                    </span>
                     {!submitted && (
                       <span className="text-muted" aria-hidden="true">
                         ⠿
@@ -856,6 +1486,8 @@ export default function CertificationQuiz() {
                     onClick={() => toggleOption(i)}
                     disabled={submitted}
                     className={`rounded-xl border px-4 py-3 text-left text-sm transition ${
+                      looksLikeCode(label) ? "font-mono text-[13px] tracking-tight" : ""
+                    } ${
                       submitted && isCorrect
                         ? "border-green/40 bg-green/10 text-green"
                         : submitted && isPicked
@@ -901,7 +1533,7 @@ export default function CertificationQuiz() {
               transition={{ duration: 0.3 }}
               className="mt-6"
             >
-              {question.explanation && (
+              {mode === "training" && question.explanation && (
                 <div className="rounded-2xl border border-teal/25 bg-teal/[0.06] p-5">
                   <p className="text-xs font-semibold uppercase tracking-wide text-teal-dark">
                     {t.quiz.explanationLabel}

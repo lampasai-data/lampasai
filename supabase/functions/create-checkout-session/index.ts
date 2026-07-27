@@ -73,6 +73,10 @@ Deno.serve(async (req) => {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      // Restrict to Card + Klarna (+ Apple Pay, which rides along with "card").
+      // Without this, Stripe auto-enables every method configured on the
+      // account (Bancontact, MB WAY, Link, Amazon Pay, ...).
+      payment_method_types: ["card", "klarna", "paypal"],
       integration_identifier: `lampasai-cert-${randomSuffix()}`,
       // This account has Stripe Managed Payments enabled by default, which
       // requires a tax code per product unless explicitly disabled here.

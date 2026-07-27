@@ -16,7 +16,7 @@ export default function UpgradeModal() {
   const { user, upgradeModalOpen, upgradeModalPreselect, closeUpgradeModal } = useAuth();
   const { lang, t } = useLanguage();
   const [certs, setCerts] = useState<CertificationSummary[]>([]);
-  const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
+  const [purchasedIds, setPurchasedIds] = useState<Map<string, string>>(new Map());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,12 +96,12 @@ export default function UpgradeModal() {
               type="button"
               aria-label="Fermer"
               onClick={closeUpgradeModal}
-              className="absolute -top-3 -right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-ink shadow-sm transition hover:bg-black/[0.03]"
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-ink shadow-sm transition hover:bg-black/[0.03]"
             >
               ✕
             </button>
 
-            <h3 className="font-display text-lg font-medium text-ink">
+            <h3 className="pr-8 font-display text-lg font-medium text-ink">
               {t.formations.upgradeModalTitle}
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-muted">

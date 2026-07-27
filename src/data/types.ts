@@ -44,4 +44,6 @@ export interface Question {
   explanation?: LocalizedText;
   /** Optional path to an exhibit image (table/diagram/screenshot) shown above the question. */
   image?: string;
+  /** When true, this question is only drawn in exam mode, never in free/training runs. */
+  examOnly?: boolean;
 }
