@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n";
 import { localize } from "../lib/i18nText";
 import {
+  getAllCertificationPurchaseDates,
   getPurchasedCertificationIds,
   getUserProgress,
   loadQuestions,
@@ -20,6 +21,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
   const { t, lang } = useLanguage();
   const [progress, setProgress] = useState<Record<string, CertificationProgress>>({});
   const [purchasedIds, setPurchasedIds] = useState<Map<string, string>>(new Map());
+  const [allPurchaseDates, setAllPurchaseDates] = useState<Map<string, string>>(new Map());
   const [downloadingSlug, setDownloadingSlug] = useState<string | null>(null);
   const [pdfModal, setPdfModal] = useState<{
     certName: LocalizedText;
@@ -37,6 +39,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
   useEffect(() => {
     if (!user) return;
     getPurchasedCertificationIds(user.id).then(setPurchasedIds);
+    getAllCertificationPurchaseDates(user.id).then(setAllPurchaseDates);
   }, [user]);
 
   useEffect(() => {
@@ -47,6 +50,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
       attempts += 1;
       const ids = await getPurchasedCertificationIds(user.id);
       setPurchasedIds(ids);
+      getAllCertificationPurchaseDates(user.id).then(setAllPurchaseDates);
       if (attempts >= 5) clearInterval(interval);
     }, 2000);
     setSearchParams((prev) => {
@@ -138,6 +142,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
           const stats = progress[cert.slug];
           const expiresAt = purchasedIds.get(cert.id);
           const unlocked = isPro || expiresAt !== undefined;
+          const isExpired = !isPro && expiresAt === undefined && allPurchaseDates.has(cert.id);
           return (
             <motion.div
               key={cert.slug}
@@ -170,6 +175,11 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                     {!isPro && expiresAt && (
                       <span className="inline-flex items-center rounded-full border border-green/30 bg-green/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-green">
                         {t.formations.dashboardPaidBadge}
+                      </span>
+                    )}
+                    {isExpired && (
+                      <span className="inline-flex items-center rounded-full border border-red-300 bg-red-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-red-600">
+                        {t.formations.dashboardRenewAccess}
                       </span>
                     )}
                   </div>
@@ -259,6 +269,26 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                     </svg>
                   </span>
                 </div>
+              )}
+              {isExpired && (
+                <button
+                  type="button"
+                  onClick={() => openUpgradeModal(cert.slug)}
+                  className="mt-auto flex items-center justify-center gap-2 pt-4 text-xs font-medium text-red-600 transition hover:text-red-700"
+                >
+                  <span>{t.formations.dashboardRenewAccess}</span>
+                  <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-red-500 text-white">
+                    <svg viewBox="0 0 24 24" fill="none" className="h-2 w-2">
+                      <path
+                        d="M6 6l12 12M18 6L6 18"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                </button>
               )}
             </motion.div>
           );

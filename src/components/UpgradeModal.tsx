@@ -9,6 +9,7 @@ import {
   listCertifications,
   type CertificationSummary,
 } from "../lib/quizData";
+import { ENABLE_GUMROAD, buildGumroadCheckoutUrl } from "../lib/paymentConfig";
 
 const CERT_PRICE_EUR = 9.99;
 
@@ -54,7 +55,19 @@ export default function UpgradeModal() {
     });
   }
 
-  async function handleCheckout() {
+  // Gumroad has no equivalent of Stripe's "pick several, pay one total"
+  // checkout session - each product is its own purchase. Sends the buyer
+  // straight to that certification's Gumroad checkout instead.
+  function handleGumroadBuy(cert: CertificationSummary) {
+    const url = buildGumroadCheckoutUrl(cert.slug, user?.email);
+    if (!url) {
+      setError(t.formations.upgradeModalError);
+      return;
+    }
+    window.location.href = url;
+  }
+
+  async function handleStripeCheckout() {
     setError(null);
     setLoading(true);
     try {
@@ -72,6 +85,12 @@ export default function UpgradeModal() {
   }
 
   const availableCerts = certs.filter((c) => !purchasedIds.has(c.id));
+  // "Passer en mode Pro" on a specific certification card should only ever
+  // offer to pay for that certification - not also list the other one, the
+  // way the generic "Passer en illimité" (no preselect) entry point does.
+  const gumroadCerts = upgradeModalPreselect
+    ? availableCerts.filter((c) => c.slug === upgradeModalPreselect)
+    : availableCerts;
   const total = (selected.size * CERT_PRICE_EUR).toFixed(2).replace(".", ",");
 
   return (
@@ -105,13 +124,27 @@ export default function UpgradeModal() {
               {t.formations.upgradeModalTitle}
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-muted">
-              {t.formations.upgradeModalDesc}
+              {ENABLE_GUMROAD ? t.formations.upgradeModalDescSingle : t.formations.upgradeModalDesc}
             </p>
 
-            {availableCerts.length === 0 ? (
+            {(ENABLE_GUMROAD ? gumroadCerts : availableCerts).length === 0 ? (
               <p className="mt-6 rounded-xl border border-teal/25 bg-teal/5 p-4 text-sm text-teal-dark">
                 {t.formations.upgradeModalEmpty}
               </p>
+            ) : ENABLE_GUMROAD ? (
+              <div className="mt-5 flex flex-col gap-2">
+                {gumroadCerts.map((cert) => (
+                  <button
+                    key={cert.id}
+                    type="button"
+                    onClick={() => handleGumroadBuy(cert)}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-black/10 px-4 py-3 text-left text-sm transition hover:border-teal/40 hover:bg-teal/[0.04]"
+                  >
+                    <span className="text-ink">{localize(cert.name, lang)}</span>
+                    <span className="shrink-0 font-medium text-teal-dark">9,99 €</span>
+                  </button>
+                ))}
+              </div>
             ) : (
               <div className="mt-5 flex flex-col gap-2">
                 {availableCerts.map((cert) => (
@@ -138,7 +171,7 @@ export default function UpgradeModal() {
               </div>
             )}
 
-            {selected.size > 0 && (
+            {!ENABLE_GUMROAD && selected.size > 0 && (
               <div className="mt-5 flex items-center justify-between border-t border-black/5 pt-4 text-sm">
                 <span className="text-muted">{t.formations.upgradeModalTotal}</span>
                 <span className="font-display text-lg font-semibold text-ink">{total} €</span>
@@ -147,10 +180,10 @@ export default function UpgradeModal() {
 
             {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
 
-            {availableCerts.length > 0 && (
+            {!ENABLE_GUMROAD && availableCerts.length > 0 && (
               <button
                 type="button"
-                onClick={handleCheckout}
+                onClick={handleStripeCheckout}
                 disabled={selected.size === 0 || loading}
                 className="brand-gradient mt-6 w-full rounded-full px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
               >

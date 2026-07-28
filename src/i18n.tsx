@@ -94,12 +94,14 @@ interface Translations {
     dashboardPlanPro: string;
     dashboardPaidBadge: string;
     dashboardAccessUntil: (date: string) => string;
+    dashboardRenewAccess: string;
     dashboardProgress: (pct: number, correct: number, answered: number) => string;
     dashboardNotStarted: string;
     dashboardContinue: string;
     dashboardGoPro: string;
     upgradeModalTitle: string;
     upgradeModalDesc: string;
+    upgradeModalDescSingle: string;
     upgradeModalEmpty: string;
     upgradeModalTotal: string;
     upgradeModalSubmit: string;
@@ -177,7 +179,7 @@ interface Translations {
     preparingExam: string;
     endExam: string;
     examTimeLeft: string;
-    passThresholdNote: string;
+    passThresholdNote: (scoreOn1000: number) => string;
     trainingSuccess: string;
     trainingFail: string;
     dragHint: string;
@@ -291,13 +293,14 @@ const translations: Record<Lang, Translations> = {
       skipFreeDesc: "Tu peux créer ton compte dès maintenant et passer directement en accès illimité, sans faire les 20 questions gratuites.",
       createAccountCta: "Créer mon compte",
       upgradeTitle: "Envie de t'entraîner sans limite ?",
-      upgradeDesc: "Passe en mode Pro pour accéder à toutes les questions de certification, sans les 20 questions gratuites.",
+      upgradeDesc: "Passe en mode Pro pour accéder à toutes les questions de certification",
       upgradeCta: "Passer en illimité",
       dashboardWelcome: "Ton espace d'entraînement",
       dashboardGreeting: (name) => `Bienvenue ${name}`,
       dashboardPlanPro: "Compte Pro",
       dashboardPaidBadge: "Payé",
       dashboardAccessUntil: (date) => `Accès jusqu'au ${date}`,
+      dashboardRenewAccess: "Renouvelle ton accès",
       dashboardProgress: (pct, correct, answered) =>
         `${correct}/${answered} (${pct}%) à ta dernière session`,
       dashboardNotStarted: "Pas encore commencé",
@@ -305,6 +308,7 @@ const translations: Record<Lang, Translations> = {
       dashboardGoPro: "Passer en mode Pro",
       upgradeModalTitle: "Débloquer des certifications",
       upgradeModalDesc: "Choisis une ou plusieurs certifications pour un accès illimité pendant 3 mois (9,99 € / certification).",
+      upgradeModalDescSingle: "Choisis une certification pour un accès illimité pendant 3 mois (9,99 € / certification).",
       upgradeModalEmpty: "Toutes tes certifications sont déjà débloquées.",
       upgradeModalTotal: "Total",
       upgradeModalSubmit: "Continuer vers le paiement",
@@ -382,7 +386,8 @@ const translations: Record<Lang, Translations> = {
       preparingExam: "Préparation de l'examen…",
       endExam: "Terminer l'examen",
       examTimeLeft: "Temps restant",
-      passThresholdNote: "Seuil de réussite : 70% de bonnes réponses.",
+      passThresholdNote: (scoreOn1000) =>
+        `Seuil de réussite : ${scoreOn1000}/1000 (${Math.round(scoreOn1000 / 10)}% de bonnes réponses).`,
       trainingSuccess: "Succès 🎉",
       trainingFail: "Échec",
       dragHint: "Fais glisser pour réordonner",
@@ -494,20 +499,22 @@ const translations: Record<Lang, Translations> = {
       skipFreeDesc: "You can create your account right away and go straight to unlimited access, without doing the 20 free questions.",
       createAccountCta: "Create my account",
       upgradeTitle: "Want to practice without limits?",
-      upgradeDesc: "Switch to Pro to access every certification question, without the 20 free questions.",
+      upgradeDesc: "Switch to Pro to access every certification question",
       upgradeCta: "Go unlimited",
       dashboardWelcome: "Your training space",
-      dashboardGreeting: (name) => `Welcome ${name} 👋, your training space`,
+      dashboardGreeting: (name) => `Welcome ${name}, your training space`,
       dashboardPlanPro: "Pro account",
       dashboardPaidBadge: "Paid",
       dashboardAccessUntil: (date) => `Access until ${date}`,
+      dashboardRenewAccess: "Renew your access",
       dashboardProgress: (pct, correct, answered) =>
-        `${pct}% correct out of ${answered} questions (${correct}/${answered}) in your last session`,
+        `${correct}/${answered} (${pct}%) in your last session`,
       dashboardNotStarted: "Not started yet",
       dashboardContinue: "Start the exam",
       dashboardGoPro: "Go Pro",
       upgradeModalTitle: "Unlock certifications",
       upgradeModalDesc: "Pick one or more certifications for unlimited access for 3 months (€9.99 / certification).",
+      upgradeModalDescSingle: "Pick a certification for unlimited access for 3 months (€9.99 / certification).",
       upgradeModalEmpty: "All your certifications are already unlocked.",
       upgradeModalTotal: "Total",
       upgradeModalSubmit: "Continue to payment",
@@ -585,7 +592,8 @@ const translations: Record<Lang, Translations> = {
       preparingExam: "Preparing your exam…",
       endExam: "End exam",
       examTimeLeft: "Time left",
-      passThresholdNote: "Pass threshold: 70% correct answers.",
+      passThresholdNote: (scoreOn1000) =>
+        `Pass threshold: ${scoreOn1000}/1000 (${Math.round(scoreOn1000 / 10)}% correct answers).`,
       trainingSuccess: "Success 🎉",
       trainingFail: "Failure",
       dragHint: "Drag to reorder",

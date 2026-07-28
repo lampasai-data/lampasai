@@ -212,6 +212,31 @@ export async function getPurchasedCertificationIds(userId: string): Promise<Map<
   return new Map(data.map((row) => [row.certification_id as string, row.expires_at as string]));
 }
 
+// Every certification the user has ever paid for, regardless of whether the
+// 3-month window is still valid - lets the Dashboard tell "never purchased"
+// apart from "purchased but expired" (used for display only; access gating
+// still relies on getPurchasedCertificationIds, which only returns the
+// still-valid ones).
+export async function getAllCertificationPurchaseDates(
+  userId: string
+): Promise<Map<string, string>> {
+  if (!isSupabaseConfigured || !supabase) return new Map();
+
+  const { data, error } = await supabase
+    .from("certification_purchases")
+    .select("certification_id, expires_at")
+    .eq("user_id", userId)
+    .eq("status", "paid")
+    .order("expires_at", { ascending: true });
+
+  if (error || !data) return new Map();
+  // Rows are ascending by expiry, so later rows (renewals) overwrite earlier
+  // ones, leaving the most recent expiry per certification.
+  const map = new Map<string, string>();
+  for (const row of data) map.set(row.certification_id as string, row.expires_at as string);
+  return map;
+}
+
 export async function createCheckoutSession(
   certificationIds: string[],
   successUrl: string,

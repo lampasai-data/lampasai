@@ -28,6 +28,15 @@ function ClockIcon({ className = "h-4 w-4" }: { className?: string }) {
 const POINTS_PER_CORRECT = 10;
 const EXAM_SECONDS_PER_QUESTION = 60;
 const PASS_THRESHOLD = 0.7;
+// SnowPro Core's real exam scores out of 1000 with a 750 pass mark (75%),
+// vs. PL-300's ~700/1000 (70%). Reflect the real threshold per certification.
+const PASS_THRESHOLD_BY_SLUG: Record<string, number> = {
+  snowflake: 0.75,
+};
+
+function getPassThreshold(slug: string) {
+  return PASS_THRESHOLD_BY_SLUG[slug] ?? PASS_THRESHOLD;
+}
 
 function sameAnswers(a: number[], b: number[]) {
   if (a.length !== b.length) return false;
@@ -114,6 +123,9 @@ function clearPersistedRun(slug: string) {
 // Options that look like code/formula snippets (DAX, SQL, ...) read much
 // better in a monospace font than the default prose font.
 function looksLikeCode(text: string) {
+  // A bare type/length token like "VARCHAR(25)" or "CHARACTER(25)" isn't a
+  // real code snippet - it reads better in the normal font than monospace.
+  if (/^[A-Z_]+\(\d+\)$/.test(text.trim())) return false;
   // Square/curly brackets ([Column], {values}) or an UPPERCASE function call
   // (USERNAME(), CALCULATE(...)) are strong DAX/SQL signals. Plain
   // parenthesised words like "(ribbon)" or "(scatter)" are not.
@@ -758,7 +770,8 @@ export default function CertificationQuiz() {
   if (finished) {
     const points = currentScore * POINTS_PER_CORRECT;
     const ratio = runSize > 0 ? currentScore / runSize : 0;
-    const passed = mode === "exam" && ratio >= PASS_THRESHOLD;
+    const passThreshold = getPassThreshold(slug);
+    const passed = mode === "exam" && ratio >= passThreshold;
     const doingWell = ratio >= 0.75;
 
     function restartRun() {
@@ -789,7 +802,9 @@ export default function CertificationQuiz() {
               >
                 {passed ? t.quiz.trainingSuccess : t.quiz.trainingFail}
               </span>
-              <p className="mt-2 text-xs text-muted">{t.quiz.passThresholdNote}</p>
+              <p className="mt-2 text-xs text-muted">
+                {t.quiz.passThresholdNote(Math.round(passThreshold * 1000))}
+              </p>
             </div>
           ) : (
             <div className="mt-4">

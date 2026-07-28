@@ -87,11 +87,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!session) return;
+    if (!session || !supabase) return;
     setAuthModalOpen(false);
     // Remembered so the auth panel can default to "sign in" instead of
     // "sign up" for a browser that has already logged in before.
     localStorage.setItem(HAS_LOGGED_IN_KEY, "1");
+    // Every login AND signup fires a session here - catch up any Gumroad
+    // purchase that arrived before this account existed, or under an email
+    // that only now matches. Fire-and-forget: never blocks the UI, and a
+    // failure here just means it's retried on the next login (or caught by
+    // the scheduled reconcile sweep / the manual admin catch-up page).
+    supabase.functions.invoke("reconcile-pending-purchases").catch((err) => {
+      console.error("Failed to reconcile pending Gumroad purchases", err);
+    });
     // Google sign-in does a full page redirect, which wipes all in-memory
     // state - sessionStorage is what actually survives to re-open the
     // upgrade modal once the session comes back.
