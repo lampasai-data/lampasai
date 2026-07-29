@@ -29,6 +29,18 @@ export default function Contact() {
       return;
     }
 
+    const body = [
+      `Prénom: ${data.get("firstname")}`,
+      `Nom: ${data.get("lastname")}`,
+      `Email: ${data.get("email")}`,
+      `Téléphone: ${data.get("phone") || "-"}`,
+      "",
+      String(data.get("message") || ""),
+    ].join("\n");
+    window.location.href = `mailto:contact@lampasai.com?subject=${encodeURIComponent(
+      "Contact depuis lampasai.com"
+    )}&body=${encodeURIComponent(body)}`;
+
     setSent(true);
     form.reset();
     setTimeout(() => setSent(false), 3000);

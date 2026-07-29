@@ -1,0 +1,2076 @@
+[
+  {
+    "source_id": 1,
+    "question_fr": "Votre équipe sécurité exige que Snowflake ne puisse pas déchiffrer vos données sans la participation de votre organisation. Quelle fonctionnalité permet cela ?",
+    "question_en": "Your security team requires that Snowflake cannot decrypt your data without your organization's participation. What feature provides this?",
+    "explanation_fr": "Tri-Secret Secure nécessite à la fois la clé de Snowflake et une clé KMS gérée par le client pour déchiffrer les données.",
+    "explanation_en": "Tri-Secret Secure requires both Snowflake's key and a customer-managed KMS key to decrypt data.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "Tri-Secret Secure",
+      "Customer-managed encryption keys only",
+      "End-to-end encryption with Snowflake-managed keys only",
+      "Client-side encryption enforced via a Network Policy"
+    ],
+    "options_fr": [
+      "Tri-Secret Secure",
+      "Des clés de chiffrement gérées uniquement par le client",
+      "Un chiffrement de bout en bout avec des clés gérées uniquement par Snowflake",
+      "Un chiffrement côté client imposé via une Network Policy"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 2,
+    "question_fr": "Vous avez une table de staging qui reçoit des insertions brutes. Vous devez détecter les enregistrements nouveaux, modifiés et supprimés pour appliquer du CDC vers une table cible. Quel objet devez-vous créer ?",
+    "question_en": "You have a staging table that receives raw inserts. You need to detect new, updated, and deleted records to apply CDC to a target table. What object should you create?",
+    "explanation_fr": "Un Stream capture les changements INSERT/UPDATE/DELETE (CDC) sur une table source pour être consommé.",
+    "explanation_en": "A Stream captures INSERT/UPDATE/DELETE changes (CDC) on a source table for consumption.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "A Dynamic Table on the staging table",
+      "A Time Travel query comparing snapshots",
+      "Stream on the staging table",
+      "A Task scheduled every minute"
+    ],
+    "options_fr": [
+      "Une Dynamic Table sur la table de staging",
+      "Une requête Time Travel comparant des snapshots",
+      "Un Stream sur la table de staging",
+      "Une Task planifiée toutes les minutes"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 3,
+    "question_fr": "Vous voulez partager un jeu de données sélectionné avec 50 comptes partenaires spécifiques (pas publiquement). Quel mécanisme est le plus adapté ?",
+    "question_en": "You want to share a curated dataset with 50 specific partner accounts (not publicly). What mechanism is best?",
+    "explanation_fr": "Les Direct Shares sont un partage privé, compte à compte, pour des partenaires spécifiques connus.",
+    "explanation_en": "Direct Shares are private, account-to-account sharing for specific known partners.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "Direct Data Share",
+      "A Marketplace Listing (public)",
+      "An external stage with pre-signed URLs",
+      "A Reader Account"
+    ],
+    "options_fr": [
+      "Direct Data Share (partage direct)",
+      "Un Marketplace Listing (public)",
+      "Un stage externe avec des pre-signed URLs",
+      "Un Reader Account"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 4,
+    "question_fr": "Associez chaque taille de warehouse à sa consommation de crédits/heure.",
+    "question_en": "Match each warehouse size with its credits/hour consumption.",
+    "explanation_fr": "Chaque taille double la consommation de crédits de la précédente : XS=1, S=2, M=4, L=8, XL=16, 2XL=32, 3XL=64, 4XL=128.",
+    "explanation_en": "Each size doubles the credit consumption of the previous one: XS=1, S=2, M=4, L=8, XL=16, 2XL=32, 3XL=64, 4XL=128.",
+    "is_free": true,
+    "type": "match",
+    "pool_fr": [
+      "1 crédit/heure",
+      "2 crédits/heure",
+      "4 crédits/heure",
+      "8 crédits/heure"
+    ],
+    "pool_en": [
+      "1 credit/hour",
+      "2 credits/hour",
+      "4 credits/hour",
+      "8 credits/hour"
+    ],
+    "targets": [
+      {
+        "label_fr": "X-Small",
+        "label_en": "X-Small",
+        "correctPoolIndex": 0
+      },
+      {
+        "label_fr": "Small",
+        "label_en": "Small",
+        "correctPoolIndex": 1
+      },
+      {
+        "label_fr": "Medium",
+        "label_en": "Medium",
+        "correctPoolIndex": 2
+      },
+      {
+        "label_fr": "Large",
+        "label_en": "Large",
+        "correctPoolIndex": 3
+      }
+    ]
+  },
+  {
+    "source_id": 5,
+    "question_fr": "Un utilisateur exécute exactement la même requête SELECT deux fois en 10 minutes. La seconde exécution renvoie le résultat instantanément sans consommer de crédit warehouse. Que s'est-il passé ?",
+    "question_en": "A user runs the exact same SELECT query twice in 10 minutes. The second execution returns instantly with zero warehouse credits consumed. What happened?",
+    "explanation_fr": "Le Result Cache sert des résultats identiques pendant 24 heures sans consommer de crédits ni démarrer de warehouse.",
+    "explanation_en": "The Result Cache serves identical query results for 24 hours without consuming credits or starting a warehouse.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "Local Disk Cache hit",
+      "Metadata Cache hit",
+      "Result Cache hit",
+      "The warehouse auto-resumed instantly"
+    ],
+    "options_fr": [
+      "Un hit du Local Disk Cache",
+      "Un hit du Metadata Cache",
+      "Un hit du Result Cache (cache de résultats)",
+      "Le warehouse a repris instantanément"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 6,
+    "question_fr": "Vous devez restaurer un schéma supprimé contenant 50 tables, supprimé il y a 12 heures (édition Enterprise). Quelle commande unique restaure tout ?",
+    "question_en": "You need to restore a dropped schema that contained 50 tables, dropped 12 hours ago (Enterprise edition). What single command restores everything?",
+    "explanation_fr": "UNDROP SCHEMA restaure l'intégralité du schéma, y compris tous ses objets, dans la période de rétention Time Travel.",
+    "explanation_en": "UNDROP SCHEMA restores the entire schema, including all its objects, within the Time Travel retention period.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "UNDROP SCHEMA schema_name",
+      "ALTER SCHEMA schema_name SET RETENTION_TIME = 1",
+      "CREATE SCHEMA ... CLONE schema_name AT (OFFSET => -12)",
+      "RESTORE SCHEMA schema_name"
+    ],
+    "options_fr": [
+      "UNDROP SCHEMA schema_name",
+      "ALTER SCHEMA schema_name SET RETENTION_TIME = 1",
+      "CREATE SCHEMA ... CLONE schema_name AT (OFFSET => -12)",
+      "RESTORE SCHEMA schema_name"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 7,
+    "question_fr": "Qu'est-ce que le Native App Framework de Snowflake ?",
+    "question_en": "What is the Snowflake Native App Framework?",
+    "explanation_fr": "Le Native App Framework permet de créer des applications (interface Streamlit, logique, données) qui s'exécutent directement dans le compte Snowflake du consommateur.",
+    "explanation_en": "The Native App Framework lets developers build applications (with a Streamlit UI, logic, and data) that run directly inside the consumer's Snowflake account.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "A framework for creating and distributing apps within Snowflake",
+      "A container orchestration service for external apps",
+      "A BI tool for building dashboards natively in Snowflake",
+      "A marketplace exclusively for pre-built connectors"
+    ],
+    "options_fr": [
+      "Un framework pour créer et distribuer des applications au sein de Snowflake",
+      "Un service d'orchestration de conteneurs pour des applications externes",
+      "Un outil BI pour créer des dashboards nativement dans Snowflake",
+      "Un marketplace réservé aux connecteurs préconstruits"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 8,
+    "question_fr": "Vos fichiers JSON source contiennent des tableaux d'objets. Vous voulez que chaque objet soit chargé comme une ligne séparée. Quelle option de format de fichier permet cela ?",
+    "question_en": "Your source JSON files contain arrays of objects. You want each object loaded as a separate row. Which file format option enables this?",
+    "explanation_fr": "STRIP_OUTER_ARRAY = TRUE retire les crochets du tableau externe et charge chaque élément comme une ligne individuelle.",
+    "explanation_en": "STRIP_OUTER_ARRAY = TRUE removes the outer array brackets and loads each element as an individual row.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "FLATTEN_ARRAY = TRUE",
+      "STRIP_NULL_VALUES = TRUE",
+      "STRIP_OUTER_ARRAY = TRUE",
+      "ENABLE_OCTAL = TRUE"
+    ],
+    "options_fr": [
+      "FLATTEN_ARRAY = TRUE",
+      "STRIP_NULL_VALUES = TRUE",
+      "STRIP_OUTER_ARRAY = TRUE",
+      "ENABLE_OCTAL = TRUE"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 9,
+    "question_fr": "Votre organisation tague automatiquement les colonnes contenant des emails avec 'PII_EMAIL'. Vous voulez des rapports de conformité montrant tous les objets tagués. Quelle fonctionnalité le permet ?",
+    "question_en": "Your organization automatically tags columns containing emails as 'PII_EMAIL'. You want compliance reports showing all tagged objects. What feature provides this?",
+    "explanation_fr": "Les tags d'objets combinés à la vue TAG_REFERENCES permettent d'interroger tous les objets porteurs d'un tag donné, à des fins de reporting de conformité.",
+    "explanation_en": "Object Tags combined with the TAG_REFERENCES view allow querying all objects that carry a specific tag, for compliance reporting.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "Row Access Policies",
+      "Dynamic Data Masking alone",
+      "The ACCESS_HISTORY view alone",
+      "Object Tagging with the TAG_REFERENCES view"
+    ],
+    "options_fr": [
+      "Les Row Access Policies",
+      "Le Dynamic Data Masking seul",
+      "La vue ACCESS_HISTORY seule",
+      "Le tagging d'objets (Object Tagging) avec la vue TAG_REFERENCES"
+    ],
+    "correct_indexes": [
+      3
+    ]
+  },
+  {
+    "source_id": 10,
+    "question_fr": "Associez chaque type de cache à son emplacement.",
+    "question_en": "Match each cache type with its location.",
+    "explanation_fr": "Chaque cache se situe à une couche différente de l'architecture Snowflake, du cache local SSD du warehouse au cache global de la couche Cloud Services.",
+    "explanation_en": "Each cache lives at a different layer of Snowflake's architecture, from warehouse-local SSD caching to global Cloud Services caching.",
+    "is_free": true,
+    "type": "match",
+    "pool_fr": [
+      "Couche Cloud Services (globale, 24h)",
+      "SSD sur les nœuds du warehouse",
+      "Couche Cloud Services (statistiques)",
+      "Couche Cloud Services (plans compilés)"
+    ],
+    "pool_en": [
+      "Cloud Services layer (global, 24h)",
+      "SSD on warehouse nodes",
+      "Cloud Services layer (statistics)",
+      "Cloud Services layer (compiled plans)"
+    ],
+    "targets": [
+      {
+        "label_fr": "Result Cache",
+        "label_en": "Result Cache",
+        "correctPoolIndex": 0
+      },
+      {
+        "label_fr": "Local Disk Cache",
+        "label_en": "Local Disk Cache",
+        "correctPoolIndex": 1
+      },
+      {
+        "label_fr": "Metadata Cache",
+        "label_en": "Metadata Cache",
+        "correctPoolIndex": 2
+      },
+      {
+        "label_fr": "Query Plan Cache",
+        "label_en": "Query Plan Cache",
+        "correctPoolIndex": 3
+      }
+    ]
+  },
+  {
+    "source_id": 13,
+    "question_fr": "Un nouvel employé doit créer des tables dans ANALYTICS_DB mais ne doit pas gérer les utilisateurs ni les droits. Quel rôle convient ?",
+    "question_en": "A new hire needs to create tables in ANALYTICS_DB but should not manage users or grants. Which system role is appropriate?",
+    "explanation_fr": "Conformément au principe du moindre privilège, un rôle personnalisé limité est préférable à un rôle système large comme SYSADMIN.",
+    "explanation_en": "Following least privilege, a scoped custom role is preferred over a broad system role like SYSADMIN.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "A custom role with CREATE TABLE on that database",
+      "SYSADMIN",
+      "SECURITYADMIN",
+      "ACCOUNTADMIN"
+    ],
+    "options_fr": [
+      "Un rôle personnalisé avec le privilège CREATE TABLE sur cette base",
+      "SYSADMIN",
+      "SECURITYADMIN",
+      "ACCOUNTADMIN"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 16,
+    "question_fr": "Vous devez prévisualiser les données d'un fichier de stage avant chargement, pour vérifier le mapping des colonnes. Quelle approche SQL fonctionne ?",
+    "question_en": "You need to preview data in a stage file before loading it, to verify column mappings. What SQL approach works?",
+    "explanation_fr": "On peut interroger directement des fichiers stagés en utilisant des références de colonnes positionnelles ($1, $2, ...) avec un format de fichier spécifié.",
+    "explanation_en": "You can query staged files directly using positional column references ($1, $2, ...) with a specified file format.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "COPY INTO temp_table FROM @stage/file VALIDATION_MODE = 'RETURN_ROWS'",
+      "SELECT $1, $2, $3 FROM @stage/file (FILE_FORMAT => my_format) LIMIT 10",
+      "SHOW STAGE @stage",
+      "DESCRIBE STAGE @stage"
+    ],
+    "options_fr": [
+      "COPY INTO temp_table FROM @stage/file VALIDATION_MODE = 'RETURN_ROWS'",
+      "SELECT $1, $2, $3 FROM @stage/file (FILE_FORMAT => my_format) LIMIT 10",
+      "SHOW STAGE @stage",
+      "DESCRIBE STAGE @stage"
+    ],
+    "correct_indexes": [
+      1
+    ]
+  },
+  {
+    "source_id": 18,
+    "question_fr": "Quel est le comportement par défaut lorsqu'un utilisateur n'a aucun rôle défini ?",
+    "question_en": "What is the default behavior when a user has no role set?",
+    "explanation_fr": "Chaque utilisateur est automatiquement membre du rôle PUBLIC, utilisé par défaut lorsqu'aucun autre rôle n'est actif.",
+    "explanation_en": "Every user is automatically a member of the PUBLIC role, which is used as a fallback when no other role is active.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "The user's default role from CREATE USER is used",
+      "The PUBLIC role is used",
+      "The login fails until a role is assigned",
+      "The ACCOUNTADMIN role is used by default"
+    ],
+    "options_fr": [
+      "Le rôle par défaut défini dans CREATE USER est utilisé",
+      "Le rôle PUBLIC est utilisé",
+      "La connexion échoue tant qu'aucun rôle n'est assigné",
+      "Le rôle ACCOUNTADMIN est utilisé par défaut"
+    ],
+    "correct_indexes": [
+      1
+    ]
+  },
+  {
+    "source_id": 20,
+    "question_fr": "Quel format de fichier interne Snowflake utilise-t-il pour stocker les données ?",
+    "question_en": "What internal file format does Snowflake use to store data?",
+    "explanation_fr": "Snowflake stocke les données en interne dans un format columnaire propriétaire compressé, organisé en micro-partitions optimisées pour les requêtes analytiques.",
+    "explanation_en": "Snowflake stores data internally in a proprietary, compressed, columnar micro-partition format optimized for analytical queries.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "Apache Iceberg",
+      "Apache Parquet",
+      "A proprietary compressed columnar format",
+      "Raw CSV, compressed with gzip"
+    ],
+    "options_fr": [
+      "Apache Iceberg",
+      "Apache Parquet",
+      "Un format columnaire compressé propriétaire",
+      "Du CSV brut, compressé avec gzip"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 21,
+    "question_fr": "Qu'est-ce que le Snowflake Marketplace ?",
+    "question_en": "What is Snowflake Marketplace?",
+    "explanation_fr": "Le Snowflake Marketplace permet de découvrir, accéder et partager des jeux de données tiers directement dans votre compte Snowflake, sans déplacement de données.",
+    "explanation_en": "Snowflake Marketplace lets you discover, access, and share third-party data sets directly within your Snowflake account, without any data movement.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "An internal catalog of a company's own tables only",
+      "A repository of Snowflake SQL code samples",
+      "A platform for discovering and accessing third-party data",
+      "A billing dashboard for credit usage"
+    ],
+    "options_fr": [
+      "Un catalogue interne réservé aux tables propres de l'entreprise",
+      "Un dépôt d'exemples de code SQL Snowflake",
+      "Une plateforme pour découvrir et accéder à des données tierces",
+      "Un tableau de bord de facturation des crédits"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 22,
+    "question_fr": "Une stored procedure doit créer des tables, accorder des droits et insérer des données. Une UDF n'est pas suffisante. Pourquoi ?",
+    "question_en": "A stored procedure needs to create tables, grant privileges, and insert data. A UDF is not sufficient. Why?",
+    "explanation_fr": "Les UDF ne font que retourner une valeur au sein d'une requête ; seules les stored procedures peuvent exécuter des instructions DDL (CREATE), DML (INSERT) et GRANT.",
+    "explanation_en": "UDFs only return values within a query; only stored procedures can execute DDL (CREATE), DML (INSERT), and GRANT statements.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "UDFs cannot perform DDL/DML operations; only stored procedures can",
+      "Stored procedures cannot be written in SQL",
+      "UDFs are slower than stored procedures for this workload",
+      "UDFs cannot return a value"
+    ],
+    "options_fr": [
+      "Les UDF ne peuvent pas exécuter d'opérations DDL/DML ; seules les stored procedures le peuvent",
+      "Les procédures stockées ne peuvent pas être écrites en SQL",
+      "Les UDF sont plus lentes que les procédures stockées pour cette charge",
+      "Les UDF ne peuvent pas retourner de valeur"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 23,
+    "question_fr": "Quelle est la taille de fichier recommandée pour les chargements COPY INTO ?",
+    "question_en": "What is the recommended file size for COPY INTO loads?",
+    "explanation_fr": "Des fichiers de 100 à 250 Mo compressés permettent un bon parallélisme de chargement sans surcoût excessif par fichier.",
+    "explanation_en": "Files of 100-250 MB compressed allow good load parallelism without excessive per-file overhead.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "1-2 GB compressed",
+      "100-250 MB compressed",
+      "1-5 MB compressed",
+      "Exactly 16 MB uncompressed"
+    ],
+    "options_fr": [
+      "1 à 2 Go compressés",
+      "100 à 250 Mo compressés",
+      "1 à 5 Mo compressés",
+      "Exactement 16 Mo non compressés"
+    ],
+    "correct_indexes": [
+      1
+    ]
+  },
+  {
+    "source_id": 24,
+    "question_fr": "Vous voulez charger les bons fichiers et ignorer les mauvais lors d'un COPY INTO. Quel paramètre ON_ERROR utiliser ?",
+    "question_en": "You want to load the good files and skip the bad ones during a COPY INTO. What ON_ERROR setting should you use?",
+    "explanation_fr": "SKIP_FILE ignore un fichier entier lorsqu'il contient des erreurs, et poursuit le chargement des autres fichiers valides.",
+    "explanation_en": "SKIP_FILE skips an entire file when it contains errors, and continues loading the remaining good files.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "ABORT_STATEMENT",
+      "CONTINUE",
+      "SKIP_FILE_10",
+      "SKIP_FILE"
+    ],
+    "options_fr": [
+      "ABORT_STATEMENT",
+      "CONTINUE",
+      "SKIP_FILE_10",
+      "SKIP_FILE"
+    ],
+    "correct_indexes": [
+      3
+    ]
+  },
+  {
+    "source_id": 25,
+    "question_fr": "Un pattern de data lakehouse nécessite d'interroger des fichiers Parquet dans S3 sans les charger dans Snowflake. Quel objet devez-vous créer ?",
+    "question_en": "A data lakehouse pattern requires querying Parquet files in S3 without loading them into Snowflake. What object should you create?",
+    "explanation_fr": "Les External Tables offrent une interface SQL en lecture seule sur des fichiers situés dans un stage externe, sans charger les données.",
+    "explanation_en": "External Tables provide a read-only SQL interface over files sitting in an external stage, without loading the data.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Materialized View",
+      "Iceberg Table",
+      "Internal Table",
+      "External Table"
+    ],
+    "options_fr": [
+      "Une vue matérialisée",
+      "Une Iceberg Table",
+      "Une table interne",
+      "Une External Table (table externe)"
+    ],
+    "correct_indexes": [
+      3
+    ]
+  },
+  {
+    "source_id": 26,
+    "question_fr": "Votre équipe a besoin d'une table qui stocke des résultats ETL intermédiaires entre sessions mais sans protection Fail-safe. Quel type de table utiliser ?",
+    "question_en": "Your team needs a table that stores intermediate ETL results between sessions but does not need Fail-safe protection. What table type should you use?",
+    "explanation_fr": "Les tables transientes persistent entre les sessions mais n'ont pas de période Fail-safe, ce qui réduit les coûts de stockage pour des données intermédiaires.",
+    "explanation_en": "Transient tables persist across sessions but have no Fail-safe period, reducing storage costs for intermediate data.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Transient table",
+      "Temporary table",
+      "External table",
+      "Permanent table"
+    ],
+    "options_fr": [
+      "Une table transiente (Transient table)",
+      "Une table temporary",
+      "Une table externe",
+      "Une table permanent"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 27,
+    "question_fr": "Que se passe-t-il lorsqu'un warehouse est suspendu ?",
+    "question_en": "What happens when a warehouse is suspended?",
+    "explanation_fr": "La suspension libère les ressources de calcul, perd le cache disque local, et force les requêtes en cours à se terminer ou être annulées.",
+    "explanation_en": "Suspension releases the compute resources, loses the local disk cache, and forces running queries to either finish or be cancelled.",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "Only running queries are cancelled; the local cache is preserved",
+      "Only the local cache is lost; compute keeps running until manually stopped",
+      "Nothing happens until the warehouse is dropped",
+      "All of the above (compute is released, local cache is lost, running queries must finish or be cancelled)"
+    ],
+    "options_fr": [
+      "Seules les requêtes en cours sont annulées ; le cache local est conservé",
+      "Seul le cache local est perdu ; le compute continue de tourner jusqu'à un arrêt manuel",
+      "Rien ne se passe tant que le warehouse n'est pas supprimé",
+      "Tout ce qui précède (le compute est libéré, le cache local est perdu, les requêtes en cours doivent se terminer ou être annulées)"
+    ],
+    "correct_indexes": [
+      3
+    ]
+  },
+  {
+    "source_id": 28,
+    "question_fr": "Quelle est l'architecture de Snowflake ?",
+    "question_en": "What is Snowflake's architecture?",
+    "explanation_fr": "Snowflake combine les avantages d'une architecture shared-disk (données centralisées) et d'une architecture shared-nothing (calcul indépendant et scalable).",
+    "explanation_en": "Snowflake combines the benefits of shared-disk architecture (centralized data) with shared-nothing architecture (independent compute scalability).",
+    "is_free": true,
+    "type": "choice",
+    "options_en": [
+      "A purely on-premises architecture",
+      "Multi-cluster shared data architecture",
+      "A peer-to-peer distributed architecture",
+      "A single-tier monolithic architecture"
+    ],
+    "options_fr": [
+      "Une architecture purement on-premises",
+      "Architecture multi-cluster à données partagées (shared data)",
+      "Une architecture distribuée pair-à-pair",
+      "Une architecture monolithique à un seul niveau"
+    ],
+    "correct_indexes": [
+      1
+    ]
+  },
+  {
+    "source_id": 29,
+    "question_fr": "Associez chaque service Cortex à sa fonction.",
+    "question_en": "Match each Cortex service with its function.",
+    "explanation_fr": "Cortex expose des fonctions d'IA directement en SQL : COMPLETE pour la génération, TRANSLATE pour la traduction, SENTIMENT pour l'analyse et SUMMARIZE pour le résumé.",
+    "explanation_en": "Cortex exposes AI functions directly via SQL: COMPLETE for generation, TRANSLATE for translation, SENTIMENT for analysis, and SUMMARIZE for summarization.",
+    "is_free": false,
+    "type": "match",
+    "pool_fr": [
+      "Génération de texte avec un LLM",
+      "Traduction automatique de texte",
+      "Analyse de sentiment de texte",
+      "Résumé automatique de texte"
+    ],
+    "pool_en": [
+      "Text generation with an LLM",
+      "Automatic text translation",
+      "Text sentiment analysis",
+      "Automatic text summarization"
+    ],
+    "targets": [
+      {
+        "label_fr": "COMPLETE()",
+        "label_en": "COMPLETE()",
+        "correctPoolIndex": 0
+      },
+      {
+        "label_fr": "TRANSLATE()",
+        "label_en": "TRANSLATE()",
+        "correctPoolIndex": 1
+      },
+      {
+        "label_fr": "SENTIMENT()",
+        "label_en": "SENTIMENT()",
+        "correctPoolIndex": 2
+      },
+      {
+        "label_fr": "SUMMARIZE()",
+        "label_en": "SUMMARIZE()",
+        "correctPoolIndex": 3
+      }
+    ]
+  },
+  {
+    "source_id": 31,
+    "question_fr": "Quel est le principal avantage des Resource Monitors ?",
+    "question_en": "What is the main advantage of Resource Monitors?",
+    "explanation_fr": "Les Resource Monitors suivent et plafonnent la consommation de crédits, avec des alertes configurables et des actions automatiques (notifier, suspendre).",
+    "explanation_en": "Resource Monitors track and cap credit consumption, with configurable alerts and automatic actions (notify, suspend).",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Manage user role hierarchies",
+      "Control and limit credit consumption",
+      "Encrypt data at rest",
+      "Automatically resize warehouses based on load"
+    ],
+    "options_fr": [
+      "Gérer la hiérarchie des rôles utilisateurs",
+      "Contrôler et limiter la consommation de crédits",
+      "Chiffrer les données au repos",
+      "Redimensionner automatiquement les warehouses selon la charge"
+    ],
+    "correct_indexes": [
+      1
+    ]
+  },
+  {
+    "source_id": 34,
+    "question_fr": "Vous devez combiner les résultats de deux requêtes ayant les mêmes colonnes (pouvant se chevaucher), sans doublons. Que faut-il utiliser ?",
+    "question_en": "You need to combine results from two queries with the same columns (which may overlap), with no duplicates. What do you use?",
+    "explanation_fr": "UNION combine des ensembles de résultats et supprime automatiquement les lignes dupliquées, contrairement à UNION ALL.",
+    "explanation_en": "UNION combines result sets and automatically removes duplicate rows, unlike UNION ALL.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "INTERSECT",
+      "UNION ALL",
+      "UNION",
+      "MINUS"
+    ],
+    "options_fr": [
+      "INTERSECT",
+      "UNION ALL",
+      "UNION",
+      "MINUS"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 35,
+    "question_fr": "Quel est le principal avantage de la séparation du calcul (compute) et du stockage (storage) ?",
+    "question_en": "What is the main advantage of separating compute and storage?",
+    "explanation_fr": "Le calcul et le stockage évoluent indépendamment, ce qui permet de ne payer que le calcul réellement utilisé et le stockage réellement consommé.",
+    "explanation_en": "Compute and storage scale independently, so you only pay for the compute you actually use and the storage you actually consume.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Independent scalability of compute and storage, with pay-per-use pricing",
+      "Lower query latency for all workloads automatically",
+      "Simplified backup and restore",
+      "Reduced need for data governance"
+    ],
+    "options_fr": [
+      "Une scalabilité indépendante du calcul et du stockage, avec une tarification à l'usage",
+      "Une latence de requête automatiquement réduite pour toutes les charges",
+      "Une sauvegarde/restauration simplifiée",
+      "Un besoin réduit de gouvernance des données"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 38,
+    "question_fr": "(Choisissez 2) Quels sont les avantages des Dynamic Tables par rapport à Tasks + Streams ?",
+    "question_en": "(Choose 2) What are the advantages of Dynamic Tables over Tasks + Streams?",
+    "explanation_fr": "Les Dynamic Tables permettent de déclarer l'état final souhaité ; Snowflake gère automatiquement le suivi des dépendances et l'optimisation du rafraîchissement.",
+    "explanation_en": "Dynamic Tables let you declare the desired end state; Snowflake handles dependency tracking and refresh optimization automatically.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "A declarative approach (no dependency management)",
+      "Lower storage cost than Tasks + Streams",
+      "No compute cost at all",
+      "automatically optimized refresh by Snowflake"
+    ],
+    "options_fr": [
+      "Une approche déclarative (pas de gestion des dépendances)",
+      "Un coût de stockage plus bas que Tasks + Streams",
+      "Aucun coût de compute du tout",
+      "un rafraîchissement automatiquement optimisé par Snowflake"
+    ],
+    "correct_indexes": [
+      0,
+      3
+    ]
+  },
+  {
+    "source_id": 40,
+    "question_fr": "Quel objet restreint l'accès réseau à un compte ?",
+    "question_en": "Which object restricts network access to an account?",
+    "explanation_fr": "Une Network Policy restreint les connexions à Snowflake selon des plages d'IP autorisées ou bloquées.",
+    "explanation_en": "A Network Policy restricts connections to Snowflake based on allowed or blocked IP ranges.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Row Access Policy",
+      "Resource Monitor",
+      "Storage Integration",
+      "Network Policy"
+    ],
+    "options_fr": [
+      "Une Row Access Policy",
+      "Un Resource Monitor",
+      "Une Storage Integration",
+      "Une Network Policy"
+    ],
+    "correct_indexes": [
+      3
+    ]
+  },
+  {
+    "source_id": 42,
+    "question_fr": "Vous devez exposer les métadonnées de fichiers (nom, taille, dernière modification) d'un stage comme une table SQL interrogeable. Quelle fonctionnalité le permet ?",
+    "question_en": "You need to expose file metadata (name, size, last modified) from a stage as a queryable SQL table. What feature provides this?",
+    "explanation_fr": "Une Directory Table expose les métadonnées des fichiers stagés sous forme de table interrogeable, une fois le listing de répertoire activé sur le stage.",
+    "explanation_en": "A Directory Table exposes metadata about staged files as a queryable table, once directory listing is enabled on the stage.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Stage Metadata Table",
+      "Information Schema view",
+      "Directory Table",
+      "External Table"
+    ],
+    "options_fr": [
+      "Une Stage Metadata Table",
+      "Une vue Information Schema",
+      "Une Directory Table",
+      "Une External Table"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 43,
+    "question_fr": "Votre warehouse multi-cluster utilise la politique de scaling Economy. Les utilisateurs se plaignent d'attentes de 5-6 minutes lors de pics soudains. Quel changement résout ce problème ?",
+    "question_en": "Your multi-cluster warehouse uses the Economy scaling policy. Users complain about 5-6 minute waits during sudden spikes. What change fixes this?",
+    "explanation_fr": "La politique Standard démarre immédiatement des clusters supplémentaires dès que des requêtes commencent à être mises en file d'attente, tandis qu'Economy attend (environ 6 minutes) pour privilégier l'économie de crédits.",
+    "explanation_en": "The Standard policy starts additional clusters immediately when queries start queueing, while Economy waits (about 6 minutes) to favor credit savings.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Switch to the Economy scaling policy",
+      "Switch to the Standard scaling policy",
+      "Add more warehouses manually",
+      "Increase the warehouse size (T-shirt size)"
+    ],
+    "options_fr": [
+      "Passer à la politique de scaling Economy",
+      "Passer à la politique de scaling Standard",
+      "Ajouter manuellement d'autres warehouses",
+      "Augmenter la taille du warehouse (T-shirt size)"
+    ],
+    "correct_indexes": [
+      1
+    ]
+  },
+  {
+    "source_id": 44,
+    "question_fr": "Vous avez exécuté SHOW WAREHOUSES et voulez filtrer ces résultats via une requête. Quelle fonction le permet ?",
+    "question_en": "You ran SHOW WAREHOUSES and want to query those results with filters. What function allows this?",
+    "explanation_fr": "RESULT_SCAN(LAST_QUERY_ID()) transforme le résultat de la commande précédente en table interrogeable, permettant filtres et jointures.",
+    "explanation_en": "RESULT_SCAN(LAST_QUERY_ID()) treats the output of the previous command as a queryable table, allowing filters and joins.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "SELECT * FROM TABLE(INFORMATION_SCHEMA.WAREHOUSES())",
+      "SHOW WAREHOUSES INTO A TABLE",
+      "GET_QUERY_RESULT()",
+      "RESULT_SCAN(LAST_QUERY_ID())"
+    ],
+    "options_fr": [
+      "SELECT * FROM TABLE(INFORMATION_SCHEMA.WAREHOUSES())",
+      "SHOW WAREHOUSES INTO A TABLE",
+      "GET_QUERY_RESULT()",
+      "RESULT_SCAN(LAST_QUERY_ID())"
+    ],
+    "correct_indexes": [
+      3
+    ]
+  },
+  {
+    "source_id": 45,
+    "question_fr": "Qu'est-ce que le principe du moindre privilège ?",
+    "question_en": "What is the principle of least privilege?",
+    "explanation_fr": "Le moindre privilège signifie que chaque rôle ne reçoit que l'accès minimal nécessaire à sa fonction, ce qui réduit le risque de sécurité.",
+    "explanation_en": "Least privilege means each role receives only the minimum access required to perform its function, reducing security risk.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Grant ACCOUNTADMIN to all power users",
+      "Grant only the strictly necessary privileges per role",
+      "Grant all privileges then revoke as needed",
+      "Share one generic role across all users"
+    ],
+    "options_fr": [
+      "Accorder ACCOUNTADMIN à tous les utilisateurs avancés",
+      "N'accorder que les privilèges strictement nécessaires par rôle",
+      "Accorder tous les privilèges puis révoquer au besoin",
+      "Partager un seul rôle générique entre tous les utilisateurs"
+    ],
+    "correct_indexes": [
+      1
+    ]
+  },
+  {
+    "source_id": 47,
+    "question_fr": "Quelle commande charge des données d'un stage vers une table ?",
+    "question_en": "What command loads data from a stage into a table?",
+    "explanation_fr": "COPY INTO charge des données depuis un stage interne ou externe vers une table Snowflake.",
+    "explanation_en": "COPY INTO loads data from an internal or external stage into a Snowflake table.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "COPY INTO table FROM stage",
+      "LOAD DATA INTO table FROM stage",
+      "INSERT INTO table FROM stage",
+      "MERGE INTO table FROM stage"
+    ],
+    "options_fr": [
+      "COPY INTO table FROM stage",
+      "LOAD DATA INTO table FROM stage",
+      "INSERT INTO table FROM stage",
+      "MERGE INTO table FROM stage"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 49,
+    "question_fr": "Un développeur supprime accidentellement une table de production. Quelle est la meilleure approche pour éviter que cela se reproduise ?",
+    "question_en": "A developer accidentally drops a production table. What is the best approach to prevent this from happening again?",
+    "explanation_fr": "Restreindre les développeurs à un accès en lecture seule (SELECT) sur les objets de production évite les opérations destructrices accidentelles comme DROP.",
+    "explanation_en": "Restricting developers to read-only (SELECT) access on production objects prevents accidental destructive operations like DROP.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Grant only SELECT privilege on production tables, not OWNERSHIP",
+      "Use Fail-safe to prevent accidental drops",
+      "Disable DROP TABLE for all roles account-wide",
+      "Enable Time Travel with a longer retention period"
+    ],
+    "options_fr": [
+      "N'accorder que le privilège SELECT sur les tables de production, pas OWNERSHIP",
+      "Utiliser le Fail-safe pour empêcher les suppressions accidentelles",
+      "Désactiver DROP TABLE pour tous les rôles au niveau du compte",
+      "Activer Time Travel avec une rétention plus longue"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 51,
+    "question_fr": "(Choisissez 2) Quelles sont les caractéristiques de l'édition Standard ?",
+    "question_en": "(Choose 2) What are characteristics of the Standard edition?",
+    "explanation_fr": "L'édition Standard ne supporte pas les warehouses multi-cluster et limite la rétention Time Travel à 1 jour, contrairement à Enterprise (jusqu'à 90 jours).",
+    "explanation_en": "Standard edition lacks multi-cluster warehouse support and caps Time Travel retention at 1 day, unlike Enterprise (up to 90 days).",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Time Travel limited to 1 day",
+      "No Fail-safe protection",
+      "No multi-cluster warehouses",
+      "No Secure Views support"
+    ],
+    "options_fr": [
+      "Time Travel limité à 1 jour",
+      "Pas de protection Fail-safe",
+      "Pas de warehouses multi-cluster",
+      "Pas de support des Secure Views"
+    ],
+    "correct_indexes": [
+      0,
+      2
+    ]
+  },
+  {
+    "source_id": 52,
+    "question_fr": "Un fournisseur envoie quotidiennement des fichiers CSV dans votre bucket S3 et vous voulez qu'ils soient chargés automatiquement dès leur arrivée. Quelle architecture utiliser ?",
+    "question_en": "A vendor sends daily CSV files to your S3 bucket and you want them automatically loaded as they arrive. What architecture should you use?",
+    "explanation_fr": "La fonctionnalité d'auto-ingestion de Snowpipe écoute les notifications d'événements S3 et charge automatiquement les nouveaux fichiers dès leur dépôt.",
+    "explanation_en": "Snowpipe's auto-ingest feature listens to S3 event notifications and automatically loads new files as soon as they land.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Snowpipe with auto-ingest via S3 event notifications",
+      "Bulk loading via the Snowflake web UI",
+      "A scheduled Task running COPY INTO every minute",
+      "An External Table refreshed manually"
+    ],
+    "options_fr": [
+      "Snowpipe avec auto-ingestion via les notifications d'événements S3",
+      "Un bulk loading via l'interface web Snowflake",
+      "Une Task planifiée qui exécute COPY INTO chaque minute",
+      "Une External Table rafraîchie manuellement"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 53,
+    "question_fr": "Qu'est-ce que Snowflake Cortex Analyst ?",
+    "question_en": "What is Snowflake Cortex Analyst?",
+    "explanation_fr": "Cortex Analyst traduit des questions métier en langage naturel en requêtes SQL exécutables, en s'appuyant sur un modèle sémantique défini.",
+    "explanation_en": "Cortex Analyst translates natural language business questions into executable SQL queries based on a defined semantic model.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "A tool for auto-generating dashboards",
+      "A code review assistant for stored procedures",
+      "A service for turning natural language questions into SQL queries",
+      "A service for translating SQL between dialects"
+    ],
+    "options_fr": [
+      "Un outil de génération automatique de dashboards",
+      "Un assistant de revue de code pour procédures stockées",
+      "Un service qui transforme des questions en langage naturel en requêtes SQL",
+      "Un service de traduction de SQL entre dialectes"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 54,
+    "question_fr": "Vous voulez exporter des résultats de requête au format Parquet dans un stage externe. Quelle commande utiliser ?",
+    "question_en": "You want to export query results to Parquet in an external stage. What command should you use?",
+    "explanation_fr": "COPY INTO peut exporter des données depuis une table ou un résultat de requête vers un stage, avec le format de fichier spécifié pour le déchargement (unload).",
+    "explanation_en": "COPY INTO can export data from a table or query result into a stage, using the specified file format for unloading.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "UNLOAD TO @external_stage FILE_FORMAT=(TYPE='PARQUET')",
+      "GET @external_stage/file.parquet",
+      "COPY INTO @external_stage FROM (SELECT ...) FILE_FORMAT=(TYPE='PARQUET')",
+      "EXPORT TABLE INTO @external_stage AS PARQUET"
+    ],
+    "options_fr": [
+      "UNLOAD TO @external_stage FILE_FORMAT=(TYPE='PARQUET')",
+      "GET @external_stage/file.parquet",
+      "COPY INTO @external_stage FROM (SELECT ...) FILE_FORMAT=(TYPE='PARQUET')",
+      "EXPORT TABLE INTO @external_stage AS PARQUET"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 55,
+    "question_fr": "Quel chiffrement Snowflake utilise-t-il pour les données au repos ?",
+    "question_en": "What encryption does Snowflake use for data at rest?",
+    "explanation_fr": "Snowflake chiffre automatiquement et de manière transparente toutes les données au repos en AES-256.",
+    "explanation_en": "Snowflake automatically and transparently encrypts all data at rest using AES-256.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "RSA-2048",
+      "SHA-256",
+      "AES-256",
+      "AES-128"
+    ],
+    "options_fr": [
+      "RSA-2048",
+      "SHA-256",
+      "AES-256",
+      "AES-128"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 56,
+    "question_fr": "Quelle commande utiliser pour attribuer un rôle à un utilisateur ?",
+    "question_en": "What command do you use to assign a role to a user?",
+    "explanation_fr": "GRANT ROLE ... TO USER ... est la commande SQL standard pour attribuer un rôle à un utilisateur.",
+    "explanation_en": "GRANT ROLE ... TO USER ... is the standard SQL command used to assign a role to a user.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "GRANT ROLE role_name TO USER user_name",
+      "GRANT USER user_name TO ROLE role_name",
+      "ASSIGN ROLE role_name TO user_name",
+      "ALTER USER user_name SET ROLE role_name"
+    ],
+    "options_fr": [
+      "GRANT ROLE role_name TO USER user_name",
+      "GRANT USER user_name TO ROLE role_name",
+      "ASSIGN ROLE role_name TO user_name",
+      "ALTER USER user_name SET ROLE role_name"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 57,
+    "question_fr": "Vous voulez valider 500 fichiers CSV avant de réellement les charger. Quel paramètre utiliser ?",
+    "question_en": "You want to validate 500 CSV files before actually loading them. What parameter should you use?",
+    "explanation_fr": "VALIDATION_MODE permet d'exécuter un COPY INTO à blanc qui remonte les erreurs sans réellement charger de données.",
+    "explanation_en": "VALIDATION_MODE lets you run a dry-run of COPY INTO that reports errors without actually loading any data.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "VALIDATION_MODE = 'RETURN_ALL_ERRORS'",
+      "VALIDATION_MODE = 'RETURN_ERRORS'",
+      "DRY_RUN = TRUE",
+      "ON_ERROR = 'CONTINUE'"
+    ],
+    "options_fr": [
+      "VALIDATION_MODE = 'RETURN_ALL_ERRORS'",
+      "VALIDATION_MODE = 'RETURN_ERRORS'",
+      "DRY_RUN = TRUE",
+      "ON_ERROR = 'CONTINUE'"
+    ],
+    "correct_indexes": [
+      1
+    ]
+  },
+  {
+    "source_id": 58,
+    "question_fr": "Quel est le rôle système le plus élevé dans Snowflake ?",
+    "question_en": "What is the highest-level system role in Snowflake?",
+    "explanation_fr": "ACCOUNTADMIN est le rôle de plus haut niveau ; il englobe SYSADMIN et SECURITYADMIN et a un contrôle total sur le compte.",
+    "explanation_en": "ACCOUNTADMIN is the top-level role; it encapsulates SYSADMIN and SECURITYADMIN and has full account control.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "ACCOUNTADMIN",
+      "ORGADMIN",
+      "SYSADMIN",
+      "SECURITYADMIN"
+    ],
+    "options_fr": [
+      "ACCOUNTADMIN",
+      "ORGADMIN",
+      "SYSADMIN",
+      "SECURITYADMIN"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 59,
+    "question_fr": "(Choisissez 2) Quelles sont les différences entre Snowpipe et le chargement en bloc (bulk loading) ?",
+    "question_en": "(Choose 2) What are the differences between Snowpipe and bulk loading?",
+    "explanation_fr": "Snowpipe s'exécute sur du compute serverless géré par Snowflake, facturé à la seconde, tandis que le bulk loading (COPY INTO) nécessite un warehouse virtuel actif.",
+    "explanation_en": "Snowpipe runs on Snowflake-managed serverless compute billed per second, whereas bulk loading (COPY INTO) requires an active virtual warehouse.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Bulk loading uses a virtual warehouse",
+      "Snowpipe uses serverless resources",
+      "Snowpipe requires manual COPY INTO execution",
+      "Bulk loading only supports CSV files"
+    ],
+    "options_fr": [
+      "Le bulk loading utilise un warehouse virtuel",
+      "Snowpipe utilise des ressources serverless",
+      "Snowpipe nécessite l'exécution manuelle de COPY INTO",
+      "Le bulk loading ne supporte que les fichiers CSV"
+    ],
+    "correct_indexes": [
+      0,
+      1
+    ]
+  },
+  {
+    "source_id": 60,
+    "question_fr": "Quelle est la taille par défaut d'une micro-partition dans Snowflake ?",
+    "question_en": "What is the default micro-partition size in Snowflake?",
+    "explanation_fr": "Snowflake organise automatiquement les données en micro-partitions d'environ 50 à 500 Mo de données non compressées chacune.",
+    "explanation_en": "Snowflake automatically organizes data into micro-partitions of roughly 50-500 MB of uncompressed data each.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "50-500 MB uncompressed",
+      "16 MB uncompressed (fixed)",
+      "1 GB uncompressed",
+      "10-100 MB uncompressed"
+    ],
+    "options_fr": [
+      "50 à 500 Mo non compressés",
+      "16 Mo non compressés (fixe)",
+      "1 Go non compressé",
+      "10 à 100 Mo non compressés"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 61,
+    "question_fr": "(Choisissez 3) Quels services utilisent du compute serverless ?",
+    "question_en": "(Choose 3) Which services use serverless compute?",
+    "explanation_fr": "Ces services en arrière-plan s'exécutent sur du compute serverless géré par Snowflake, facturé séparément des warehouses utilisateur.",
+    "explanation_en": "These background services run on Snowflake-managed serverless compute, billed separately from user warehouses.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Automatic Clustering",
+      "Virtual Warehouses",
+      "Snowpipe",
+      "Time Travel",
+      "Search Optimization Service"
+    ],
+    "options_fr": [
+      "le Automatic Clustering",
+      "Les Virtual Warehouses",
+      "Snowpipe",
+      "Time Travel",
+      "le Search Optimization Service"
+    ],
+    "correct_indexes": [
+      0,
+      2,
+      4
+    ]
+  },
+  {
+    "source_id": 62,
+    "question_fr": "Un éditeur logiciel (ISV) veut construire une application data avec une interface, de la logique Python, et la distribuer via le Marketplace. Quel framework utiliser ?",
+    "question_en": "An ISV wants to build a data application with a UI, Python logic, and distribute it to customers via Marketplace. Which framework should they use?",
+    "explanation_fr": "Le Native App Framework packages interface, logique et données en une application distribuée via le Marketplace, exécutée dans le compte de chaque consommateur.",
+    "explanation_en": "The Native App Framework packages UI, logic, and data as an application distributed via the Marketplace and run inside each consumer's account.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Native App Framework",
+      "External Functions",
+      "Snowpark Container Services alone",
+      "Streamlit in Snowflake alone"
+    ],
+    "options_fr": [
+      "Native App Framework",
+      "Les External Functions",
+      "Snowpark Container Services seul",
+      "Streamlit in Snowflake seul"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 63,
+    "question_fr": "Un auditeur demande qui s'est connecté au compte depuis une adresse IP inhabituelle la semaine dernière. Quelle vue interroger ?",
+    "question_en": "An auditor asks who logged into the account from an unusual IP address last week. Which view should you query?",
+    "explanation_fr": "LOGIN_HISTORY enregistre toutes les tentatives de connexion, y compris l'adresse IP source, l'horodatage et le statut succès/échec.",
+    "explanation_en": "LOGIN_HISTORY records all login attempts including the source IP address, timestamp, and success/failure status.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "ACCESS_HISTORY",
+      "GRANTS_TO_USERS",
+      "SESSIONS view",
+      "LOGIN_HISTORY"
+    ],
+    "options_fr": [
+      "ACCESS_HISTORY",
+      "GRANTS_TO_USERS",
+      "La vue SESSIONS",
+      "LOGIN_HISTORY"
+    ],
+    "correct_indexes": [
+      3
+    ]
+  },
+  {
+    "source_id": 64,
+    "question_fr": "Vous recevez des fichiers Parquet avec des structures imbriquées complexes, stockées en VARIANT. Comment accéder au champ 'order.items[0].price' en SQL ?",
+    "question_en": "You receive Parquet files with complex nested structures, stored as VARIANT. How do you access the field 'order.items[0].price' in SQL?",
+    "explanation_fr": "Le deux-points (:) navigue à travers les clés d'un objet VARIANT, et la notation entre crochets ([0]) permet d'indexer un tableau.",
+    "explanation_en": "The colon (:) navigates through VARIANT object keys, and bracket notation ([0]) is used to index into arrays.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "GET(data, 'order.items[0].price')",
+      "data['order']['items'][0]['price']::STRING",
+      "data.order.items[0].price",
+      "data:order.items[0].price"
+    ],
+    "options_fr": [
+      "GET(data, 'order.items[0].price')",
+      "data['order']['items'][0]['price']::STRING",
+      "data.order.items[0].price",
+      "data:order.items[0].price"
+    ],
+    "correct_indexes": [
+      3
+    ]
+  },
+  {
+    "source_id": 65,
+    "question_fr": "(Choisissez 2) Vous clonez un schéma contenant des tables, vues et stages. Que peut-on affirmer ?",
+    "question_en": "(Choose 2) You clone a schema containing tables, views, and stages. What is true?",
+    "explanation_fr": "Le clonage zero-copy partage initialement les micro-partitions sous-jacentes, sans surcoût de stockage, et le clone et l'original deviennent totalement indépendants après création.",
+    "explanation_en": "Zero-copy cloning shares underlying micro-partitions initially, at no extra storage cost, and the clone and original become fully independent after creation.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "The clone shares the same Time Travel retention as a live copy",
+      "Changes to the clone do not affect the original",
+      "Cloning triggers a full physical data copy immediately",
+      "the clone has zero additional storage initially"
+    ],
+    "options_fr": [
+      "Le clone partage la même rétention Time Travel qu'une copie live",
+      "Les modifications du clone n'affectent pas l'original",
+      "Le clonage déclenche une copie physique complète immédiate",
+      "le clone n'occupe aucun stockage supplémentaire au départ"
+    ],
+    "correct_indexes": [
+      1,
+      3
+    ]
+  },
+  {
+    "source_id": 66,
+    "question_fr": "Vous avez besoin d'une reprise après sinistre automatique avec bascule vers un compte secondaire dans une autre région. Que devez-vous configurer ?",
+    "question_en": "You need automatic disaster recovery with failover to a secondary account in another region. What should you configure?",
+    "explanation_fr": "Un Replication Group avec failover configuré réplique les données vers un compte secondaire et permet une bascule automatique ou manuelle.",
+    "explanation_en": "A Replication Group with failover configured replicates data to a secondary account and enables automatic or manual failover.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "A Replication Group with failover enabled",
+      "Cross-region Data Sharing",
+      "A Reader Account in the secondary region",
+      "A Database Clone scheduled nightly"
+    ],
+    "options_fr": [
+      "Un Replication Group avec le failover activé",
+      "Un Data Sharing inter-région",
+      "Un Reader Account dans la région secondaire",
+      "Un clone de base planifié chaque nuit"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 67,
+    "question_fr": "Un compte de service s'authentifie de manière programmatique, sans connexion interactive. Quelle méthode d'authentification est la plus adaptée ?",
+    "question_en": "A service account authenticates programmatically, with no interactive login. What authentication method is most appropriate?",
+    "explanation_fr": "L'authentification par paire de clés utilise une clé publique/privée et est la méthode recommandée pour un accès programmatique non interactif.",
+    "explanation_en": "Key pair authentication uses a public/private key pair and is the recommended method for programmatic, non-interactive access.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "SSO via SAML",
+      "OAuth with a browser redirect",
+      "Key Pair Authentication",
+      "Username/password only"
+    ],
+    "options_fr": [
+      "SSO via SAML",
+      "OAuth avec redirection navigateur",
+      "L'authentification par paire de clés (Key Pair Authentication)",
+      "Nom d'utilisateur/mot de passe uniquement"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 68,
+    "question_fr": "Qu'est-ce qu'un rôle secondaire (secondary role) ?",
+    "question_en": "What is a secondary role?",
+    "explanation_fr": "Les rôles secondaires permettent à une session de cumuler les privilèges de plusieurs rôles simultanément, via USE SECONDARY ROLES ALL.",
+    "explanation_en": "Secondary roles let a session use the privileges of multiple roles simultaneously, via USE SECONDARY ROLES ALL.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "A role that replaces the primary role temporarily",
+      "A backup role used only if the primary role fails",
+      "A role reserved for service accounts only",
+      "A role activated alongside the primary role for combined privileges"
+    ],
+    "options_fr": [
+      "Un rôle qui remplace temporairement le rôle principal",
+      "Un rôle de secours utilisé seulement si le rôle principal échoue",
+      "Un rôle réservé aux comptes de service uniquement",
+      "Un rôle activé en parallèle du rôle principal pour cumuler les privilèges"
+    ],
+    "correct_indexes": [
+      3
+    ]
+  },
+  {
+    "source_id": 69,
+    "question_fr": "Votre entreprise utilise Spark et Trino en parallèle de Snowflake. L'équipe data engineering veut stocker des données interrogeables directement par les trois moteurs depuis le même stockage. Quelle fonctionnalité Snowflake recommander ?",
+    "question_en": "Your company runs Spark and Trino alongside Snowflake. The data engineering team wants to store data that all three engines can query directly from the same storage. Which Snowflake feature should you recommend?",
+    "explanation_fr": "Les Iceberg Tables utilisent le format ouvert Apache Iceberg, permettant à plusieurs moteurs (Snowflake, Spark, Trino) d'accéder au même stockage sous-jacent.",
+    "explanation_en": "Iceberg Tables use the open Apache Iceberg format, allowing multiple engines (Snowflake, Spark, Trino) to access the same underlying storage.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Materialized Views",
+      "Hybrid Tables",
+      "Iceberg Tables",
+      "External Tables"
+    ],
+    "options_fr": [
+      "Les vues matérialisées",
+      "Les Hybrid Tables",
+      "Les Iceberg Tables",
+      "Les External Tables"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 70,
+    "question_fr": "Quel composant permet le partage de données en zero-copy entre comptes ?",
+    "question_en": "Which component enables zero-copy data sharing between accounts?",
+    "explanation_fr": "Secure Data Sharing permet à des comptes d'accéder à des données partagées directement, sans déplacement ni duplication de données.",
+    "explanation_en": "Secure Data Sharing allows accounts to access shared data directly, with no data movement or duplication.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Secure Data Sharing",
+      "External Functions",
+      "Snowpipe Streaming",
+      "Database Replication"
+    ],
+    "options_fr": [
+      "Secure Data Sharing",
+      "Les External Functions",
+      "Snowpipe Streaming",
+      "La réplication de base de données"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 71,
+    "question_fr": "(Choisissez 3) Quels fournisseurs cloud supportent Snowflake ?",
+    "question_en": "(Choose 3) Which cloud providers support Snowflake?",
+    "explanation_fr": "Snowflake fonctionne sur les trois principaux clouds publics : AWS, Microsoft Azure et Google Cloud Platform.",
+    "explanation_en": "Snowflake runs on the three major public clouds: AWS, Microsoft Azure, and Google Cloud Platform.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "AWS",
+      "Google Cloud Platform",
+      "IBM Cloud",
+      "Oracle Cloud Infrastructure",
+      "Microsoft Azure"
+    ],
+    "options_fr": [
+      "AWS",
+      "Google Cloud Platform",
+      "IBM Cloud",
+      "Oracle Cloud Infrastructure",
+      "Microsoft Azure"
+    ],
+    "correct_indexes": [
+      0,
+      1,
+      4
+    ]
+  },
+  {
+    "source_id": 72,
+    "question_fr": "Le service RH a besoin d'une sécurité au niveau ligne pour que les managers ne voient que leurs subordonnés directs dans la table EMPLOYEES. Quelle fonctionnalité implémenter ?",
+    "question_en": "The HR department needs row-level security so managers only see their direct reports in the EMPLOYEES table. What feature should you implement?",
+    "explanation_fr": "Une Row Access Policy applique des règles de filtrage au niveau ligne selon l'identité ou le rôle de l'utilisateur qui interroge.",
+    "explanation_en": "A Row Access Policy applies row-level filtering rules based on the querying user's identity or role.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Secure View",
+      "Row Access Policy",
+      "Network Policy",
+      "Column-level masking policy"
+    ],
+    "options_fr": [
+      "Une Secure View",
+      "Une Row Access Policy",
+      "Une Network Policy",
+      "Une masking policy au niveau colonne"
+    ],
+    "correct_indexes": [
+      1
+    ]
+  },
+  {
+    "source_id": 73,
+    "question_fr": "(Choisissez 2) Votre organisation utilise Snowflake sur AWS mais un partenaire utilise Azure. Vous devez partager des données en direct entre clouds. Quelles approches fonctionnent ?",
+    "question_en": "(Choose 2) Your organization uses Snowflake on AWS but a partner uses Azure. You need to share live data across clouds. Which approaches work?",
+    "explanation_fr": "Le partage inter-cloud/inter-région nécessite soit de répliquer d'abord les données entre clouds/régions, soit d'utiliser un Marketplace listing configuré pour une livraison inter-cloud ; le partage direct seul ne traverse pas les frontières de cloud.",
+    "explanation_en": "Cross-cloud/cross-region sharing requires either replicating data between clouds/regions first, or using a Marketplace listing configured for cross-cloud delivery; direct sharing alone does not cross cloud boundaries.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Cross-cloud replication followed by Data Sharing",
+      "Exporting to Parquet and re-loading manually",
+      "Direct Data Share (works only within the same cloud)",
+      "Marketplace Listing with cross-region delivery"
+    ],
+    "options_fr": [
+      "une réplication inter-cloud suivie d'un Data Sharing",
+      "Exporter en Parquet et recharger manuellement",
+      "Un Direct Data Share (fonctionne uniquement dans le même cloud)",
+      "Un Marketplace Listing avec livraison inter-région"
+    ],
+    "correct_indexes": [
+      0,
+      3
+    ]
+  },
+  {
+    "source_id": 74,
+    "question_fr": "(Choisissez 2) Quelles propriétés une Network Policy peut-elle configurer ?",
+    "question_en": "(Choose 2) What properties can a Network Policy configure?",
+    "explanation_fr": "Les Network Policies définissent des plages d'adresses IP autorisées et/ou bloquées pour contrôler quels réseaux peuvent se connecter à Snowflake.",
+    "explanation_en": "Network Policies define allowed and/or blocked IP address ranges to control which networks can connect to Snowflake.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "ALLOWED_IP_LIST",
+      "BLOCKED_IP_LIST",
+      "MFA_ENFORCEMENT_LIST",
+      "ALLOWED_USER_LIST"
+    ],
+    "options_fr": [
+      "ALLOWED_IP_LIST",
+      "BLOCKED_IP_LIST",
+      "MFA_ENFORCEMENT_LIST",
+      "ALLOWED_USER_LIST"
+    ],
+    "correct_indexes": [
+      0,
+      1
+    ]
+  },
+  {
+    "source_id": 75,
+    "question_fr": "Votre entreprise utilise Okta pour la gestion des identités. Vous voulez que les utilisateurs Snowflake soient provisionnés et déprovisionnés automatiquement à l'arrivée ou au départ d'un employé. Quel protocole le permet ?",
+    "question_en": "Your company uses Okta for identity. You want Snowflake users to be automatically provisioned and deprovisioned when employees join or leave. What protocol enables this?",
+    "explanation_fr": "SCIM (System for Cross-domain Identity Management) automatise le provisionnement et le déprovisionnement des utilisateurs et rôles depuis un fournisseur d'identité.",
+    "explanation_en": "SCIM (System for Cross-domain Identity Management) automates the provisioning and deprovisioning of users and roles from an identity provider.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "SAML 2.0 alone",
+      "LDAP sync (native, no protocol needed)",
+      "OAuth 2.0 alone",
+      "SCIM"
+    ],
+    "options_fr": [
+      "SAML 2.0 seul",
+      "Une synchronisation LDAP native, sans protocole",
+      "OAuth 2.0 seul",
+      "SCIM"
+    ],
+    "correct_indexes": [
+      3
+    ]
+  },
+  {
+    "source_id": 77,
+    "question_fr": "(Choisissez 3) Quels types de stage existent dans Snowflake ?",
+    "question_en": "(Choose 3) What stage types exist in Snowflake?",
+    "explanation_fr": "Snowflake propose des User Stages, des Table Stages et des Named Stages (internes ou externes) pour le staging des fichiers de données.",
+    "explanation_en": "Snowflake offers User Stages, Table Stages, and Named Stages (internal or external) for staging data files.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Schema Stage",
+      "Table Stage (@%table)",
+      "Database Stage",
+      "User Stage (@~)",
+      "Named Internal Stage"
+    ],
+    "options_fr": [
+      "Schema Stage",
+      "Table Stage (@%table)",
+      "Database Stage",
+      "User Stage (@~)",
+      "Named Internal Stage"
+    ],
+    "correct_indexes": [
+      1,
+      3,
+      4
+    ]
+  },
+  {
+    "source_id": 78,
+    "question_fr": "(Choisissez 2) Vous devez charger des données depuis S3 de manière sécurisée, sans intégrer de clés AWS dans le SQL. De quoi avez-vous besoin ?",
+    "question_en": "(Choose 2) You need to load data from S3 securely, without embedding AWS keys in SQL. What do you need?",
+    "explanation_fr": "Une Storage Integration utilise un rôle IAM pour accorder un accès sécurisé au stockage cloud, et un External Stage la référençant évite d'intégrer des identifiants dans le SQL.",
+    "explanation_en": "A Storage Integration uses an IAM role to grant secure access to cloud storage, and an External Stage referencing it avoids embedding credentials in SQL.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "A Storage Integration with an IAM Role",
+      "an External Stage referencing that integration",
+      "AWS access keys embedded in the stage definition",
+      "A Network Policy allowing the S3 IP range"
+    ],
+    "options_fr": [
+      "Une Storage Integration avec un rôle IAM",
+      "un External Stage référençant cette intégration",
+      "Des clés d'accès AWS intégrées dans la définition du stage",
+      "Une Network Policy autorisant la plage IP de S3"
+    ],
+    "correct_indexes": [
+      0,
+      1
+    ]
+  },
+  {
+    "source_id": 79,
+    "question_fr": "Quel est le principal avantage des clustering keys ?",
+    "question_en": "What is the main advantage of clustering keys?",
+    "explanation_fr": "Les clustering keys regroupent des valeurs similaires au sein des micro-partitions, ce qui permet à l'optimiseur de requêtes d'écarter (pruning) plus efficacement les partitions non pertinentes.",
+    "explanation_en": "Clustering keys co-locate similar values within micro-partitions, allowing the query optimizer to prune (skip) irrelevant partitions more effectively.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Reduce storage cost directly",
+      "Enable automatic query result caching",
+      "Improve micro-partition pruning",
+      "Increase warehouse concurrency"
+    ],
+    "options_fr": [
+      "Réduire directement le coût de stockage",
+      "Activer la mise en cache automatique des résultats",
+      "Améliorer le pruning des micro-partitions",
+      "Augmenter la concurrence du warehouse"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 80,
+    "question_fr": "Quelle commande affiche les droits accordés à un rôle ?",
+    "question_en": "What command shows the grants held by a role?",
+    "explanation_fr": "SHOW GRANTS TO ROLE liste tous les privilèges et rôles accordés au rôle spécifié.",
+    "explanation_en": "SHOW GRANTS TO ROLE lists all privileges and roles granted to the specified role.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "SHOW GRANTS OF ROLE role_name",
+      "SHOW GRANTS TO ROLE role_name",
+      "DESCRIBE ROLE role_name",
+      "SHOW PRIVILEGES FOR ROLE role_name"
+    ],
+    "options_fr": [
+      "SHOW GRANTS OF ROLE role_name",
+      "SHOW GRANTS TO ROLE role_name",
+      "DESCRIBE ROLE role_name",
+      "SHOW PRIVILEGES FOR ROLE role_name"
+    ],
+    "correct_indexes": [
+      1
+    ]
+  },
+  {
+    "source_id": 82,
+    "question_fr": "Une requête ETL complexe affiche 'Bytes spilled to remote storage' dans le Query Profile. Quelle est la correction la plus efficace ?",
+    "question_en": "A complex ETL query shows 'Bytes spilled to remote storage' in the Query Profile. What is the most effective fix?",
+    "explanation_fr": "Le spilling vers du stockage distant signifie que le warehouse a manqué de mémoire/disque local pour l'opération ; augmenter la taille du warehouse ajoute de la mémoire par nœud, ce qui réduit ou élimine le spilling.",
+    "explanation_en": "Spilling to remote storage means the warehouse ran out of local memory/disk for the operation; increasing warehouse size adds more memory per node, reducing or eliminating spillage.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Increase the number of clusters (multi-cluster)",
+      "Enable the Search Optimization Service",
+      "Increase the warehouse size",
+      "Rewrite the query to use a UNION instead of a JOIN"
+    ],
+    "options_fr": [
+      "Augmenter le nombre de clusters (multi-cluster)",
+      "Activer le Search Optimization Service",
+      "Augmenter la taille du warehouse",
+      "Réécrire la requête avec un UNION au lieu d'un JOIN"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 83,
+    "question_fr": "Une équipe produit veut construire une fonction de recherche sémantique sur des tickets support stockés dans Snowflake. Quel service combine recherche par mots-clés et recherche vectorielle ?",
+    "question_en": "A product team wants to build a semantic search feature over their support tickets stored in Snowflake. Which service combines keyword and vector search?",
+    "explanation_fr": "Cortex Search est un service de recherche hybride combinant recherche par mots-clés (lexicale) et recherche vectorielle (sémantique), intégré nativement à Snowflake.",
+    "explanation_en": "Cortex Search is a hybrid search service combining keyword (lexical) and vector (semantic) search, integrated natively into Snowflake.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "External Functions with Elasticsearch",
+      "Search Optimization Service alone",
+      "Cortex Analyst",
+      "Cortex Search"
+    ],
+    "options_fr": [
+      "Des External Functions avec Elasticsearch",
+      "Le Search Optimization Service seul",
+      "Cortex Analyst",
+      "Cortex Search"
+    ],
+    "correct_indexes": [
+      3
+    ]
+  },
+  {
+    "source_id": 84,
+    "question_fr": "Le Query Profile montre une 'Exploding JOIN' produisant 10 milliards de lignes à partir de deux tables de 100K lignes. Quelle est la cause racine ?",
+    "question_en": "The Query Profile shows an 'Exploding JOIN' producing 10 billion rows from two 100K-row tables. What is the root cause?",
+    "explanation_fr": "Lorsqu'un JOIN manque d'une condition adaptée (ou que la condition ne fait pas correctement correspondre les lignes), il produit un produit cartésien, faisant exploser le nombre de lignes de manière exponentielle.",
+    "explanation_en": "When a JOIN lacks a proper condition (or the condition doesn't match rows correctly), it produces a Cartesian product, exploding the row count exponentially.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "A Cartesian product due to a missing or incorrect JOIN condition",
+      "Automatic query result caching malfunctioning",
+      "A missing clustering key on both tables",
+      "Spilling to remote storage during the JOIN"
+    ],
+    "options_fr": [
+      "Un produit cartésien dû à une condition de JOIN manquante ou incorrecte",
+      "Un dysfonctionnement du cache automatique des résultats",
+      "Une clé de clustering manquante sur les deux tables",
+      "Un spilling vers le stockage distant pendant le JOIN"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 85,
+    "question_fr": "Qu'est-ce qu'une Password Policy ?",
+    "question_en": "What is a Password Policy?",
+    "explanation_fr": "Une Password Policy impose des règles sur la longueur, la complexité et l'expiration/rotation des mots de passe des utilisateurs.",
+    "explanation_en": "A Password Policy enforces rules on password length, complexity, and expiration/rotation for users.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Rules defining password complexity and rotation",
+      "A Network Policy restricting login IPs",
+      "An MFA enforcement setting only",
+      "A Resource Monitor limiting login attempts"
+    ],
+    "options_fr": [
+      "Des règles définissant la complexité et la rotation des mots de passe",
+      "Une Network Policy restreignant les IP de connexion",
+      "Un simple réglage d'application du MFA",
+      "Un Resource Monitor limitant les tentatives de connexion"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 86,
+    "question_fr": "Une équipe marketing veut poser des questions métier en langage naturel et obtenir des résultats SQL, sans écrire de requêtes. Quel service Snowflake l'équipe data doit-elle configurer ?",
+    "question_en": "A marketing team wants to ask business questions in natural language and get SQL results, without writing queries. Which Snowflake service should the data team configure?",
+    "explanation_fr": "Cortex Analyst convertit des questions métier en langage naturel en requêtes SQL, en s'appuyant sur un modèle sémantique configuré par l'équipe data.",
+    "explanation_en": "Cortex Analyst converts natural language business questions into SQL queries based on a semantic model configured by the data team.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Snowflake Cortex Analyst",
+      "Streamlit in Snowflake",
+      "Snowsight Dashboards",
+      "Snowflake Cortex Search"
+    ],
+    "options_fr": [
+      "Snowflake Cortex Analyst",
+      "Streamlit in Snowflake",
+      "Les dashboards Snowsight",
+      "Snowflake Cortex Search"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 87,
+    "question_fr": "Quel service améliore les requêtes de recherche ponctuelle (point lookup) ?",
+    "question_en": "Which service improves point lookup queries?",
+    "explanation_fr": "Le Search Optimization Service construit un chemin d'accès de recherche qui accélère fortement les requêtes sélectives de point lookup et d'égalité.",
+    "explanation_en": "The Search Optimization Service builds a search access path that dramatically speeds up selective point lookup and equality queries.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Search Optimization Service",
+      "Automatic Clustering",
+      "Query Acceleration Service",
+      "Materialized Views"
+    ],
+    "options_fr": [
+      "Le Search Optimization Service",
+      "L'Automatic Clustering",
+      "Le Query Acceleration Service",
+      "Les vues matérialisées"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 88,
+    "question_fr": "Qu'est-ce que Cortex Search de Snowflake ?",
+    "question_en": "What is Snowflake Cortex Search?",
+    "explanation_fr": "Cortex Search combine recherche sémantique (vectorielle) et recherche par mots-clés directement dans Snowflake, sans infrastructure externe.",
+    "explanation_en": "Cortex Search combines semantic (vector) and keyword search directly within Snowflake, without external infrastructure.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "A BI tool for exploring search logs",
+      "A vector database external to Snowflake",
+      "A keyword-only full text search engine",
+      "A hybrid search service (semantic + keyword) integrated into Snowflake"
+    ],
+    "options_fr": [
+      "Un outil BI pour explorer les logs de recherche",
+      "Une base de données vectorielle externe à Snowflake",
+      "Un moteur de recherche plein texte par mots-clés uniquement",
+      "Un service de recherche hybride (sémantique + mots-clés) intégré à Snowflake"
+    ],
+    "correct_indexes": [
+      3
+    ]
+  },
+  {
+    "source_id": 89,
+    "question_fr": "(Choisissez 2) Quelles fonctionnalités sont disponibles dans l'édition Enterprise mais PAS dans Standard ?",
+    "question_en": "(Choose 2) Which features are available in Enterprise edition but NOT in Standard?",
+    "explanation_fr": "L'édition Enterprise ajoute un Time Travel étendu (jusqu'à 90 jours), les warehouses multi-cluster, les vues matérialisées et le masquage dynamique de données, absents de l'édition Standard.",
+    "explanation_en": "Enterprise edition adds extended Time Travel (up to 90 days), multi-cluster warehouses, materialized views, and dynamic data masking, none of which are in Standard.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Multi-cluster warehouses",
+      "Database Replication",
+      "Time Travel up to 90 days",
+      "Tri-Secret Secure"
+    ],
+    "options_fr": [
+      "les warehouses multi-cluster",
+      "La réplication de base de données",
+      "Time Travel jusqu'à 90 jours",
+      "Tri-Secret Secure"
+    ],
+    "correct_indexes": [
+      0,
+      2
+    ]
+  },
+  {
+    "source_id": 90,
+    "question_fr": "Vous devez partager des données avec un partenaire via Secure Data Sharing, et la vue partagée référence des tables internes. Quel type de vue devez-vous utiliser ?",
+    "question_en": "You need to share data with a partner via Secure Data Sharing, and the shared view references internal tables. What type of view must you use?",
+    "explanation_fr": "Les objets partagés doivent utiliser des Secure Views pour empêcher le consommateur de données de voir la définition de la vue sous-jacente ou d'accéder directement aux tables internes référencées.",
+    "explanation_en": "Shared objects must use Secure Views to prevent the data consumer from seeing the underlying view definition or accessing the referenced internal tables directly.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Secure View",
+      "Materialized View",
+      "Directory Table",
+      "Standard View"
+    ],
+    "options_fr": [
+      "Une Secure View",
+      "Une vue matérialisée",
+      "Une Directory Table",
+      "Une vue standard"
+    ],
+    "correct_indexes": [
+      0
+    ]
+  },
+  {
+    "source_id": 91,
+    "question_fr": "Quel paramètre définit la fraîcheur des données dans une Dynamic Table ?",
+    "question_en": "What parameter defines data freshness in a Dynamic Table?",
+    "explanation_fr": "TARGET_LAG spécifie le décalage maximal acceptable entre les données d'une Dynamic Table et sa source.",
+    "explanation_en": "TARGET_LAG specifies the maximum acceptable staleness of a Dynamic Table's data relative to its source.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "WAREHOUSE_SIZE",
+      "TARGET_LAG",
+      "DATA_RETENTION_TIME_IN_DAYS",
+      "REFRESH_MODE"
+    ],
+    "options_fr": [
+      "WAREHOUSE_SIZE",
+      "TARGET_LAG",
+      "DATA_RETENTION_TIME_IN_DAYS",
+      "REFRESH_MODE"
+    ],
+    "correct_indexes": [
+      1
+    ]
+  },
+  {
+    "source_id": 92,
+    "question_fr": "Des capteurs IoT envoient 1000 événements par seconde et vous avez besoin d'une latence d'ingestion inférieure à la seconde. Le chargement de fichiers depuis un stage est trop lent. Que devez-vous utiliser ?",
+    "question_en": "IoT sensors send 1000 events per second and you need sub-second ingestion latency. Loading files from a stage is too slow. What should you use?",
+    "explanation_fr": "Snowpipe Streaming ingère les lignes directement (sans passer par un fichier de stage), offrant une latence très faible, inférieure à la seconde, pour des données à haute fréquence.",
+    "explanation_en": "Snowpipe Streaming ingests rows directly (without staging files first), achieving low, sub-second latency for high-frequency event data.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Snowpipe (file-based)",
+      "Bulk loading with COPY INTO",
+      "External Tables with auto-refresh",
+      "Snowpipe Streaming"
+    ],
+    "options_fr": [
+      "Snowpipe (basé sur des fichiers)",
+      "Le bulk loading avec COPY INTO",
+      "Les External Tables avec auto-refresh",
+      "Snowpipe Streaming"
+    ],
+    "correct_indexes": [
+      3
+    ]
+  },
+  {
+    "source_id": 93,
+    "question_fr": "Votre compte Snowflake ne doit être accessible que depuis votre VPN d'entreprise (plage IP 10.0.0.0/8). Que devez-vous configurer ?",
+    "question_en": "Your Snowflake account should only be accessible from your corporate VPN (IP range 10.0.0.0/8). What do you configure?",
+    "explanation_fr": "Une Network Policy avec ALLOWED_IP_LIST restreint l'accès au compte aux seules plages d'IP spécifiées.",
+    "explanation_en": "A Network Policy with ALLOWED_IP_LIST restricts account access to the specified IP range(s) only.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "A Storage Integration restricted to the VPN CIDR",
+      "A Row Access Policy filtering by IP",
+      "Client-side VPN enforcement only, no Snowflake config needed",
+      "Network Policy with ALLOWED_IP_LIST"
+    ],
+    "options_fr": [
+      "Une Storage Integration restreinte au CIDR du VPN",
+      "Une Row Access Policy filtrant par IP",
+      "Une simple application côté VPN, sans config Snowflake",
+      "Une Network Policy avec ALLOWED_IP_LIST"
+    ],
+    "correct_indexes": [
+      3
+    ]
+  },
+  {
+    "source_id": 94,
+    "question_fr": "Quelle est la différence entre DAC et RBAC dans Snowflake ?",
+    "question_en": "What is DAC vs RBAC in Snowflake?",
+    "explanation_fr": "Snowflake combine le DAC (le propriétaire de l'objet accorde les privilèges) et le RBAC (les rôles sont attribués aux utilisateurs et portent les privilèges).",
+    "explanation_en": "Snowflake combines DAC (the object owner grants privileges) and RBAC (roles are assigned to users and hold privileges).",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "DAC and RBAC are the same concept in Snowflake",
+      "DAC means the object owner controls access; RBAC means roles control access - Snowflake uses both",
+      "Snowflake uses only RBAC, not DAC",
+      "Snowflake uses only DAC, not RBAC"
+    ],
+    "options_fr": [
+      "DAC et RBAC sont le même concept dans Snowflake",
+      "DAC signifie que le propriétaire de l'objet contrôle l'accès ; RBAC signifie que les rôles contrôlent l'accès - Snowflake utilise les deux",
+      "Snowflake n'utilise que le RBAC, pas le DAC",
+      "Snowflake n'utilise que le DAC, pas le RBAC"
+    ],
+    "correct_indexes": [
+      1
+    ]
+  },
+  {
+    "source_id": 95,
+    "question_fr": "Vous voulez appliquer automatiquement la même politique de masquage à toute colonne taguée 'PII' dans toutes les tables. Quelle fonctionnalité le permet ?",
+    "question_en": "You want to apply the same masking policy automatically to any column tagged as 'PII' across all tables. What feature enables this?",
+    "explanation_fr": "Le Tag-Based Masking associe une politique de masquage à un tag, l'appliquant automatiquement à toute colonne portant ce tag.",
+    "explanation_en": "Tag-Based Masking associates a masking policy with a tag, automatically applying it to every column carrying that tag.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Dynamic Data Masking without tags",
+      "A manual masking policy applied per column",
+      "Tag-Based Masking",
+      "Row Access Policies applied per tag"
+    ],
+    "options_fr": [
+      "Le Dynamic Data Masking sans tags",
+      "Une masking policy manuelle appliquée par colonne",
+      "Le masquage basé sur les tags (Tag-Based Masking)",
+      "Des Row Access Policies appliquées par tag"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 97,
+    "question_fr": "Qu'est-ce que le Feature Store de Snowflake ?",
+    "question_en": "What is the Snowflake Feature Store?",
+    "explanation_fr": "Le Feature Store définit, stocke et sert les features de ML de manière centralisée, aussi bien pour l'entraînement que pour l'inférence en production.",
+    "explanation_en": "The Feature Store defines, stores, and serves ML features centrally for both training and production inference.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "A repository for storing trained model binaries only",
+      "A data catalog for tagging PII columns",
+      "A service for centrally managing and serving ML features",
+      "A BI semantic layer for business metrics"
+    ],
+    "options_fr": [
+      "Un dépôt de stockage des binaires de modèles entraînés uniquement",
+      "Un catalogue de données pour taguer les colonnes PII",
+      "Un service pour gérer et servir de manière centralisée les features de machine learning",
+      "Une couche sémantique BI pour les métriques métier"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 98,
+    "question_fr": "Quel rôle système gère les utilisateurs et les rôles ?",
+    "question_en": "Which system role manages users and roles?",
+    "explanation_fr": "USERADMIN est conçu pour gérer les utilisateurs et les rôles ; SECURITYADMIN hérite des privilèges de USERADMIN.",
+    "explanation_en": "USERADMIN is designed for managing users and roles; SECURITYADMIN inherits USERADMIN's privileges.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "SYSADMIN",
+      "SECURITYADMIN",
+      "USERADMIN",
+      "ACCOUNTADMIN"
+    ],
+    "options_fr": [
+      "SYSADMIN",
+      "SECURITYADMIN",
+      "USERADMIN",
+      "ACCOUNTADMIN"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 99,
+    "question_fr": "Votre entreprise doit exécuter un conteneur Docker personnalisé pour de l'inférence de modèle intensive en GPU, sans infrastructure externe. Quel service Snowflake le permet ?",
+    "question_en": "Your company needs to run a custom Docker container for GPU-intensive model inference, without external infrastructure. What Snowflake service enables this?",
+    "explanation_fr": "Snowpark Container Services exécute des conteneurs OCI directement dans Snowflake, y compris des charges de travail GPU, sans aucune infrastructure externe.",
+    "explanation_en": "Snowpark Container Services runs OCI containers directly within Snowflake, including GPU workloads, without any external infrastructure.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Native App Framework alone",
+      "Snowpark for Python (UDFs only)",
+      "External Functions calling a GPU API",
+      "Snowpark Container Services"
+    ],
+    "options_fr": [
+      "Le Native App Framework seul",
+      "Snowpark for Python (UDF uniquement)",
+      "Des External Functions appelant une API GPU",
+      "Snowpark Container Services"
+    ],
+    "correct_indexes": [
+      3
+    ]
+  },
+  {
+    "source_id": 100,
+    "question_fr": "Quel type de contrôle d'accès Snowflake utilise-t-il ?",
+    "question_en": "What type of access control does Snowflake use?",
+    "explanation_fr": "Snowflake utilise le contrôle d'accès basé sur les rôles (RBAC) : les privilèges sont accordés à des rôles, et les rôles sont attribués aux utilisateurs.",
+    "explanation_en": "Snowflake uses Role-Based Access Control (RBAC): privileges are granted to roles, and roles are assigned to users.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "DAC (Discretionary Access Control) only",
+      "MAC (Mandatory Access Control)",
+      "RBAC (Role-Based Access Control)",
+      "ABAC (Attribute-Based Access Control)"
+    ],
+    "options_fr": [
+      "Le DAC (Discretionary Access Control) uniquement",
+      "Le MAC (Mandatory Access Control)",
+      "RBAC (contrôle d'accès basé sur les rôles)",
+      "L'ABAC (Attribute-Based Access Control)"
+    ],
+    "correct_indexes": [
+      2
+    ]
+  },
+  {
+    "source_id": 101,
+    "question_fr": "(Choisissez 3) Quelles sont les trois couches principales de l'architecture Snowflake ?",
+    "question_en": "(Choose 3) What are the three main layers of Snowflake's architecture?",
+    "explanation_fr": "L'architecture Snowflake comporte trois couches : Database Storage, Query Processing (warehouses virtuels/compute) et Cloud Services (métadonnées, sécurité, optimisation).",
+    "explanation_en": "Snowflake's architecture has three layers: Database Storage, Query Processing (virtual warehouses/compute), and Cloud Services (metadata, security, optimization).",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "Client Applications Layer",
+      "Database Storage",
+      "Query Processing (Compute)",
+      "Network Layer",
+      "Cloud Services"
+    ],
+    "options_fr": [
+      "La couche Client Applications",
+      "Database Storage",
+      "Query Processing (Compute)",
+      "La couche Network",
+      "Cloud Services"
+    ],
+    "correct_indexes": [
+      1,
+      2,
+      4
+    ]
+  },
+  {
+    "source_id": 102,
+    "question_fr": "(Choisissez 2) Une requête s'exécute en 2 secondes le lundi mais prend 30 secondes le vendredi avec les mêmes données. Qu'est-ce qui pourrait l'expliquer ?",
+    "question_en": "(Choose 2) A query runs in 2 seconds on Monday but takes 30 seconds on Friday with the same data. What could explain this?",
+    "explanation_fr": "Si le warehouse a été suspendu entre-temps, son cache disque local est perdu ; et si plus de 24h se sont écoulées, le Result Cache expire également, ce qui force un recalcul complet.",
+    "explanation_en": "If the warehouse was suspended in between, its local disk cache is lost; and if more than 24h passed, the Result Cache also expires, forcing full re-computation.",
+    "is_free": false,
+    "type": "choice",
+    "options_en": [
+      "The query optimizer chose a different join order",
+      "Result Cache expired after 24h",
+      "Local disk cache lost due to warehouse suspension",
+      "The underlying table was reclustered"
+    ],
+    "options_fr": [
+      "L'optimiseur de requêtes a choisi un plan de jointure différent",
+      "expiration du Result Cache après 24h",
+      "Perte du cache disque local suite à la suspension du warehouse",
+      "La table sous-jacente a été reclusterisée"
+    ],
+    "correct_indexes": [
+      1,
+      2
+    ]
+  }
+]

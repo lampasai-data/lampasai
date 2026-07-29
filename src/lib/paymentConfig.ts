@@ -4,7 +4,7 @@
 // UI links out to.
 export const ENABLE_GUMROAD = true;
 
-const GUMROAD_SELLER = "allatessem";
+const GUMROAD_SELLER = "lampasai";
 
 // Mirrors GUMROAD_PERMALINK_POWERBI / GUMROAD_PERMALINK_SNOWFLAKE set on the
 // gumroad-webhook Edge Function. Permalinks aren't secret (they're part of

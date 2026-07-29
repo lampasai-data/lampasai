@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useAuth, HAS_LOGGED_IN_KEY, markGoogleAuthIntent } from "../context/AuthContext";
 import { isSupabaseConfigured } from "../lib/supabase";
 import {
@@ -8,6 +8,12 @@ import {
 import googleLogo from "../assets/google-logo.png";
 
 type Mode = "signin" | "signup" | "forgot";
+
+// Same lightweight anti-bot pattern as Contact.tsx / TrainingRequestForm.tsx
+// (honeypot + time-trap) - only gated on "signup", since that's the one mode
+// that actually creates a new account (a bot's real target); gating login
+// the same way would risk false positives on fast password-manager autofill.
+const MIN_SIGNUP_DELAY_MS = 2500;
 
 export default function AuthPanel({
   title,
@@ -37,6 +43,8 @@ export default function AuthPanel({
   const [loadingGoogle, setLoadingGoogle] = useState(false);
   const [sentConfirmation, setSentConfirmation] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [tooFast, setTooFast] = useState(false);
+  const mountedAt = useRef(Date.now());
 
   // Set by AuthContext when a Google sign-in attempt just turned out to have
   // auto-created (and then deleted again) a brand-new account - steer the
@@ -72,9 +80,23 @@ export default function AuthPanel({
     setLoadingGoogle(false);
   }
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setTooFast(false);
+
+    if (mode === "signup") {
+      const data = new FormData(e.currentTarget);
+      // Honeypot: a field only bots fill in (hidden from real users via CSS).
+      if (data.get("company_website")) return;
+      // Time-trap: a real human takes at least a couple of seconds to fill
+      // the signup form; a bot submitting instantly gets silently blocked.
+      if (Date.now() - mountedAt.current < MIN_SIGNUP_DELAY_MS) {
+        setTooFast(true);
+        return;
+      }
+    }
+
     setLoadingEmail(true);
 
     if (mode === "forgot") {
@@ -152,6 +174,18 @@ export default function AuthPanel({
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           {mode === "signup" && (
+            <div className="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+              <label htmlFor="auth_company_website">Company website</label>
+              <input
+                id="auth_company_website"
+                name="company_website"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+              />
+            </div>
+          )}
+          {mode === "signup" && (
             <input
               type="text"
               required
@@ -179,6 +213,11 @@ export default function AuthPanel({
               onChange={(e) => setPassword(e.target.value)}
               className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink placeholder:text-muted/70 focus:border-teal focus:outline-none"
             />
+          )}
+          {tooFast && (
+            <p className="text-sm text-amber">
+              Un instant... prends le temps de vérifier tes informations avant de valider.
+            </p>
           )}
           {error &&
           (error === ALREADY_REGISTERED_MESSAGE ||

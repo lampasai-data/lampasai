@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import type { Question } from "../data/types";
 import type { Lang } from "../i18n";
 import { localize } from "./i18nText";
+import { splitInlineCode } from "./inlineCode";
 
 type RGB = readonly [number, number, number];
 
@@ -108,13 +109,13 @@ const COPY = {
 } as const;
 
 /**
- * "<slot> => <answer>" for match/hotspot rows. Labels often already end in a
+ * "<slot> : <answer>" for match/hotspot rows. Labels often already end in a
  * colon or an arrow of their own, so the trailing punctuation is dropped and a
  * distinct separator is used to keep the answer unambiguous.
  */
 function slotAnswer(label: string, answer: string): string {
   const trimmed = label.replace(/[\s:]+$/, "");
-  return trimmed ? `${trimmed}  =>  ${answer}` : answer;
+  return trimmed ? `${trimmed} : ${answer}` : answer;
 }
 
 function fileSlug(name: string): string {
@@ -145,10 +146,61 @@ export function exportCertificationPdf(certName: string, questions: Question[], 
   const setText = (c: RGB) => doc.setTextColor(c[0], c[1], c[2]);
   const setDraw = (c: RGB) => doc.setDrawColor(c[0], c[1], c[2]);
 
-  function measure(text: string, width: number, size: number, style: "normal" | "bold" | "italic") {
-    doc.setFont("helvetica", style);
-    doc.setFontSize(size);
-    return (doc.splitTextToSize(text, width) as string[]).length * lineHeight(size);
+  type RichToken = { text: string; code: boolean };
+
+  // Tokenizes text (already split into prose/code segments by
+  // splitInlineCode) into words and whitespace runs, each tagged with
+  // whether it belongs to a formula-like fragment - so wrapping can measure
+  // and draw each token in the right font (courier for code, helvetica
+  // otherwise).
+  function tokenizeRich(text: string): RichToken[] {
+    const tokens: RichToken[] = [];
+    for (const seg of splitInlineCode(text)) {
+      for (const part of seg.text.split(/(\s+)/)) {
+        if (part.length > 0) tokens.push({ text: part, code: seg.code });
+      }
+    }
+    return tokens;
+  }
+
+  function fontFor(code: boolean): "helvetica" | "courier" {
+    return code ? "courier" : "helvetica";
+  }
+
+  // Wraps `text` into lines of tokens, sharing this single layout pass
+  // between measureRich (for `ensure()` pagination) and writeRich (the
+  // actual draw), so the two can never disagree on line count.
+  function layoutRich(
+    text: string,
+    width: number,
+    size: number,
+    style: "normal" | "bold" | "italic"
+  ): RichToken[][] {
+    const widthOf = (t: RichToken) => {
+      doc.setFont(fontFor(t.code), style);
+      doc.setFontSize(size);
+      return doc.getTextWidth(t.text);
+    };
+    const lines: RichToken[][] = [[]];
+    let cursor = 0;
+    for (const token of tokenizeRich(text)) {
+      const currentLine = lines[lines.length - 1];
+      const isSpace = /^\s+$/.test(token.text);
+      if (isSpace && currentLine.length === 0) continue; // never start a line with a space
+      const w = widthOf(token);
+      if (cursor > 0 && cursor + w > width) {
+        lines.push([]);
+        cursor = 0;
+        if (isSpace) continue; // dropped at the wrap point
+      }
+      lines[lines.length - 1].push(token);
+      cursor += w;
+    }
+    return lines;
+  }
+
+  function measureRich(text: string, width: number, size: number, style: "normal" | "bold" | "italic") {
+    return layoutRich(text, width, size, style).length * lineHeight(size);
   }
 
   function newPage() {
@@ -186,6 +238,40 @@ export function exportCertificationPdf(certName: string, questions: Question[], 
     const lines = doc.splitTextToSize(text, width) as string[];
     doc.text(lines, x, y, { baseline: "top" });
     y += lines.length * lineHeight(size) + gapAfter;
+  }
+
+  /** Like `write`, but renders inline formula-like fragments in monospace. */
+  function writeRich(
+    text: string,
+    opts: {
+      x?: number;
+      width?: number;
+      size?: number;
+      style?: "normal" | "bold" | "italic";
+      color?: RGB;
+      gapAfter?: number;
+    } = {}
+  ) {
+    const {
+      x = BODY_X,
+      width = BODY_W,
+      size = 10.5,
+      style = "normal",
+      color = INK,
+      gapAfter = 0,
+    } = opts;
+    setText(color);
+    for (const line of layoutRich(text, width, size, style)) {
+      let cx = x;
+      for (const token of line) {
+        doc.setFont(fontFor(token.code), style);
+        doc.setFontSize(size);
+        doc.text(token.text, cx, y, { baseline: "top" });
+        cx += doc.getTextWidth(token.text);
+      }
+      y += lineHeight(size);
+    }
+    y += gapAfter;
   }
 
   /** Approximates the brand gradient (teal -> brown) with thin vertical slices. */
@@ -269,7 +355,7 @@ export function exportCertificationPdf(certName: string, questions: Question[], 
     const textX = BODY_X + labelW;
     const textW = BODY_W - labelW - padX;
 
-    const height = measure(text, textW, size, correct ? "bold" : "normal") + padY * 2;
+    const height = measureRich(text, textW, size, correct ? "bold" : "normal") + padY * 2;
     ensure(height);
 
     if (correct) {
@@ -287,7 +373,7 @@ export function exportCertificationPdf(certName: string, questions: Question[], 
 
     const before = y;
     y += padY;
-    write(text, {
+    writeRich(text, {
       x: textX,
       width: textW,
       size,
@@ -303,7 +389,7 @@ export function exportCertificationPdf(certName: string, questions: Question[], 
     const padY = 3;
     const innerW = BODY_W - padX * 2;
     const labelH = lineHeight(7.5) + 1.2;
-    const height = labelH + measure(text, innerW, size, "italic") + padY * 2;
+    const height = labelH + measureRich(text, innerW, size, "italic") + padY * 2;
 
     ensure(height + 2);
     y += 2;
@@ -323,14 +409,14 @@ export function exportCertificationPdf(certName: string, questions: Question[], 
     });
 
     y = top + padY + labelH;
-    write(text, { x: BODY_X + padX, width: innerW, size, style: "italic", color: MUTED });
+    writeRich(text, { x: BODY_X + padX, width: innerW, size, style: "italic", color: MUTED });
     y = top + height;
   }
 
   function questionBlock(question: Question, index: number) {
     const number = String(index + 1).padStart(2, "0");
     const heading = clean(localize(question.question, lang));
-    const headingH = measure(heading, BODY_W, 10.5, "bold");
+    const headingH = measureRich(heading, BODY_W, 10.5, "bold");
 
     // Keep the number, the question and at least one answer row together.
     ensure(headingH + 16);
@@ -340,7 +426,7 @@ export function exportCertificationPdf(certName: string, questions: Question[], 
     setText(TEAL);
     doc.text(number, MARGIN_X, y, { baseline: "top" });
 
-    write(heading, { size: 10.5, style: "bold", color: INK, gapAfter: 2.5 });
+    writeRich(heading, { size: 10.5, style: "bold", color: INK, gapAfter: 2.5 });
 
     if (question.type === "match" && question.pool && question.targets) {
       answerTypeLabel(t.matchLabel);

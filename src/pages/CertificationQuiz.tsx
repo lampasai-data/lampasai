@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n";
 import { localize } from "../lib/i18nText";
 import { FREE_QUESTION_LIMIT } from "../lib/freeQuota";
+import { splitInlineCode } from "../lib/inlineCode";
 import { supabase } from "../lib/supabase";
 import AuthPanel from "../components/AuthPanel";
 import ProUpsell from "../components/ProUpsell";
@@ -158,14 +159,32 @@ function withCircledNumbers(text: string) {
   });
 }
 
+// Renders question/explanation text, switching to monospace for embedded
+// formula-like fragments (see splitInlineCode) without flipping the whole
+// sentence, plus the coarser whole-line check for a formula sitting alone on
+// its own line (e.g. a full DAX expression).
 function renderQuestionText(text: string) {
   const lines = text.split("\n");
   return lines.map((line, i) => (
     <span key={i} className={looksLikeCode(line) ? "font-mono text-[13px] tracking-tight" : undefined}>
-      {withCircledNumbers(line)}
+      {withCircledNumbers(line).flatMap((part, pi) =>
+        typeof part === "string" ? renderInlineCode(part, `${i}-${pi}`) : [part]
+      )}
       {i < lines.length - 1 ? "\n" : ""}
     </span>
   ));
+}
+
+function renderInlineCode(text: string, keyPrefix: string) {
+  return splitInlineCode(text).map((seg, i) =>
+    seg.code ? (
+      <code key={`${keyPrefix}-${i}`} className="rounded bg-black/5 px-1 py-0.5 font-mono text-[0.92em] tracking-tight">
+        {seg.text}
+      </code>
+    ) : (
+      seg.text
+    )
+  );
 }
 
 function formatTime(totalSeconds: number) {
@@ -928,7 +947,7 @@ export default function CertificationQuiz() {
                                 {t.quiz.explanationLabel}
                               </p>
                               <p className="mt-2 text-sm leading-relaxed text-ink/80">
-                                {localize(q.explanation, lang)}
+                                {renderQuestionText(localize(q.explanation, lang))}
                               </p>
                             </div>
                           )}
@@ -1554,7 +1573,7 @@ export default function CertificationQuiz() {
                     {t.quiz.explanationLabel}
                   </p>
                   <p className="mt-2 text-sm leading-relaxed text-ink/80">
-                    {localize(question.explanation, lang)}
+                    {renderQuestionText(localize(question.explanation, lang))}
                   </p>
                 </div>
               )}
