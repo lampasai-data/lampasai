@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -12,13 +13,14 @@ import { mapAuthError, validatePassword } from "../lib/authErrors";
 const PENDING_UPGRADE_KEY = "lampasai_pending_upgrade_slug";
 export const HAS_LOGGED_IN_KEY = "lampasai_has_logged_in_before";
 
-// Google OAuth always creates the account on first sign-in - there's no way
-// to block that client-side (the account already exists in auth.users by
-// the time the redirect comes back). This just remembers whether the click
-// happened from "Connexion" or "Inscription" across the full-page OAuth
-// redirect, so we can show an honest "your account was just created"
-// message afterwards instead of silently dropping a would-be sign-in into a
-// brand-new account.
+// Google OAuth always creates the account server-side before we get a
+// chance to react (the redirect already comes back with a live session).
+// We can't stop that first step, but we can undo it: this remembers whether
+// the click happened from "Connexion" or "Inscription" across the full-page
+// OAuth redirect, so a sign-in attempt that turns out to have just created a
+// brand-new account can be reverted (delete-orphan-oauth-user) and reported
+// as "no account found, sign up first" instead of silently letting the user
+// into an empty new account. Same pattern as the Wonjo app.
 const GOOGLE_AUTH_INTENT_KEY = "lampasai_google_auth_intent";
 
 export function markGoogleAuthIntent(mode: "signin" | "signup") {
@@ -53,8 +55,10 @@ interface AuthState {
   updatePassword: (password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-  googleWelcomeNewAccount: boolean;
-  dismissGoogleWelcome: () => void;
+  googleAccountNotFound: boolean;
+  dismissGoogleAccountNotFound: () => void;
+  googleAccountAlreadyExists: boolean;
+  dismissGoogleAccountAlreadyExists: () => void;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -67,7 +71,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeModalPreselect, setUpgradeModalPreselect] = useState<string | null>(null);
-  const [googleWelcomeNewAccount, setGoogleWelcomeNewAccount] = useState(false);
+  const [googleAccountNotFound, setGoogleAccountNotFound] = useState(false);
+  const [googleAccountAlreadyExists, setGoogleAccountAlreadyExists] = useState(false);
+  // Supabase fires the session change more than once for a single sign-in
+  // (getSession() resolving separately from onAuthStateChange, sometimes an
+  // extra INITIAL_SESSION event) - each firing re-runs the effect below with
+  // a new session object. Without this guard, a second firing can read the
+  // Google-auth-intent flag as already consumed and fall through to the
+  // "normal login" branch while the first firing's async block-and-sign-out
+  // is still in flight, racing it and silently letting the user in.
+  const handledSessionUserIdRef = useRef<string | null>(null);
 
   async function loadProfile(userId: string) {
     if (!supabase) return;
@@ -83,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return;
 
     supabase.auth.getSession().then(({ data }) => {
+      console.debug("[auth-debug] getSession() resolved", !!data.session, data.session?.user.id);
       setSession(data.session);
       setReady(true);
       if (data.session) loadProfile(data.session.user.id);
@@ -90,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
+        console.debug("[auth-debug] onAuthStateChange", event, newSession?.user.id);
         setSession(newSession);
         if (newSession) loadProfile(newSession.user.id);
         else setProfile(null);
@@ -103,7 +118,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!session || !supabase) return;
+    if (!session || !supabase) {
+      // Reset on sign-out so a later, genuinely new sign-in by the same
+      // user isn't mistaken for a re-fire of the previous one.
+      handledSessionUserIdRef.current = null;
+      return;
+    }
+
+    if (handledSessionUserIdRef.current === session.user.id) {
+      console.debug("[auth-debug] session effect skipped (already handled this user.id this mount)", session.user.id);
+      return;
+    }
+    handledSessionUserIdRef.current = session.user.id;
+
+    const storedAuthIntent = sessionStorage.getItem(GOOGLE_AUTH_INTENT_KEY);
+    sessionStorage.removeItem(GOOGLE_AUTH_INTENT_KEY);
+    // Only ever act on the flag for an actual Google session. Without this,
+    // a Google attempt that gets abandoned mid-flow (cancelled, closed,
+    // navigated away) leaves the flag sitting in sessionStorage, and it would
+    // otherwise get wrongly applied to the next login - even an unrelated
+    // plain email/password one - and sign the user right back out.
+    const authIntent =
+      session.user.app_metadata?.provider === "google" ? storedAuthIntent : null;
+    console.debug("[auth-debug] session effect firing", {
+      storedAuthIntent,
+      authIntent,
+      created_at: session.user.created_at,
+      last_sign_in_at: session.user.last_sign_in_at,
+      provider: session.user.app_metadata?.provider,
+    });
+
+    if (authIntent === "signin" || authIntent === "signup") {
+      const createdAt = new Date(session.user.created_at).getTime();
+      const lastSignInAt = session.user.last_sign_in_at
+        ? new Date(session.user.last_sign_in_at).getTime()
+        : createdAt;
+      // A brand-new account's first sign-in timestamp lands within a few
+      // seconds of its creation timestamp - a returning user's won't.
+      const isBrandNew = Math.abs(lastSignInAt - createdAt) < 10000;
+      console.debug("[auth-debug] isBrandNew computed", { isBrandNew, diffMs: Math.abs(lastSignInAt - createdAt) });
+
+      if (authIntent === "signin" && isBrandNew) {
+        const accessToken = session.access_token;
+        supabase
+          .functions.invoke("delete-orphan-oauth-user", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          })
+          .catch((err) => console.error("Failed to delete orphan OAuth user", err))
+          .finally(async () => {
+            await supabase!.auth.signOut();
+            setGoogleAccountNotFound(true);
+            setAuthModalOpen(true);
+          });
+        return;
+      }
+
+      // Mirror case: clicked "Continuer avec Google" from the register panel,
+      // but this Google identity already had an account before today - nothing
+      // to delete (it's a legitimate existing account), just refuse to silently
+      // log them in from the signup panel and point them at "Connexion" instead.
+      if (authIntent === "signup" && !isBrandNew) {
+        supabase.auth.signOut().then(() => {
+          setGoogleAccountAlreadyExists(true);
+          setAuthModalOpen(true);
+        });
+        return;
+      }
+    }
+
     setAuthModalOpen(false);
     // Remembered so the auth panel can default to "sign in" instead of
     // "sign up" for a browser that has already logged in before.
@@ -124,18 +206,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem(PENDING_UPGRADE_KEY);
       setUpgradeModalPreselect(pending);
       setUpgradeModalOpen(true);
-    }
-
-    const authIntent = sessionStorage.getItem(GOOGLE_AUTH_INTENT_KEY);
-    sessionStorage.removeItem(GOOGLE_AUTH_INTENT_KEY);
-    if (authIntent === "signin") {
-      const createdAt = new Date(session.user.created_at).getTime();
-      const lastSignInAt = session.user.last_sign_in_at
-        ? new Date(session.user.last_sign_in_at).getTime()
-        : createdAt;
-      // A brand-new account's first sign-in timestamp lands within a few
-      // seconds of its creation timestamp - a returning user's won't.
-      if (Math.abs(lastSignInAt - createdAt) < 10000) setGoogleWelcomeNewAccount(true);
     }
   }, [session]);
 
@@ -232,8 +302,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (session) await loadProfile(session.user.id);
   }
 
-  function dismissGoogleWelcome() {
-    setGoogleWelcomeNewAccount(false);
+  function dismissGoogleAccountNotFound() {
+    setGoogleAccountNotFound(false);
+  }
+
+  function dismissGoogleAccountAlreadyExists() {
+    setGoogleAccountAlreadyExists(false);
   }
 
   return (
@@ -258,8 +332,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updatePassword,
         signOut,
         refreshProfile,
-        googleWelcomeNewAccount,
-        dismissGoogleWelcome,
+        googleAccountNotFound,
+        dismissGoogleAccountNotFound,
+        googleAccountAlreadyExists,
+        dismissGoogleAccountAlreadyExists,
       }}
     >
       {children}

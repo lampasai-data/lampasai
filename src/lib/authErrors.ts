@@ -3,6 +3,11 @@
 export const ALREADY_REGISTERED_MESSAGE =
   "Un compte existe déjà avec cet email. Essaie de te connecter.";
 
+// Same rendering treatment as ALREADY_REGISTERED_MESSAGE (clickable "Se
+// connecter" link), for the Google-sign-in-from-register-panel case.
+export const GOOGLE_ACCOUNT_ALREADY_EXISTS_MESSAGE =
+  "Un compte existe déjà avec cette adresse Google.";
+
 export function mapAuthError(message: string): string {
   const lower = message.toLowerCase();
 

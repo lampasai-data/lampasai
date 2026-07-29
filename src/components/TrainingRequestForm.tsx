@@ -2,7 +2,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { useLanguage } from "../i18n";
 
 const MIN_SUBMIT_DELAY_MS = 2500;
-const TOOLS = ["Power BI", "Snowflake", "dbt"];
+const TOOLS = ["Power BI", "Snowflake", "dbt", "Git", "Linux", "SQL"];
 
 export default function TrainingRequestForm() {
   const [sent, setSent] = useState(false);

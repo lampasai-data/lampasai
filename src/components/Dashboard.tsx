@@ -17,8 +17,7 @@ import { CERT_LOGOS } from "../data/certLogos";
 import { CERTIFICATION_DOMAINS } from "../data/certificationDomains";
 
 export default function Dashboard({ certs }: { certs: CertificationSummary[] }) {
-  const { user, profile, openUpgradeModal, googleWelcomeNewAccount, dismissGoogleWelcome } =
-    useAuth();
+  const { user, profile, openUpgradeModal } = useAuth();
   const { t, lang } = useLanguage();
   const [progress, setProgress] = useState<Record<string, CertificationProgress>>({});
   const [purchasedIds, setPurchasedIds] = useState<Map<string, string>>(new Map());
@@ -85,27 +84,6 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
 
   return (
     <>
-      {googleWelcomeNewAccount && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 flex items-start justify-between gap-4 rounded-2xl border border-teal/25 bg-teal/5 px-5 py-4 text-sm font-medium text-teal-dark"
-        >
-          <span>
-            Aucun compte n'existait avec cette adresse Google - on vient de
-            t'en créer un. Bienvenue !
-          </span>
-          <button
-            type="button"
-            onClick={dismissGoogleWelcome}
-            aria-label="Fermer"
-            className="shrink-0 text-teal-dark/60 hover:text-teal-dark"
-          >
-            ✕
-          </button>
-        </motion.div>
-      )}
-
       {showSuccessBanner && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}

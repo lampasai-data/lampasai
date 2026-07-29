@@ -1,7 +1,10 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useAuth, HAS_LOGGED_IN_KEY, markGoogleAuthIntent } from "../context/AuthContext";
 import { isSupabaseConfigured } from "../lib/supabase";
-import { ALREADY_REGISTERED_MESSAGE } from "../lib/authErrors";
+import {
+  ALREADY_REGISTERED_MESSAGE,
+  GOOGLE_ACCOUNT_ALREADY_EXISTS_MESSAGE,
+} from "../lib/authErrors";
 import googleLogo from "../assets/google-logo.png";
 
 type Mode = "signin" | "signup" | "forgot";
@@ -13,8 +16,16 @@ export default function AuthPanel({
   title?: string;
   subtitle?: string;
 }) {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail, sendPasswordReset } =
-    useAuth();
+  const {
+    signInWithGoogle,
+    signInWithEmail,
+    signUpWithEmail,
+    sendPasswordReset,
+    googleAccountNotFound,
+    dismissGoogleAccountNotFound,
+    googleAccountAlreadyExists,
+    dismissGoogleAccountAlreadyExists,
+  } = useAuth();
   const [mode, setMode] = useState<Mode>(() =>
     localStorage.getItem(HAS_LOGGED_IN_KEY) ? "signin" : "signup"
   );
@@ -27,10 +38,38 @@ export default function AuthPanel({
   const [sentConfirmation, setSentConfirmation] = useState(false);
   const [resetSent, setResetSent] = useState(false);
 
+  // Set by AuthContext when a Google sign-in attempt just turned out to have
+  // auto-created (and then deleted again) a brand-new account - steer the
+  // user toward actually signing up instead.
+  useEffect(() => {
+    if (!googleAccountNotFound) return;
+    setMode("signup");
+    setError(
+      "Aucun compte n'existe avec cette adresse Google. Crée ton compte ci-dessous."
+    );
+    dismissGoogleAccountNotFound();
+  }, [googleAccountNotFound, dismissGoogleAccountNotFound]);
+
+  // Set by AuthContext when a Google sign-in attempt from the register panel
+  // resolved to an account that already existed - stays on the register
+  // panel and shows a clickable link to switch to sign-in, same treatment as
+  // the "email already registered" case below. This always fires after a
+  // full-page reload (the OAuth redirect), where the panel's initial mode is
+  // freshly recomputed from HAS_LOGGED_IN_KEY and can default back to
+  // "signin" even though the user was on "Inscription" - force it back.
+  useEffect(() => {
+    if (!googleAccountAlreadyExists) return;
+    setMode("signup");
+    setError(GOOGLE_ACCOUNT_ALREADY_EXISTS_MESSAGE);
+    dismissGoogleAccountAlreadyExists();
+  }, [googleAccountAlreadyExists, dismissGoogleAccountAlreadyExists]);
+
   async function handleGoogle() {
     setError(null);
     setLoadingGoogle(true);
-    markGoogleAuthIntent(mode === "signup" ? "signup" : "signin");
+    const intent = mode === "signup" ? "signup" : "signin";
+    console.debug("[auth-debug] handleGoogle, mode =", mode, "intent stored =", intent);
+    markGoogleAuthIntent(intent);
     await signInWithGoogle();
     setLoadingGoogle(false);
   }
@@ -143,9 +182,11 @@ export default function AuthPanel({
               className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink placeholder:text-muted/70 focus:border-teal focus:outline-none"
             />
           )}
-          {error && error === ALREADY_REGISTERED_MESSAGE ? (
+          {error &&
+          (error === ALREADY_REGISTERED_MESSAGE ||
+            error === GOOGLE_ACCOUNT_ALREADY_EXISTS_MESSAGE) ? (
             <p className="text-sm text-red-500">
-              Un compte existe déjà avec cet email.{" "}
+              {error}{" "}
               <button
                 type="button"
                 onClick={() => {
