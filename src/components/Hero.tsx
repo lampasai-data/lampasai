@@ -1,19 +1,31 @@
 import { useEffect, useRef, type CSSProperties } from "react";
 import { useLanguage } from "../i18n";
 import snowflakeLogo from "../assets/snowflake.png";
-import powerBiLogo from "../assets/PowerBI-removebg-preview.png";
+import powerBiLogo from "../assets/icons8-puissance-bi-2021-96.png";
 import dbtLogo from "../assets/dbt.png";
 import gcpLogo from "../assets/GCP.png";
-import fivetranLogo from "../assets/Fivetran.png";
+import fivetranLogo from "../assets/Fivetran-removebg-preview.png";
+import gitLogo from "../assets/icons8-git-96.png";
+import linuxLogo from "../assets/icons8-linux-96.png";
+import sqlLogo from "../assets/icons8-sql-96.png";
 
+// Grouped by category so the layout reads top-to-bottom as Ingestion/ETL,
+// Storage, BI - with the general dev tools (not part of any category) kept
+// in a neutral row at the bottom.
 const CORNER_TOOLS: { name: string; logo: string; style: CSSProperties; float: string }[] = [
-  { name: "Snowflake", logo: snowflakeLogo, style: { top: "6%", left: "5%" }, float: "9s" },
-  { name: "Power BI", logo: powerBiLogo, style: { top: "6%", right: "5%" }, float: "8s" },
-  { name: "dbt", logo: dbtLogo, style: { bottom: "6%", left: "5%" }, float: "10.5s" },
-  { name: "GCP", logo: gcpLogo, style: { bottom: "6%", right: "5%" }, float: "7.5s" },
+  // Ingestion / ETL - top row
+  { name: "Fivetran", logo: fivetranLogo, style: { top: "6%", left: "32%", transform: "translateX(-50%)" }, float: "11s" },
+  { name: "dbt", logo: dbtLogo, style: { top: "6%", left: "68%", transform: "translateX(-50%)" }, float: "10.5s" },
+  // Storage - left column
+  { name: "Snowflake", logo: snowflakeLogo, style: { top: "36%", left: "5%" }, float: "9s" },
+  { name: "GCP", logo: gcpLogo, style: { top: "62%", left: "5%" }, float: "7.5s" },
+  // BI - right side
+  { name: "Power BI", logo: powerBiLogo, style: { top: "49%", right: "5%", transform: "translateY(-50%)" }, float: "8s" },
+  // General tools - neutral bottom row (not part of any category above)
+  { name: "SQL", logo: sqlLogo, style: { bottom: "5%", left: "30%", transform: "translateX(-50%)" }, float: "9.5s" },
+  { name: "Git", logo: gitLogo, style: { bottom: "5%", left: "56%", transform: "translateX(-50%)" }, float: "8.5s" },
+  { name: "Linux", logo: linuxLogo, style: { bottom: "5%", left: "82%", transform: "translateX(-50%)" }, float: "10s" },
 ];
-
-const CENTER_TOOL = { name: "Fivetran", logo: fivetranLogo, float: "11s" };
 
 function MeshBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -181,36 +193,23 @@ export default function Hero() {
             <MeshBackground />
 
             {CORNER_TOOLS.map((tool, i) => (
-              <div
-                key={tool.name}
-                className="absolute flex h-14 w-14 items-center justify-center rounded-2xl border border-black/8 bg-white/95 p-2.5 shadow-md backdrop-blur-sm lg:h-16 lg:w-16"
-                style={{
-                  ...tool.style,
-                  animation: `float-slow ${tool.float} ease-in-out infinite`,
-                  animationDelay: `${i * 0.5}s`,
-                }}
-                title={tool.name}
-              >
-                <img src={tool.logo} alt={tool.name} className="h-full w-full object-contain" />
+              // Positioning transform (e.g. centering a logo) and the float
+              // animation both set `transform`, so they can't share one
+              // element - the animation would silently override any static
+              // transform. Split them: an outer div for position, an inner
+              // one for the animation.
+              <div key={tool.name} className="absolute" style={tool.style} title={tool.name}>
+                <div
+                  className="flex h-14 w-14 items-center justify-center rounded-2xl border border-black/8 bg-white/95 p-2.5 shadow-md backdrop-blur-sm lg:h-16 lg:w-16"
+                  style={{
+                    animation: `float-slow ${tool.float} ease-in-out infinite`,
+                    animationDelay: `${i * 0.5}s`,
+                  }}
+                >
+                  <img src={tool.logo} alt={tool.name} className="h-full w-full object-contain" />
+                </div>
               </div>
             ))}
-
-            <div
-              className="absolute"
-              style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
-              title={CENTER_TOOL.name}
-            >
-              <div
-                className="flex h-16 w-16 items-center justify-center rounded-2xl border border-teal/25 bg-white shadow-lg backdrop-blur-sm lg:h-20 lg:w-20"
-                style={{ animation: `float-slow ${CENTER_TOOL.float} ease-in-out infinite` }}
-              >
-                <img
-                  src={CENTER_TOOL.logo}
-                  alt={CENTER_TOOL.name}
-                  className="h-full w-full object-contain p-1"
-                />
-              </div>
-            </div>
           </div>
 
           <p className="mt-4 text-center text-xs font-medium uppercase tracking-widest text-muted">

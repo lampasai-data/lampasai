@@ -1,8 +1,22 @@
 import { useRef, useState, type FormEvent } from "react";
 import { useLanguage } from "../i18n";
+import powerBiLogo from "../assets/icons8-puissance-bi-2021-96.png";
+import snowflakeLogo from "../assets/snowflake.png";
+import dbtLogo from "../assets/dbt.png";
+import gitLogo from "../assets/icons8-git-96.png";
+import linuxLogo from "../assets/icons8-linux-96.png";
+import sqlLogo from "../assets/icons8-sql-96.png";
 
 const MIN_SUBMIT_DELAY_MS = 2500;
 const TOOLS = ["Power BI", "Snowflake", "dbt", "Git", "Linux", "SQL"];
+const TOOL_LOGOS: Record<string, string> = {
+  "Power BI": powerBiLogo,
+  Snowflake: snowflakeLogo,
+  dbt: dbtLogo,
+  Git: gitLogo,
+  Linux: linuxLogo,
+  SQL: sqlLogo,
+};
 
 export default function TrainingRequestForm() {
   const [sent, setSent] = useState(false);
@@ -116,6 +130,7 @@ export default function TrainingRequestForm() {
                 >
                   {isSelected && "✓"}
                 </span>
+                <img src={TOOL_LOGOS[tool]} alt="" className="h-4 w-4 object-contain" />
                 {tool}
               </button>
             );
