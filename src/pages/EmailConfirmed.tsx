@@ -67,7 +67,7 @@ export default function EmailConfirmed() {
               C'est souvent dû à ta messagerie qui ouvre les liens
               automatiquement pour vérifier qu'ils sont sûrs, avant même que
               tu ne cliques. Bonne nouvelle : ton compte est presque
-              certainement déjà validé — connecte-toi directement.
+              certainement déjà validé - connecte-toi directement.
             </p>
             <button
               type="button"
