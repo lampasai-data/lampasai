@@ -96,7 +96,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return;
 
     supabase.auth.getSession().then(({ data }) => {
-      console.debug("[auth-debug] getSession() resolved", !!data.session, data.session?.user.id);
       setSession(data.session);
       setReady(true);
       if (data.session) loadProfile(data.session.user.id);
@@ -104,7 +103,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
-        console.debug("[auth-debug] onAuthStateChange", event, newSession?.user.id);
         setSession(newSession);
         if (newSession) loadProfile(newSession.user.id);
         else setProfile(null);
@@ -125,10 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (handledSessionUserIdRef.current === session.user.id) {
-      console.debug("[auth-debug] session effect skipped (already handled this user.id this mount)", session.user.id);
-      return;
-    }
+    if (handledSessionUserIdRef.current === session.user.id) return;
     handledSessionUserIdRef.current = session.user.id;
 
     const storedAuthIntent = sessionStorage.getItem(GOOGLE_AUTH_INTENT_KEY);
@@ -140,13 +135,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // plain email/password one - and sign the user right back out.
     const authIntent =
       session.user.app_metadata?.provider === "google" ? storedAuthIntent : null;
-    console.debug("[auth-debug] session effect firing", {
-      storedAuthIntent,
-      authIntent,
-      created_at: session.user.created_at,
-      last_sign_in_at: session.user.last_sign_in_at,
-      provider: session.user.app_metadata?.provider,
-    });
 
     if (authIntent === "signin" || authIntent === "signup") {
       const createdAt = new Date(session.user.created_at).getTime();
@@ -156,7 +144,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // A brand-new account's first sign-in timestamp lands within a few
       // seconds of its creation timestamp - a returning user's won't.
       const isBrandNew = Math.abs(lastSignInAt - createdAt) < 10000;
-      console.debug("[auth-debug] isBrandNew computed", { isBrandNew, diffMs: Math.abs(lastSignInAt - createdAt) });
 
       if (authIntent === "signin" && isBrandNew) {
         const accessToken = session.access_token;

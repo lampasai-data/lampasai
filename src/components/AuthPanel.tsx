@@ -67,9 +67,7 @@ export default function AuthPanel({
   async function handleGoogle() {
     setError(null);
     setLoadingGoogle(true);
-    const intent = mode === "signup" ? "signup" : "signin";
-    console.debug("[auth-debug] handleGoogle, mode =", mode, "intent stored =", intent);
-    markGoogleAuthIntent(intent);
+    markGoogleAuthIntent(mode === "signup" ? "signup" : "signin");
     await signInWithGoogle();
     setLoadingGoogle(false);
   }
