@@ -655,7 +655,7 @@ export default function CertificationQuiz() {
 
           {previewQuestion && (
             <div className="mt-6 rounded-2xl border border-black/8 bg-white p-7 shadow-sm">
-              <p className="whitespace-pre-line text-justify font-display text-base font-medium text-ink">
+              <p className="whitespace-pre-line font-display text-base font-medium text-ink">
                 {renderQuestionText(localize(previewQuestion.question, lang))}
               </p>
               {(previewQuestion.options ?? []).length > 0 && (
@@ -1212,7 +1212,7 @@ export default function CertificationQuiz() {
             />
           )}
           <div className="flex items-start justify-between gap-4">
-            <p className="whitespace-pre-line text-justify font-display text-base font-medium text-ink">
+            <p className="whitespace-pre-line font-display text-base font-medium text-ink">
               {renderQuestionText(localize(question.question, lang))}
             </p>
             <button

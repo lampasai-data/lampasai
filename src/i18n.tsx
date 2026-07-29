@@ -218,7 +218,7 @@ const translations: Record<Lang, Translations> = {
       ctaPrimary: "Discutons de votre projet",
       ctaGhost: "En savoir plus",
       highlights: ["KPIs & performance", "IA prédictive", "Cloud & données"],
-      toolsLabel: "Les outils que nous maîtrisons",
+      toolsLabel: "La stack technique que nous maîtrisons",
     },
     about: {
       tag: "Qui sommes-nous ?",
