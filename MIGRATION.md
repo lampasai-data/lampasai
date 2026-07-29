@@ -2,7 +2,7 @@
 
 ## État actuel
 
-`ENABLE_GUMROAD = true` dans `src/lib/paymentConfig.ts` — l'app est branchée sur
+`ENABLE_GUMROAD = true` dans `src/lib/paymentConfig.ts` - l'app est branchée sur
 **Gumroad**. Le code Stripe (Edge Functions `create-checkout-session` et
 `stripe-webhook`, logique multi-sélection dans `UpgradeModal.tsx`) est resté
 **intact et déployé**, juste inatteignable depuis l'UI tant que ce flag est à
@@ -20,7 +20,7 @@ tout réécrire une fois l'activité lancée.
   - `supabase/functions/_shared/gumroadMatch.ts` (`PERMALINK_TO_CERT_SLUG`,
     lu depuis les secrets `GUMROAD_PERMALINK_POWERBI` /
     `GUMROAD_PERMALINK_SNOWFLAKE`)
-  - `src/lib/paymentConfig.ts` (`GUMROAD_PERMALINKS`, en dur côté frontend —
+  - `src/lib/paymentConfig.ts` (`GUMROAD_PERMALINKS`, en dur côté frontend -
     ces valeurs ne sont pas secrètes, elles apparaissent dans l'URL publique)
 - `gumroad-webhook` reçoit le ping Gumroad à chaque vente, vérifie la vente
   via l'API Gumroad (`/v2/sales/{id}`), et enregistre l'accès dans
@@ -33,7 +33,7 @@ tout réécrire une fois l'activité lancée.
   correspondant existe.
 - `/admin/gumroad` (réservé à `mbairo.allatessem@gmail.com`) liste les achats
   non rattachés après 48h et permet un rattachement manuel par email.
-- L'accès expire après 3 mois (`expires_at`), identique à Stripe — géré par
+- L'accès expire après 3 mois (`expires_at`), identique à Stripe - géré par
   la même table `certification_purchases`, juste avec `source = 'gumroad'`
   au lieu de `'stripe'`.
 

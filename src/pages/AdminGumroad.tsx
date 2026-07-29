@@ -220,7 +220,7 @@ export default function AdminGumroad() {
                 </td>
                 <td className="px-3 py-2">{log.verification_result}</td>
                 <td className="px-3 py-2">{log.match_result}</td>
-                <td className="px-3 py-2 font-mono">{log.gumroad_sale_id ?? "—"}</td>
+                <td className="px-3 py-2 font-mono">{log.gumroad_sale_id ?? "-"}</td>
                 <td className="px-3 py-2 text-red-600">{log.error_message ?? ""}</td>
               </tr>
             ))}

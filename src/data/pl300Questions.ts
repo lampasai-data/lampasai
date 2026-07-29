@@ -1011,7 +1011,7 @@ export const PL300_QUESTIONS: Question[] = [
     id: "pl300-59",
     question: {
       fr: "Un rapport a cinq pages ; les pages 1 à 4 sont visibles, la page 5 est masquée. Vous voulez permettre une navigation rapide depuis la page 1 vers toutes les autres pages visibles, en minimisant l'effort au fur et à mesure que des pages sont ajoutées. Que faites-vous en premier ?",
-      en: "A report has five pages; pages 1–4 are visible, page 5 is hidden. You want quick navigation from page 1 to all other visible pages, minimizing effort as pages are added. What should you do first?",
+      en: "A report has five pages; pages 1-4 are visible, page 5 is hidden. You want quick navigation from page 1 to all other visible pages, minimizing effort as pages are added. What should you do first?",
     },
     options: [
       { fr: "Ajouter un bouton vierge à la page 1.", en: "Add a blank button to page 1." },

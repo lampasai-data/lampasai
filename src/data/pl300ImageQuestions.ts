@@ -963,7 +963,7 @@ export const PL300_IMAGE_QUESTIONS: Question[] = [
     ],
     explanation: {
       fr: "employee_id sert de clé à la relation entre Sales et Employee : elle doit rester dans le modèle mais peut être masquée (Hide) puisqu'aucun reporting ne la requiert directement. employee_photo (binaire, volumineuse) n'est utilisée dans aucune relation ni aucun reporting : elle peut être supprimée pour réduire la taille du modèle.",
-      en: "employee_id serves as the key for the Sales–Employee relationship: it must stay in the model but can be hidden since no reporting needs it directly. employee_photo (binary, large) isn't used by any relationship or reporting: it can be deleted to reduce model size.",
+      en: "employee_id serves as the key for the Sales-Employee relationship: it must stay in the model but can be hidden since no reporting needs it directly. employee_photo (binary, large) isn't used by any relationship or reporting: it can be deleted to reduce model size.",
     },
   },
   {

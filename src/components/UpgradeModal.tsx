@@ -124,7 +124,11 @@ export default function UpgradeModal() {
               {t.formations.upgradeModalTitle}
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-muted">
-              {ENABLE_GUMROAD ? t.formations.upgradeModalDescSingle : t.formations.upgradeModalDesc}
+              {ENABLE_GUMROAD
+                ? gumroadCerts.length === 1
+                  ? t.formations.upgradeModalDescForCert(localize(gumroadCerts[0].name, lang))
+                  : t.formations.upgradeModalDescSingle
+                : t.formations.upgradeModalDesc}
             </p>
 
             {(ENABLE_GUMROAD ? gumroadCerts : availableCerts).length === 0 ? (

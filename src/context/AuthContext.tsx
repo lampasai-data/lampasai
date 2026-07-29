@@ -12,6 +12,19 @@ import { mapAuthError, validatePassword } from "../lib/authErrors";
 const PENDING_UPGRADE_KEY = "lampasai_pending_upgrade_slug";
 export const HAS_LOGGED_IN_KEY = "lampasai_has_logged_in_before";
 
+// Google OAuth always creates the account on first sign-in - there's no way
+// to block that client-side (the account already exists in auth.users by
+// the time the redirect comes back). This just remembers whether the click
+// happened from "Connexion" or "Inscription" across the full-page OAuth
+// redirect, so we can show an honest "your account was just created"
+// message afterwards instead of silently dropping a would-be sign-in into a
+// brand-new account.
+const GOOGLE_AUTH_INTENT_KEY = "lampasai_google_auth_intent";
+
+export function markGoogleAuthIntent(mode: "signin" | "signup") {
+  sessionStorage.setItem(GOOGLE_AUTH_INTENT_KEY, mode);
+}
+
 interface Profile {
   id: string;
   email: string | null;
@@ -40,6 +53,8 @@ interface AuthState {
   updatePassword: (password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  googleWelcomeNewAccount: boolean;
+  dismissGoogleWelcome: () => void;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -52,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeModalPreselect, setUpgradeModalPreselect] = useState<string | null>(null);
+  const [googleWelcomeNewAccount, setGoogleWelcomeNewAccount] = useState(false);
 
   async function loadProfile(userId: string) {
     if (!supabase) return;
@@ -109,6 +125,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUpgradeModalPreselect(pending);
       setUpgradeModalOpen(true);
     }
+
+    const authIntent = sessionStorage.getItem(GOOGLE_AUTH_INTENT_KEY);
+    sessionStorage.removeItem(GOOGLE_AUTH_INTENT_KEY);
+    if (authIntent === "signin") {
+      const createdAt = new Date(session.user.created_at).getTime();
+      const lastSignInAt = session.user.last_sign_in_at
+        ? new Date(session.user.last_sign_in_at).getTime()
+        : createdAt;
+      // A brand-new account's first sign-in timestamp lands within a few
+      // seconds of its creation timestamp - a returning user's won't.
+      if (Math.abs(lastSignInAt - createdAt) < 10000) setGoogleWelcomeNewAccount(true);
+    }
   }, [session]);
 
   function openAuthModal() {
@@ -153,12 +181,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return "Supabase n'est pas configuré.";
     const passwordError = validatePassword(password);
     if (passwordError) return passwordError;
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { first_name: firstName || null } },
+      options: {
+        data: { first_name: firstName || null },
+        // Without this, Supabase's confirmation link redirects to the bare
+        // site_url with no page able to explain what happened - especially
+        // when a mail scanner has already consumed the one-time link before
+        // the user's own click (account still gets confirmed either way,
+        // but the user's click then hits an "already used" error).
+        emailRedirectTo: `${window.location.origin}/email-confirmed`,
+      },
     });
-    return error ? mapAuthError(error.message) : null;
+    if (error) return mapAuthError(error.message);
+    // Supabase's anti-enumeration behavior: signing up with an email that
+    // already has an account returns success with no error, but an empty
+    // identities array - no confirmation email is actually sent. Without
+    // this check the user would be told to "check their inbox" for an email
+    // that never went out.
+    if (data.user && data.user.identities?.length === 0) {
+      return mapAuthError("User already registered");
+    }
+    return null;
   }
 
   async function sendPasswordReset(email: string) {
@@ -187,6 +232,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (session) await loadProfile(session.user.id);
   }
 
+  function dismissGoogleWelcome() {
+    setGoogleWelcomeNewAccount(false);
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -209,6 +258,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updatePassword,
         signOut,
         refreshProfile,
+        googleWelcomeNewAccount,
+        dismissGoogleWelcome,
       }}
     >
       {children}

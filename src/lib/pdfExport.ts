@@ -68,7 +68,7 @@ const SUBSTITUTIONS: [RegExp, string][] = [
 // Characters above U+00FF that WinAnsi still covers.
 const WINANSI_EXTRAS =
   "€‚ƒ„…†‡ˆ‰Š‹ŒŽ" +
-  "‘’“”•–—˜™š›œžŸ";
+  "‘’“”•–-˜™š›œžŸ";
 
 function clean(text: string): string {
   let out = text;

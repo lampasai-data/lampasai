@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { useAuth, HAS_LOGGED_IN_KEY } from "../context/AuthContext";
+import { useAuth, HAS_LOGGED_IN_KEY, markGoogleAuthIntent } from "../context/AuthContext";
 import { isSupabaseConfigured } from "../lib/supabase";
+import { ALREADY_REGISTERED_MESSAGE } from "../lib/authErrors";
 import googleLogo from "../assets/google-logo.png";
 
 type Mode = "signin" | "signup" | "forgot";
@@ -29,6 +30,7 @@ export default function AuthPanel({
   async function handleGoogle() {
     setError(null);
     setLoadingGoogle(true);
+    markGoogleAuthIntent(mode === "signup" ? "signup" : "signin");
     await signInWithGoogle();
     setLoadingGoogle(false);
   }
@@ -141,7 +143,24 @@ export default function AuthPanel({
               className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink placeholder:text-muted/70 focus:border-teal focus:outline-none"
             />
           )}
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && error === ALREADY_REGISTERED_MESSAGE ? (
+            <p className="text-sm text-red-500">
+              Un compte existe déjà avec cet email.{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setPassword("");
+                  setMode("signin");
+                }}
+                className="font-medium text-teal-dark underline-offset-2 hover:underline"
+              >
+                Se connecter
+              </button>
+            </p>
+          ) : (
+            error && <p className="text-sm text-red-500">{error}</p>
+          )}
           <button
             type="submit"
             disabled={loadingEmail}

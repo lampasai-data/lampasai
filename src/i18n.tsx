@@ -102,6 +102,7 @@ interface Translations {
     upgradeModalTitle: string;
     upgradeModalDesc: string;
     upgradeModalDescSingle: string;
+    upgradeModalDescForCert: (certName: string) => string;
     upgradeModalEmpty: string;
     upgradeModalTotal: string;
     upgradeModalSubmit: string;
@@ -309,6 +310,8 @@ const translations: Record<Lang, Translations> = {
       upgradeModalTitle: "Débloquer des certifications",
       upgradeModalDesc: "Choisis une ou plusieurs certifications pour un accès illimité pendant 3 mois (9,99 € / certification).",
       upgradeModalDescSingle: "Choisis une certification pour un accès illimité pendant 3 mois (9,99 € / certification).",
+      upgradeModalDescForCert: (certName) =>
+        `Débloque ${certName} pour un accès illimité pendant 3 mois (9,99 €).`,
       upgradeModalEmpty: "Toutes tes certifications sont déjà débloquées.",
       upgradeModalTotal: "Total",
       upgradeModalSubmit: "Continuer vers le paiement",
@@ -515,6 +518,8 @@ const translations: Record<Lang, Translations> = {
       upgradeModalTitle: "Unlock certifications",
       upgradeModalDesc: "Pick one or more certifications for unlimited access for 3 months (€9.99 / certification).",
       upgradeModalDescSingle: "Pick a certification for unlimited access for 3 months (€9.99 / certification).",
+      upgradeModalDescForCert: (certName) =>
+        `Unlock ${certName} for unlimited access for 3 months (€9.99).`,
       upgradeModalEmpty: "All your certifications are already unlocked.",
       upgradeModalTotal: "Total",
       upgradeModalSubmit: "Continue to payment",

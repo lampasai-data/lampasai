@@ -1,3 +1,8 @@
+// Exported so AuthPanel can detect this specific case and render a clickable
+// "Se connecter" link instead of (or alongside) the plain error text.
+export const ALREADY_REGISTERED_MESSAGE =
+  "Un compte existe déjà avec cet email. Essaie de te connecter.";
+
 export function mapAuthError(message: string): string {
   const lower = message.toLowerCase();
 
@@ -5,7 +10,7 @@ export function mapAuthError(message: string): string {
     return "Email ou mot de passe incorrect.";
   }
   if (lower.includes("user already registered") || lower.includes("already registered")) {
-    return "Un compte existe déjà avec cet email. Essaie de te connecter.";
+    return ALREADY_REGISTERED_MESSAGE;
   }
   if (lower.includes("email not confirmed")) {
     return "Confirme ton email avant de te connecter (vérifie ta boîte mail).";

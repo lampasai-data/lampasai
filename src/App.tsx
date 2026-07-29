@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import Formations from "./pages/Formations";
 import CertificationQuiz from "./pages/CertificationQuiz";
 import ResetPassword from "./pages/ResetPassword";
+import EmailConfirmed from "./pages/EmailConfirmed";
 import AdminGumroad from "./pages/AdminGumroad";
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Route path="/formations" element={<Formations />} />
         <Route path="/formations/:slug" element={<CertificationQuiz />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/email-confirmed" element={<EmailConfirmed />} />
         <Route path="/admin/gumroad" element={<AdminGumroad />} />
       </Routes>
       <Footer />

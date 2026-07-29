@@ -496,7 +496,7 @@ export default function CertificationQuiz() {
             return (
               <div key={i} className={rowClass(isRight)}>
                 <span className="font-medium text-ink/60">{i + 1}.</span>{" "}
-                {userOptIdx !== undefined ? localize((q.options ?? [])[userOptIdx], lang) : "—"}
+                {userOptIdx !== undefined ? localize((q.options ?? [])[userOptIdx], lang) : "-"}
                 {!isRight && (
                   <span className="mt-1 block text-xs font-medium text-green">
                     ✓ {localize((q.options ?? [])[correctOptIdx], lang)}
@@ -917,7 +917,7 @@ export default function CertificationQuiz() {
                             {localize(q.question, lang)}
                           </span>
                         </span>
-                        <span className="shrink-0 text-muted">{isExpanded ? "−" : "+"}</span>
+                        <span className="shrink-0 text-muted">{isExpanded ? "-" : "+"}</span>
                       </button>
                       {isExpanded && (
                         <div className="border-t border-black/8 px-4 py-4">

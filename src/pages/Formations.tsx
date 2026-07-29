@@ -129,6 +129,16 @@ export default function Formations() {
                 {t.formations.comingSoonCta}
               </button>
             </div>
+
+            <Reveal delay={60} className="mt-8 flex flex-col">
+              <h3 className="font-display text-2xl font-semibold text-ink">
+                {t.formations.requestTitle}
+              </h3>
+              <p className="mt-3 leading-relaxed text-muted">{t.formations.requestLead}</p>
+              <div className="mt-6">
+                <TrainingRequestForm />
+              </div>
+            </Reveal>
           </motion.div>
         ) : tab === "certifications" ? (
           <motion.div
@@ -288,9 +298,9 @@ export default function Formations() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.25 }}
-            className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[1.1fr_1fr] lg:items-start"
+            className="mt-8 flex justify-center"
           >
-            <Reveal delay={40} className="flex">
+            <Reveal delay={40} className="flex w-full max-w-xl">
               <div className="relative flex w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-teal/25 bg-white p-6 shadow-sm">
                 <span className="brand-gradient inline-flex rounded-full px-3 py-1 text-xs font-semibold text-white">
                   {t.formations.offerBadge}
@@ -343,16 +353,6 @@ export default function Formations() {
                 >
                   {t.formations.offerCta}
                 </button>
-              </div>
-            </Reveal>
-
-            <Reveal delay={80} className="flex flex-col">
-              <h3 className="font-display text-2xl font-semibold text-ink">
-                {t.formations.requestTitle}
-              </h3>
-              <p className="mt-3 leading-relaxed text-muted">{t.formations.requestLead}</p>
-              <div className="mt-6 flex-1">
-                <TrainingRequestForm />
               </div>
             </Reveal>
           </motion.div>
