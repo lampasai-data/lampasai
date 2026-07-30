@@ -348,7 +348,7 @@ const translations: Record<Lang, Translations> = {
       offerNote: "Paiement unique par certification, sans réengagement.",
       offerCertLabel: "Certification :",
       offerCta: "Débloquer l'accès illimité",
-      offerQuestionBank: (count) => `${count} questions supplémentaires en mode examen`,
+      offerQuestionBank: (count) => `${count} questions au total en mode examen`,
       offerFeaturesLabel: "Ce qui est inclus :",
       offerFeatures: [
         "Accès illimité à toutes les questions de la certification",
@@ -564,7 +564,7 @@ const translations: Record<Lang, Translations> = {
       offerNote: "One-time payment per certification, no subscription.",
       offerCertLabel: "Certification:",
       offerCta: "Unlock unlimited access",
-      offerQuestionBank: (count) => `${count} additional questions in exam mode`,
+      offerQuestionBank: (count) => `${count} questions in total in exam mode`,
       offerFeaturesLabel: "What's included:",
       offerFeatures: [
         "Unlimited access to every question for that certification",
