@@ -53,3 +53,17 @@ export const CERTIFICATION_DOMAINS: Record<string, SkillDomain[]> = {
     },
   ],
 };
+
+// Exam-mode question bank size per certification, shown on the public
+// Pricing tab to sell the Pro upgrade - deliberately excludes the 20 free
+// questions (those are already given away, showing them here would undersell
+// what paying actually unlocks). Static rather than a live DB count: an
+// anon/free visitor's RLS grant excludes exam_only rows entirely (see
+// migration 011_quiz_questions_rls.sql), so a live COUNT from the browser
+// would return 0 for a logged-out visitor anyway. Keep in sync manually with
+// `select certification_id, count(*) from quiz_questions where exam_only
+// group by 1` whenever the question bank changes.
+export const EXAM_QUESTION_COUNTS: Record<string, number> = {
+  "power-bi": 214,
+  snowflake: 152,
+};

@@ -8,10 +8,20 @@ import { localize } from "../lib/i18nText";
 import Reveal from "../components/Reveal";
 import Dashboard from "../components/Dashboard";
 import TrainingRequestForm from "../components/TrainingRequestForm";
-import { CERTIFICATION_DOMAINS } from "../data/certificationDomains";
+import { CERTIFICATION_DOMAINS, EXAM_QUESTION_COUNTS } from "../data/certificationDomains";
 import { CERT_LOGOS } from "../data/certLogos";
 
 type Tab = "certifications" | "formations" | "pricing";
+
+function QuestionBankIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <rect x="3" y="4" width="18" height="16" rx="2" fill="currentColor" fillOpacity="0.12" />
+      <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M7 9h10M7 12.5h10M7 16h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 export default function Formations() {
   const [certs, setCerts] = useState<CertificationSummary[]>([]);
@@ -337,6 +347,13 @@ export default function Formations() {
                   </div>
                 )}
 
+                {EXAM_QUESTION_COUNTS[pricingSlug] !== undefined && (
+                  <p className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-teal/25 bg-teal/5 px-3 py-1.5 text-xs font-semibold text-teal-dark">
+                    <QuestionBankIcon className="h-3.5 w-3.5 shrink-0" />
+                    {t.formations.offerQuestionBank(EXAM_QUESTION_COUNTS[pricingSlug])}
+                  </p>
+                )}
+
                 <p className="mt-4 text-xs font-medium text-teal-dark">{t.formations.domainsLabel}</p>
                 <ul className="mt-2 flex flex-col gap-1.5 text-sm text-ink/80">
                   {(CERTIFICATION_DOMAINS[pricingSlug] ?? []).map((domain) => (
@@ -346,6 +363,19 @@ export default function Formations() {
                     </li>
                   ))}
                 </ul>
+
+                <p className="mt-4 text-xs font-medium text-teal-dark">
+                  {t.formations.offerFeaturesLabel}
+                </p>
+                <ul className="mt-2 flex flex-col gap-1.5 text-sm text-ink/80">
+                  {t.formations.offerFeatures.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2">
+                      <span className="mt-0.5 shrink-0 text-teal-dark">✓</span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
                 <button
                   type="button"
                   onClick={() => openAuthModalForUpgrade(pricingSlug)}

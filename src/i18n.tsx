@@ -136,6 +136,9 @@ interface Translations {
     offerNote: string;
     offerCertLabel: string;
     offerCta: string;
+    offerQuestionBank: (count: number) => string;
+    offerFeaturesLabel: string;
+    offerFeatures: string[];
     domainsLabel: string;
     downloadPdf: string;
     downloadingPdf: string;
@@ -345,6 +348,14 @@ const translations: Record<Lang, Translations> = {
       offerNote: "Paiement unique par certification, sans réengagement.",
       offerCertLabel: "Certification :",
       offerCta: "Débloquer l'accès illimité",
+      offerQuestionBank: (count) => `${count} questions supplémentaires en mode examen`,
+      offerFeaturesLabel: "Ce qui est inclus :",
+      offerFeatures: [
+        "Accès illimité à toutes les questions de la certification",
+        "Mode examen chronométré, avec correction détaillée à la fin",
+        "Export PDF (questions, corrections, explications) pour réviser hors ligne",
+        "Tentatives illimitées pendant 3 mois",
+      ],
       domainsLabel: "Nos questions couvrent les blocs réellement évalués à l'examen :",
       downloadPdf: "Télécharger en PDF",
       downloadingPdf: "Génération...",
@@ -553,6 +564,14 @@ const translations: Record<Lang, Translations> = {
       offerNote: "One-time payment per certification, no subscription.",
       offerCertLabel: "Certification:",
       offerCta: "Unlock unlimited access",
+      offerQuestionBank: (count) => `${count} additional questions in exam mode`,
+      offerFeaturesLabel: "What's included:",
+      offerFeatures: [
+        "Unlimited access to every question for that certification",
+        "Timed exam mode, with a detailed review at the end",
+        "PDF export (questions, corrections, explanations) to study offline",
+        "Unlimited attempts for 3 months",
+      ],
       domainsLabel: "Our questions cover the skill blocks actually assessed on the exam:",
       downloadPdf: "Download as PDF",
       downloadingPdf: "Generating...",
