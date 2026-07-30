@@ -123,14 +123,120 @@ function clearPersistedRun(slug: string) {
 
 // Options that look like code/formula snippets (DAX, SQL, ...) read much
 // better in a monospace font than the default prose font.
+// French/English connector words that never appear inside a bare DAX/SQL
+// formula - their presence is a reliable signal that a line is prose with
+// an embedded reference ([Status], 'Sales'[Amount]) rather than a standalone
+// formula. Deliberately excludes words that double as DAX/SQL keywords
+// (if, as, on, at, by, from, when, then, else, in, is) to avoid misreading
+// a real formula line as prose.
+const PROSE_STOPWORDS = new Set([
+  "la",
+  "les",
+  "une",
+  "des",
+  "et",
+  "du",
+  "où",
+  "qui",
+  "que",
+  "qu",
+  "dans",
+  "pour",
+  "avec",
+  "sont",
+  "être",
+  "cette",
+  "cet",
+  "ces",
+  "ses",
+  "leur",
+  "leurs",
+  "ne",
+  "pas",
+  "plus",
+  "moins",
+  "très",
+  "aussi",
+  "ainsi",
+  "donc",
+  "car",
+  "si",
+  "aux",
+  "tout",
+  "tous",
+  "toute",
+  "toutes",
+  "chaque",
+  "chacun",
+  "sinon",
+  "alors",
+  "comme",
+  "quand",
+  "dont",
+  "celui",
+  "celle",
+  "ceux",
+  "celles",
+  "nous",
+  "vous",
+  "il",
+  "elle",
+  "ils",
+  "elles",
+  "je",
+  "tu",
+  "the",
+  "and",
+  "or",
+  "of",
+  "to",
+  "for",
+  "with",
+  "this",
+  "that",
+  "be",
+  "which",
+  "who",
+  "whose",
+  "using",
+  "use",
+  "uses",
+  "here",
+  "there",
+  "its",
+  "it's",
+  "each",
+  "every",
+  "other",
+  "either",
+  "given",
+  "into",
+]);
+
 function looksLikeCode(text: string) {
+  const trimmed = text.trim();
   // A bare type/length token like "VARCHAR(25)" or "CHARACTER(25)" isn't a
   // real code snippet - it reads better in the normal font than monospace.
-  if (/^[A-Z_]+\(\d+\)$/.test(text.trim())) return false;
+  if (/^[A-Z_]+\(\d+\)$/.test(trimmed)) return false;
   // Square/curly brackets ([Column], {values}) or an UPPERCASE function call
   // (USERNAME(), CALCULATE(...)) are strong DAX/SQL signals. Plain
   // parenthesised words like "(ribbon)" or "(scatter)" are not.
-  return /[[\]{}]/.test(text) || /\b[A-Z][A-Z0-9_]*\(/.test(text);
+  const hasCodeSignal = /[[\]{}]/.test(text) || /\b[A-Z][A-Z0-9_]*\(/.test(text);
+  if (!hasCodeSignal) return false;
+  // A French/English explanation sentence often references a column or table
+  // ([Status], 'Sales'[Amount]) without itself being a standalone formula.
+  // Strip every code-like fragment (refs, quoted strings, function calls,
+  // circled numbers) and check the leftover words for a prose connector -
+  // a real formula line never contains one, a sentence always does.
+  const stripped = trimmed
+    .replace(/[①②③④⑤⑥⑦⑧⑨]/g, "")
+    .replace(/\[[^\]]*\]/g, "")
+    .replace(/"[^"]*"/g, "")
+    .replace(/'[^']*'/g, "")
+    .replace(/\b[A-Z][A-Z0-9_]*\([^)]*\)/g, "")
+    .replace(/[-+&(),.:;=<>/*«»%!]/g, " ");
+  const words = stripped.split(/\s+/).map((w) => w.toLowerCase().replace(/['’]/g, ""));
+  return !words.some((w) => PROSE_STOPWORDS.has(w));
 }
 
 // Renders question/blank text line by line, switching to monospace only for
@@ -213,6 +319,11 @@ export default function CertificationQuiz() {
   // Quiz session state
   const [queue, setQueue] = useState<number[]>([]);
   const [pos, setPos] = useState(0);
+  // Question indexes visited before the current one, in order - lets
+  // "Previous" step back reliably even though "Skip" doesn't advance `pos`
+  // (it reorders `queue` in place instead), by re-locating the last visited
+  // question wherever it now sits in the (possibly reordered) queue.
+  const [history, setHistory] = useState<number[]>([]);
   const [flagged, setFlagged] = useState<Set<number>>(new Set());
   const [results, setResults] = useState<Record<number, boolean>>({});
   const [picked, setPicked] = useState<number[]>([]);
@@ -424,6 +535,7 @@ export default function CertificationQuiz() {
   function resetRun(targetMode: "training" | "exam") {
     setQueue(buildRunQueue(targetMode));
     setPos(0);
+    setHistory([]);
     setFlagged(new Set());
     setResults({});
     setPicked([]);
@@ -736,22 +848,34 @@ export default function CertificationQuiz() {
 
           {questionCountSlider}
 
-          <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <div className="flex h-full flex-col rounded-2xl border border-black/8 bg-white p-6 shadow-sm">
-              <h3 className="font-display text-lg font-medium text-ink">
-                {t.quiz.modeTrainingTitle}
-              </h3>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
-                {t.quiz.modeTrainingDesc}
-              </p>
-              <button
-                type="button"
-                onClick={launchTraining}
-                className="brand-gradient mt-5 rounded-full px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
-              >
-                {t.quiz.startTraining}
-              </button>
-            </div>
+          <div
+            className={`mt-6 grid grid-cols-1 gap-5 ${
+              user && !isPro ? "sm:max-w-sm" : "sm:grid-cols-2"
+            }`}
+          >
+            {/* Free (quota-limited) training is only offered to logged-out
+                visitors - once signed in without upgrading, the goal is to
+                move the user toward Pro, not keep giving them the free path
+                (logging out gets it back). Pro users keep this card too,
+                since for them it's their own unlimited untimed practice
+                mode, not the free one - just labelled differently. */}
+            {(!user || isPro) && (
+              <div className="flex h-full flex-col rounded-2xl border border-black/8 bg-white p-6 shadow-sm">
+                <h3 className="font-display text-lg font-medium text-ink">
+                  {isPro ? t.quiz.modeTrainingTitlePro : t.quiz.modeTrainingTitle}
+                </h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
+                  {t.quiz.modeTrainingDesc}
+                </p>
+                <button
+                  type="button"
+                  onClick={launchTraining}
+                  className="brand-gradient mt-5 rounded-full px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+                >
+                  {t.quiz.startTraining}
+                </button>
+              </div>
+            )}
 
             <div className="flex h-full flex-col rounded-2xl border border-teal/25 bg-white p-6 shadow-sm">
               <h3 className="flex items-center gap-2 font-display text-lg font-medium text-ink">
@@ -1085,6 +1209,7 @@ export default function CertificationQuiz() {
     question.type === "hotspot";
 
   function goToNextInQueue() {
+    setHistory((h) => [...h, qIndex]);
     setPicked([]);
     setSubmitted(false);
     setPos((p) => (p + 1 < queue.length ? p + 1 : p));
@@ -1095,8 +1220,25 @@ export default function CertificationQuiz() {
     goToNextInQueue();
   }
 
+  function handlePrevious() {
+    // `pos` alone can't be trusted to "step back" - Skip never advances it
+    // (it reorders `queue` in place instead), so the last-visited question
+    // has to be re-located by its index rather than by restoring a raw
+    // `pos` number, which may no longer point at the same question.
+    setHistory((h) => {
+      if (h.length === 0) return h;
+      const prevQIndex = h[h.length - 1];
+      const idx = queue.indexOf(prevQIndex);
+      if (idx !== -1) setPos(idx);
+      return h.slice(0, -1);
+    });
+    setPicked([]);
+    setSubmitted(false);
+  }
+
   function handleSkip() {
     // Move the current question to the end of the queue and flag it for review.
+    setHistory((h) => [...h, qIndex]);
     setFlagged((prev) => new Set(prev).add(qIndex));
     setQueue((prev) => {
       const next = [...prev];
@@ -1104,6 +1246,11 @@ export default function CertificationQuiz() {
       next.push(current);
       return next;
     });
+    // Removing-then-re-appending the *last* question is a no-op (it lands
+    // right back in the same spot), which silently redisplays the same
+    // question instead of skipping it. Wrap back to the front of the queue
+    // in that case so Skip always actually moves to a different question.
+    setPos((p) => (p >= queue.length - 1 ? 0 : p));
     setPicked([]);
     setSubmitted(false);
   }
@@ -1200,7 +1347,12 @@ export default function CertificationQuiz() {
           key={qIndex}
           initial={{ opacity: 0, x: 24 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -24 }}
+          // pointerEvents: "none" during exit so a click that lands in the
+          // ~0.25s window while the outgoing card is still fading out can't
+          // hit its (about to be stale) buttons - e.g. rapidly clicking
+          // "Passer" again right as the previous click's exit animation
+          // starts, which otherwise can silently do nothing.
+          exit={{ opacity: 0, x: -24, pointerEvents: "none" }}
           transition={{ duration: 0.25, ease: "easeOut" }}
           className="mt-6 rounded-2xl border border-black/8 bg-white p-7 shadow-sm"
         >
@@ -1539,6 +1691,15 @@ export default function CertificationQuiz() {
           )}
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
+            {!submitted && history.length > 0 && (
+              <button
+                type="button"
+                onClick={handlePrevious}
+                className="rounded-full border border-teal/40 px-6 py-2.5 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
+              >
+                {t.quiz.previous}
+              </button>
+            )}
             {needsValidateButton && !submitted && (
               <button
                 type="button"
@@ -1553,7 +1714,7 @@ export default function CertificationQuiz() {
               <button
                 type="button"
                 onClick={handleSkip}
-                className="rounded-full border border-black/10 px-6 py-2.5 text-sm font-medium text-ink transition hover:border-black/20"
+                className="rounded-full border border-teal/40 px-6 py-2.5 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
               >
                 {t.quiz.skip}
               </button>
@@ -1577,13 +1738,24 @@ export default function CertificationQuiz() {
                   </p>
                 </div>
               )}
-              <button
-                type="button"
-                onClick={handleNext}
-                className="brand-gradient mt-4 rounded-full px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
-              >
-                {t.quiz.next}
-              </button>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                {history.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handlePrevious}
+                    className="rounded-full border border-teal/40 px-6 py-2.5 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
+                  >
+                    {t.quiz.previous}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="brand-gradient rounded-full px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+                >
+                  {t.quiz.next}
+                </button>
+              </div>
             </motion.div>
           )}
         </motion.div>

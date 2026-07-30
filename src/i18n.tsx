@@ -153,6 +153,7 @@ interface Translations {
     selectAnswers: string;
     validate: string;
     next: string;
+    previous: string;
     skip: string;
     flag: string;
     unflag: string;
@@ -167,6 +168,7 @@ interface Translations {
     explanationLabel: string;
     modeSelectTitle: string;
     modeTrainingTitle: string;
+    modeTrainingTitlePro: string;
     modeTrainingDesc: string;
     modeExamTitle: string;
     modeExamDesc: string;
@@ -354,14 +356,15 @@ const translations: Record<Lang, Translations> = {
       pdfCountAll: "Toutes",
     },
     quiz: {
-      back: "Retour aux formations",
+      back: "Retour aux certifications",
       backDashboard: "Retour à mon espace",
       score: "Score",
       points: "Points",
       remainingFree: "gratuite(s) restante(s)",
       selectAnswers: "Sélectionne",
       validate: "Valider",
-      next: "Question suivante →",
+      next: "Suivante >",
+      previous: "< Précédente",
       skip: "Passer",
       flag: "Marquer pour plus tard",
       unflag: "Retirer le marquage",
@@ -375,7 +378,8 @@ const translations: Record<Lang, Translations> = {
       restart: "Recommencer",
       explanationLabel: "💡 Explication",
       modeSelectTitle: "Choisis ton mode d'entraînement",
-      modeTrainingTitle: "Entraînement libre",
+      modeTrainingTitle: "Entraînement gratuit",
+      modeTrainingTitlePro: "Entraînement illimité",
       modeTrainingDesc: "Avance à ton rythme, avec explications après chaque question.",
       modeExamTitle: "Mode examen chronométré",
       modeExamDesc: "Évalue-toi à l'examen réel : temps limité, résultat réussi/échoué à la fin. Réservé aux comptes en accès illimité.",
@@ -570,6 +574,7 @@ const translations: Record<Lang, Translations> = {
       selectAnswers: "Select",
       validate: "Submit",
       next: "Next question →",
+      previous: "← Previous question",
       skip: "Skip",
       flag: "Flag for later",
       unflag: "Remove flag",
@@ -584,6 +589,7 @@ const translations: Record<Lang, Translations> = {
       explanationLabel: "💡 Explanation",
       modeSelectTitle: "Choose your practice mode",
       modeTrainingTitle: "Free practice",
+      modeTrainingTitlePro: "Unlimited practice",
       modeTrainingDesc: "Go at your own pace, with explanations after each question.",
       modeExamTitle: "Timed exam mode",
       modeExamDesc: "Test yourself on the real exam: limited time, pass/fail result at the end. Reserved for unlimited access accounts.",

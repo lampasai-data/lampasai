@@ -219,7 +219,7 @@ export default function Formations() {
                       </Link>
                       <Link
                         to={`/formations/${cert.slug}`}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-teal/30 bg-teal/[0.06] px-4 py-1.5 text-xs font-semibold text-teal-dark transition group-hover:border-teal/50 group-hover:bg-teal/10"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-teal/30 bg-teal/[0.06] px-5 py-2 text-sm font-semibold text-teal-dark transition group-hover:border-teal/50 group-hover:bg-teal/10"
                       >
                         {t.formations.trainFor}
                       </Link>

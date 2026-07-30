@@ -146,19 +146,36 @@ export function exportCertificationPdf(certName: string, questions: Question[], 
   const setText = (c: RGB) => doc.setTextColor(c[0], c[1], c[2]);
   const setDraw = (c: RGB) => doc.setDrawColor(c[0], c[1], c[2]);
 
-  type RichToken = { text: string; code: boolean };
+  type RichToken = { text: string; code: boolean; underline: boolean };
+
+  // Sentinel pair marking an underlined span within text passed to
+  // writeRich/measureRich - used to underline just the answer merged into a
+  // fill-in-the-blank sentence (see the hotspot branch in questionBlock).
+  // Control characters, never drawn literally - stripped out while tokenizing.
+  const UNDERLINE_START = "";
+  const UNDERLINE_END = "";
 
   // Tokenizes text (already split into prose/code segments by
-  // splitInlineCode) into words and whitespace runs, each tagged with
-  // whether it belongs to a formula-like fragment - so wrapping can measure
-  // and draw each token in the right font (courier for code, helvetica
-  // otherwise).
+  // splitInlineCode, and underline/UNDERLINE_END spans by the caller) into
+  // words and whitespace runs, each tagged with whether it belongs to a
+  // formula-like fragment - so wrapping can measure and draw each token in
+  // the right font (courier for code, helvetica otherwise) and underline
+  // style.
   function tokenizeRich(text: string): RichToken[] {
     const tokens: RichToken[] = [];
-    for (const seg of splitInlineCode(text)) {
-      for (const part of seg.text.split(/(\s+)/)) {
-        if (part.length > 0) tokens.push({ text: part, code: seg.code });
+    const pushSegments = (chunk: string, underline: boolean) => {
+      for (const seg of splitInlineCode(chunk)) {
+        for (const part of seg.text.split(/(\s+)/)) {
+          if (part.length > 0) tokens.push({ text: part, code: seg.code, underline });
+        }
       }
+    };
+    const underlineParts = text.split(UNDERLINE_START);
+    pushSegments(underlineParts[0], false);
+    for (let i = 1; i < underlineParts.length; i++) {
+      const [underlined, rest = ""] = underlineParts[i].split(UNDERLINE_END);
+      pushSegments(underlined, true);
+      pushSegments(rest, false);
     }
     return tokens;
   }
@@ -267,7 +284,14 @@ export function exportCertificationPdf(certName: string, questions: Question[], 
         doc.setFont(fontFor(token.code), style);
         doc.setFontSize(size);
         doc.text(token.text, cx, y, { baseline: "top" });
-        cx += doc.getTextWidth(token.text);
+        const w = doc.getTextWidth(token.text);
+        if (token.underline) {
+          setDraw(color);
+          doc.setLineWidth(0.2);
+          const underlineY = y + size * PT_TO_MM * 0.92;
+          doc.line(cx, underlineY, cx + w, underlineY);
+        }
+        cx += w;
       }
       y += lineHeight(size);
     }
@@ -438,9 +462,19 @@ export function exportCertificationPdf(certName: string, questions: Question[], 
     } else if (question.type === "hotspot" && question.blanks) {
       answerTypeLabel(t.hotspotLabel);
       question.blanks.forEach((blank, i) => {
-        const answer = clean(localize(blank.options[blank.correctIndex], lang));
-        const label = blank.label ? clean(localize(blank.label, lang)) : "";
-        answerRow(`${i + 1}.`, slotAnswer(label, answer), true);
+        const answer = localize(blank.options[blank.correctIndex], lang);
+        const rawLabel = blank.label ? localize(blank.label, lang) : "";
+        // A label like "L'attrition est ⬚ fois plus élevée..." reads as a
+        // fill-in-the-blank sentence - merge the answer into it (underlined)
+        // instead of tacking it on after a separator, which would leave the
+        // blank marker sitting unfilled in the exported text.
+        if (rawLabel.includes("⬚")) {
+          const merged = clean(rawLabel.replace("⬚", `${UNDERLINE_START}${answer}${UNDERLINE_END}`));
+          answerRow(`${i + 1}.`, merged, true);
+        } else {
+          const label = rawLabel ? clean(rawLabel) : "";
+          answerRow(`${i + 1}.`, slotAnswer(label, clean(answer)), true);
+        }
       });
     } else if (question.type === "order" && question.options && question.correctOrder) {
       answerTypeLabel(t.orderLabel);
