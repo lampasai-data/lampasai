@@ -9,7 +9,11 @@ import {
   listCertifications,
   type CertificationSummary,
 } from "../lib/quizData";
-import { ENABLE_GUMROAD, buildGumroadCheckoutUrl } from "../lib/paymentConfig";
+import {
+  ENABLE_GUMROAD,
+  PENDING_GUMROAD_PURCHASE_KEY,
+  buildGumroadCheckoutUrl,
+} from "../lib/paymentConfig";
 
 const CERT_PRICE_EUR = 9.99;
 
@@ -64,6 +68,7 @@ export default function UpgradeModal() {
       setError(t.formations.upgradeModalError);
       return;
     }
+    sessionStorage.setItem(PENDING_GUMROAD_PURCHASE_KEY, "1");
     window.location.href = url;
   }
 

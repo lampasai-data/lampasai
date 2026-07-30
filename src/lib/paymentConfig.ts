@@ -28,3 +28,13 @@ export function buildGumroadCheckoutUrl(slug: string, email?: string | null): st
   if (email) params.set("email", email);
   return `https://${GUMROAD_SELLER}.gumroad.com/l/${permalink}?${params.toString()}`;
 }
+
+// Unlike Stripe, Gumroad has no configurable post-purchase redirect back to
+// our own domain - the buyer lands on Gumroad's own receipt page (which now
+// links back to /formations, see the product's custom receipt text) and has
+// to navigate back manually. Set right before sending the buyer to Gumroad;
+// read by GumroadReturnHandler on the next page load anywhere on the site,
+// so returning (even much later, on any page) bounces them into the same
+// "?checkout=success" polling/banner flow the Stripe return path already
+// has, instead of silently leaving them on a still-locked Dashboard.
+export const PENDING_GUMROAD_PURCHASE_KEY = "lampasai_pending_gumroad_purchase";

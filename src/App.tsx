@@ -5,6 +5,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import ScrollToHash from "./components/ScrollToHash";
 import AuthModal from "./components/AuthModal";
 import UpgradeModal from "./components/UpgradeModal";
+import GumroadReturnHandler from "./components/GumroadReturnHandler";
 import Home from "./pages/Home";
 import Formations from "./pages/Formations";
 import CertificationQuiz from "./pages/CertificationQuiz";
@@ -29,6 +30,7 @@ function App() {
       <ScrollToHash />
       <AuthModal />
       <UpgradeModal />
+      <GumroadReturnHandler />
     </>
   );
 }
