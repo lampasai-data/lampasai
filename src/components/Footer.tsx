@@ -65,11 +65,6 @@ export default function Footer() {
                 {t.footer.contactLink}
               </Link>
             </li>
-            <li>
-              <a href="mailto:contact@lampasai.com" className="transition hover:text-white">
-                contact@lampasai.com
-              </a>
-            </li>
           </ul>
         </div>
       </div>

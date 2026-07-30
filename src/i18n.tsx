@@ -178,8 +178,6 @@ interface Translations {
     questionCountAll: string;
     startTraining: string;
     startExam: string;
-    preparingTraining: string;
-    preparingExam: string;
     endExam: string;
     examTimeLeft: string;
     passThresholdNote: (scoreOn1000: number) => string;
@@ -389,8 +387,6 @@ const translations: Record<Lang, Translations> = {
       questionCountAll: "Toutes",
       startTraining: "Commencer l'entraînement",
       startExam: "Démarrer l'examen",
-      preparingTraining: "Préparation de l'entraînement…",
-      preparingExam: "Préparation de l'examen…",
       endExam: "Terminer l'examen",
       examTimeLeft: "Temps restant",
       passThresholdNote: (scoreOn1000) =>
@@ -599,8 +595,6 @@ const translations: Record<Lang, Translations> = {
       questionCountAll: "All",
       startTraining: "Start practice",
       startExam: "Start exam",
-      preparingTraining: "Preparing your practice session…",
-      preparingExam: "Preparing your exam…",
       endExam: "End exam",
       examTimeLeft: "Time left",
       passThresholdNote: (scoreOn1000) =>

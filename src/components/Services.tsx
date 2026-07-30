@@ -1,59 +1,61 @@
 import { useLanguage } from "../i18n";
 import Reveal from "./Reveal";
+import powerBiLogo from "../assets/icons8-puissance-bi-2021-96.png";
 
-const DATA_NODES = [
-  { x: 40, y: 55, color: "#4a8896" },
-  { x: 30, y: 120, color: "#1d9e75" },
-  { x: 50, y: 185, color: "#7d4e2e" },
-  { x: 95, y: 90, color: "#f5a623" },
-  { x: 90, y: 155, color: "#4a8896" },
-];
+const BARS = [38, 55, 46, 70, 62, 88];
 
-function ServicesIllustration() {
-  const gemLeft = { x: 190, y: 120 };
+function BIAnalyticsIllustration() {
+  const chartW = 280;
+  const chartH = 100;
+  const gap = 14;
+  const barW = (chartW - gap * (BARS.length - 1)) / BARS.length;
+  const points = BARS.map((v, i) => {
+    const x = i * (barW + gap) + barW / 2;
+    const y = chartH - v;
+    return `${x},${y}`;
+  }).join(" ");
 
   return (
-    <svg viewBox="0 0 320 240" className="h-full w-full" aria-hidden="true">
-      <defs>
-        <linearGradient id="svc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#4a8896" />
-          <stop offset="55%" stopColor="#7d4e2e" />
-          <stop offset="100%" stopColor="#f5a623" />
-        </linearGradient>
-      </defs>
+    <div className="flex h-full w-full flex-col justify-between">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <img src={powerBiLogo} alt="" className="h-7 w-7 object-contain" />
+        </div>
+        <span className="rounded-full bg-green/10 px-2.5 py-1 text-xs font-semibold text-green">
+          +24 %
+        </span>
+      </div>
 
-      {DATA_NODES.map((node) => (
-        <line
-          key={`${node.x}-${node.y}`}
-          x1={node.x}
-          y1={node.y}
-          x2={gemLeft.x}
-          y2={gemLeft.y}
-          stroke={node.color}
-          strokeOpacity="0.35"
-          strokeWidth="1.5"
-        />
-      ))}
-      {DATA_NODES.map((node) => (
-        <circle key={`n-${node.x}-${node.y}`} cx={node.x} cy={node.y} r="5" fill={node.color} />
-      ))}
+      <svg viewBox={`0 0 ${chartW} ${chartH}`} className="mt-4 h-24 w-full" aria-hidden="true">
+        <defs>
+          <linearGradient id="bi-bar-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#4a8896" />
+            <stop offset="100%" stopColor="#4a8896" stopOpacity="0.35" />
+          </linearGradient>
+        </defs>
+        {BARS.map((v, i) => (
+          <rect
+            key={i}
+            x={i * (barW + gap)}
+            y={chartH - v}
+            width={barW}
+            height={v}
+            rx="4"
+            fill={i === BARS.length - 1 ? "#f5a623" : "url(#bi-bar-grad)"}
+          />
+        ))}
+        <polyline points={points} fill="none" stroke="#1d9e75" strokeWidth="2" strokeDasharray="4 3" />
+      </svg>
 
-      <circle cx="230" cy="120" r="62" fill="url(#svc-grad)" opacity="0.14" />
-
-      <polygon
-        points="230,58 274,120 230,182 186,120"
-        fill="url(#svc-grad)"
-        opacity="0.92"
-      />
-      <polygon points="230,58 274,120 230,120" fill="#ffffff" opacity="0.15" />
-      <polygon points="186,120 230,120 230,182" fill="#000000" opacity="0.08" />
-
-      <path
-        d="M258 76 l4 9 9 4 -9 4 -4 9 -4 -9 -9 -4 9 -4 z"
-        fill="#f5a623"
-      />
-      <circle cx="270" cy="150" r="3" fill="#1d9e75" />
-    </svg>
+      <div className="mt-3 flex items-center justify-between text-xs text-muted">
+        <span>T1</span>
+        <span>T2</span>
+        <span>T3</span>
+        <span>T4</span>
+        <span>T5</span>
+        <span>T6</span>
+      </div>
+    </div>
   );
 }
 
@@ -71,8 +73,8 @@ export default function Services() {
         </Reveal>
 
         <Reveal delay={100}>
-          <div className="mx-auto flex h-56 w-full max-w-md items-center justify-center rounded-3xl border border-black/8 bg-white p-6 shadow-sm">
-            <ServicesIllustration />
+          <div className="mx-auto h-56 w-full max-w-md rounded-3xl border border-black/8 bg-white p-6 shadow-sm">
+            <BIAnalyticsIllustration />
           </div>
         </Reveal>
       </div>

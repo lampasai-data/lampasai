@@ -343,7 +343,6 @@ export default function CertificationQuiz() {
 
   const [mode, setMode] = useState<"training" | "exam" | null>(null);
   const [quickExamSetup, setQuickExamSetup] = useState(false);
-  const [launching, setLaunching] = useState<"training" | "exam" | null>(null);
   const [examEndsAt, setExamEndsAt] = useState<number | null>(null);
   const [examRemaining, setExamRemaining] = useState(0);
   const [examEnded, setExamEnded] = useState(false);
@@ -568,35 +567,6 @@ export default function CertificationQuiz() {
     setMode("exam");
   }
 
-  // Show a brief loading modal before the quiz view appears, so the switch
-  // from the setup screen to question 1 doesn't feel like an abrupt jump cut.
-  function launchTraining() {
-    setLaunching("training");
-    setTimeout(() => {
-      startTraining();
-      setLaunching(null);
-    }, 450);
-  }
-
-  function launchExam() {
-    setLaunching("exam");
-    setTimeout(() => {
-      startExam();
-      setLaunching(null);
-    }, 450);
-  }
-
-  const loadingModal = launching && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-6 backdrop-blur-sm">
-      <div className="flex flex-col items-center gap-3 rounded-2xl bg-white px-8 py-6 shadow-xl">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal/30 border-t-teal" />
-        <p className="text-sm font-medium text-ink">
-          {launching === "exam" ? t.quiz.preparingExam : t.quiz.preparingTraining}
-        </p>
-      </div>
-    </div>
-  );
-
   if (!cert) {
     return (
       <section className="mx-auto max-w-3xl px-6 py-24 text-muted">
@@ -788,49 +758,37 @@ export default function CertificationQuiz() {
 
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-6 backdrop-blur-sm"
-          onClick={() => {
-            if (launching) return;
-            navigate("/formations");
-          }}
+          onClick={() => navigate("/formations")}
         >
           <div
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-sm rounded-2xl border border-black/8 bg-white p-6 shadow-xl"
           >
-            {launching === "exam" ? (
-              <div className="flex flex-col items-center gap-3 py-4">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal/30 border-t-teal" />
-                <p className="text-sm font-medium text-ink">{t.quiz.preparingExam}</p>
-              </div>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => navigate("/formations")}
-                  aria-label={backLabel}
-                  className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-ink shadow-sm transition hover:bg-black/[0.03]"
-                >
-                  ✕
-                </button>
-                <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
-                  {t.quiz.modeExamTitle}
-                  <ClockIcon className="h-4 w-4 text-teal-dark" />
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted">{t.quiz.modeExamDescShort}</p>
+            <button
+              type="button"
+              onClick={() => navigate("/formations")}
+              aria-label={backLabel}
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-ink shadow-sm transition hover:bg-black/[0.03]"
+            >
+              ✕
+            </button>
+            <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
+              {t.quiz.modeExamTitle}
+              <ClockIcon className="h-4 w-4 text-teal-dark" />
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted">{t.quiz.modeExamDescShort}</p>
 
-                {questionCountSlider}
+            {questionCountSlider}
 
-                <button
-                  type="button"
-                  onClick={launchExam}
-                  aria-label={t.quiz.startExam}
-                  title={t.quiz.startExam}
-                  className="brand-gradient mx-auto mt-6 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-sm transition hover:opacity-90"
-                >
-                  <span className="ml-0.5 text-2xl leading-none">▶</span>
-                </button>
-              </>
-            )}
+            <button
+              type="button"
+              onClick={startExam}
+              aria-label={t.quiz.startExam}
+              title={t.quiz.startExam}
+              className="brand-gradient mx-auto mt-6 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-sm transition hover:opacity-90"
+            >
+              <span className="ml-0.5 text-2xl leading-none">▶</span>
+            </button>
           </div>
         </div>
       </>
@@ -869,7 +827,7 @@ export default function CertificationQuiz() {
                 </p>
                 <button
                   type="button"
-                  onClick={launchTraining}
+                  onClick={startTraining}
                   className="brand-gradient mt-5 rounded-full px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
                 >
                   {t.quiz.startTraining}
@@ -888,7 +846,7 @@ export default function CertificationQuiz() {
               {isPro ? (
                 <button
                   type="button"
-                  onClick={launchExam}
+                  onClick={startExam}
                   className="mt-5 rounded-full border border-teal/40 px-5 py-2.5 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
                 >
                   {t.quiz.startExam}
@@ -905,7 +863,6 @@ export default function CertificationQuiz() {
             </div>
           </div>
         </section>
-        {loadingModal}
       </>
     );
   }

@@ -57,7 +57,7 @@ export default function CustomSelect({
 
       {open && !disabled && (
         <div
-          className={`absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-auto rounded-lg border border-black/10 bg-white py-1 font-sans text-sm shadow-lg ${optionsClassName}`}
+          className={`absolute left-0 top-full z-20 mt-1 max-h-56 w-max max-w-[80vw] min-w-full overflow-auto rounded-lg border border-black/10 bg-white py-1 font-sans text-sm shadow-lg ${optionsClassName}`}
         >
           {options.map((opt, i) => (
             <button
@@ -67,7 +67,7 @@ export default function CustomSelect({
                 onChange(i);
                 setOpen(false);
               }}
-              className={`block w-full px-3 py-2 text-left transition hover:bg-teal/5 ${
+              className={`block w-full whitespace-nowrap px-3 py-2 text-left transition hover:bg-teal/5 ${
                 value === i ? "bg-teal/5 text-teal-dark" : "text-ink"
               }`}
             >
