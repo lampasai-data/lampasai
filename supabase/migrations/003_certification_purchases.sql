@@ -20,6 +20,7 @@ alter table public.certification_purchases enable row level security;
 -- Only the user can read their own purchases. Rows are written exclusively
 -- by the Edge Functions using the service role key, which bypasses RLS, so
 -- there is no insert/update policy here.
+drop policy if exists "users read own purchases" on public.certification_purchases;
 create policy "users read own purchases"
   on public.certification_purchases for select
   using (auth.uid() = user_id);

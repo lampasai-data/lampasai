@@ -177,6 +177,16 @@ interface Translations {
     modeExamDesc: string;
     modeExamDescShort: string;
     modeExamLocked: string;
+    voucherTitle: string;
+    voucherPlaceholder: string;
+    voucherSubmit: string;
+    voucherRedeeming: string;
+    voucherSuccess: string;
+    voucherSuccessFor: (certName: string) => string;
+    voucherModalTitle: string;
+    voucherModalDescFor: (certName: string) => string;
+    voucherModalDescGeneric: string;
+    voucherModalPayInstead: string;
     questionCountLabel: string;
     questionCountAll: string;
     startTraining: string;
@@ -394,6 +404,18 @@ const translations: Record<Lang, Translations> = {
       modeExamDesc: "Évalue-toi à l'examen réel : temps limité, résultat réussi/échoué à la fin. Réservé aux comptes en accès illimité.",
       modeExamDescShort: "Évalue-toi à l'examen réel : temps limité, résultat réussi/échoué à la fin.",
       modeExamLocked: "Clique pour débloquer",
+      voucherTitle: "J'ai un code d'accès",
+      voucherPlaceholder: "XXXX-XXXX",
+      voucherSubmit: "Valider",
+      voucherRedeeming: "Validation…",
+      voucherSuccess: "Code validé, accès débloqué !",
+      voucherSuccessFor: (certName: string) => `Code validé : ${certName} débloqué !`,
+      voucherModalTitle: "Débloquer avec un code d'accès",
+      voucherModalDescFor: (certName: string) =>
+        `Saisis ton code pour débloquer ${certName} en mode examen pendant 30 jours.`,
+      voucherModalDescGeneric:
+        "Choisis la certification concernée, puis saisis ton code pour débloquer le mode examen pendant 30 jours.",
+      voucherModalPayInstead: "Payer plutôt",
       questionCountLabel: "Nombre de questions",
       questionCountAll: "Toutes",
       startTraining: "Commencer l'entraînement",
@@ -610,6 +632,18 @@ const translations: Record<Lang, Translations> = {
       modeExamDesc: "Test yourself on the real exam: limited time, pass/fail result at the end. Reserved for unlimited access accounts.",
       modeExamDescShort: "Test yourself on the real exam: limited time, pass/fail result at the end.",
       modeExamLocked: "Click to unlock",
+      voucherTitle: "I have an access code",
+      voucherPlaceholder: "XXXX-XXXX",
+      voucherSubmit: "Redeem",
+      voucherRedeeming: "Redeeming…",
+      voucherSuccess: "Code redeemed, access unlocked!",
+      voucherSuccessFor: (certName: string) => `Code redeemed: ${certName} unlocked!`,
+      voucherModalTitle: "Unlock with an access code",
+      voucherModalDescFor: (certName: string) =>
+        `Enter your code to unlock ${certName} exam mode for 30 days.`,
+      voucherModalDescGeneric:
+        "Pick the certification, then enter your code to unlock exam mode for 30 days.",
+      voucherModalPayInstead: "Pay instead",
       questionCountLabel: "Number of questions",
       questionCountAll: "All",
       startTraining: "Start practice",

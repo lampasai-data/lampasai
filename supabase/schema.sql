@@ -75,13 +75,15 @@ create policy "quiz questions are publicly readable"
   on public.quiz_questions for select
   using (true);
 
--- Profiles: users can only read/update their own row.
+-- Profiles: users can only read their own row. No client update policy on
+-- purpose: profiles.plan is a paywall flag, and a plain `using (auth.uid()
+-- = id)` update policy with no WITH CHECK would let a user set their own
+-- plan to 'pro' for free (Postgres reuses USING as the check when none is
+-- given, which only re-verifies row ownership, not column values). Nothing
+-- in the app legitimately updates profiles from the client anyway - writes
+-- go through the handle_new_user trigger or service-role Edge Functions.
 create policy "users read own profile"
   on public.profiles for select
-  using (auth.uid() = id);
-
-create policy "users update own profile"
-  on public.profiles for update
   using (auth.uid() = id);
 
 -- Attempts: users can only read/insert their own attempts.

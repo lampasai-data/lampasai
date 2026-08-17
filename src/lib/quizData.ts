@@ -193,23 +193,64 @@ export async function getUserProgress(
   return progress;
 }
 
-// Certification ids the user has paid for and that are still within their
-// 3-month validity window. Independent from the legacy profiles.plan flag.
-// Maps each purchased+still-valid certification id to its expiry date (ISO
-// string), so the UI can both gate access (.has()) and show the user when
-// their 3-month window runs out.
-export async function getPurchasedCertificationIds(userId: string): Promise<Map<string, string>> {
+export interface PurchasedCertificationAccess {
+  expiresAt: string;
+  // False for exam vouchers: they unlock exam mode but not PDF export,
+  // unlike a real (Stripe/Gumroad) purchase.
+  pdfAllowed: boolean;
+}
+
+// Certification ids the user has paid for (or unlocked via voucher) and
+// that are still within their validity window. Independent from the legacy
+// profiles.plan flag. Maps each still-valid certification id to its expiry
+// date and whether it allows PDF export, so the UI can both gate access
+// (.has()) and show the user when their window runs out.
+export async function getPurchasedCertificationIds(
+  userId: string
+): Promise<Map<string, PurchasedCertificationAccess>> {
   if (!isSupabaseConfigured || !supabase) return new Map();
 
   const { data, error } = await supabase
     .from("certification_purchases")
-    .select("certification_id, expires_at")
+    .select("certification_id, expires_at, pdf_allowed")
     .eq("user_id", userId)
     .eq("status", "paid")
     .gte("expires_at", new Date().toISOString());
 
   if (error || !data) return new Map();
-  return new Map(data.map((row) => [row.certification_id as string, row.expires_at as string]));
+  return new Map(
+    data.map((row) => [
+      row.certification_id as string,
+      { expiresAt: row.expires_at as string, pdfAllowed: row.pdf_allowed as boolean },
+    ])
+  );
+}
+
+// Redeems a single-use exam voucher code for the current user via the
+// redeem-exam-voucher Edge Function. When certificationId is passed, the
+// server rejects the code if it doesn't actually unlock that certification.
+// Returns the id of the certification the code unlocked. Throws with a
+// user-facing message on failure (invalid/expired/already-used/mismatched
+// code, or no session).
+export async function redeemExamVoucher(
+  code: string,
+  certificationId?: string
+): Promise<{ certificationId: string }> {
+  if (!supabase) throw new Error("Supabase n'est pas configuré.");
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  if (!accessToken) throw new Error("Vous devez être connecté.");
+
+  const { data, error } = await supabase.functions.invoke("redeem-exam-voucher", {
+    body: { code, certificationId },
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (error || data?.error) {
+    throw new Error(data?.error ?? error?.message ?? "Erreur lors de la validation du code.");
+  }
+  return { certificationId: data.certificationId };
 }
 
 // Every certification the user has ever paid for, regardless of whether the

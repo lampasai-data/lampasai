@@ -1,13 +1,10 @@
 import { createServiceClient, logGumroadEvent } from "../_shared/gumroadMatch.ts";
+import { corsHeaders } from "../_shared/admin.ts";
 
 // Called by the frontend right after every login AND every signup (both fire
 // a Supabase auth session), so a Gumroad purchase made with a different-but-
 // now-matching email, or made before the account even existed, gets applied
 // as soon as the corresponding account is available - not just at signup.
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {

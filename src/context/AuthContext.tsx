@@ -46,7 +46,8 @@ interface AuthState {
   closeAuthModal: () => void;
   upgradeModalOpen: boolean;
   upgradeModalPreselect: string | null;
-  openUpgradeModal: (preselectSlug?: string) => void;
+  upgradeModalOpenVoucher: boolean;
+  openUpgradeModal: (preselectSlug?: string, openVoucher?: boolean) => void;
   closeUpgradeModal: () => void;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<string | null>;
@@ -71,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeModalPreselect, setUpgradeModalPreselect] = useState<string | null>(null);
+  const [upgradeModalOpenVoucher, setUpgradeModalOpenVoucher] = useState(false);
   const [googleAccountNotFound, setGoogleAccountNotFound] = useState(false);
   const [googleAccountAlreadyExists, setGoogleAccountAlreadyExists] = useState(false);
   // Supabase fires the session change more than once for a single sign-in
@@ -192,6 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (pending) {
       sessionStorage.removeItem(PENDING_UPGRADE_KEY);
       setUpgradeModalPreselect(pending);
+      setUpgradeModalOpenVoucher(false);
       setUpgradeModalOpen(true);
     }
   }, [session]);
@@ -211,8 +214,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthModalOpen(false);
   }
 
-  function openUpgradeModal(preselectSlug?: string) {
+  function openUpgradeModal(preselectSlug?: string, openVoucher = false) {
     setUpgradeModalPreselect(preselectSlug ?? null);
+    setUpgradeModalOpenVoucher(openVoucher);
     setUpgradeModalOpen(true);
   }
 
@@ -310,6 +314,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         closeAuthModal,
         upgradeModalOpen,
         upgradeModalPreselect,
+        upgradeModalOpenVoucher,
         openUpgradeModal,
         closeUpgradeModal,
         signInWithGoogle,

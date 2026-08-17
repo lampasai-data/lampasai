@@ -7,6 +7,10 @@
 -- non-exam rows stay public, exam rows require either profiles.plan='pro'
 -- or a valid, unexpired certification_purchases row for that certification.
 drop policy if exists "quiz questions are publicly readable" on public.quiz_questions;
+-- Idempotent: a prior partial run of this migration (interrupted after the
+-- first create policy) can leave one or both of these already in place.
+drop policy if exists "non-exam questions are publicly readable" on public.quiz_questions;
+drop policy if exists "exam questions readable by pro or purchased users" on public.quiz_questions;
 
 create policy "non-exam questions are publicly readable"
   on public.quiz_questions for select

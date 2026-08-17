@@ -1,7 +1,12 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, Reorder } from "motion/react";
-import { loadQuestions, getPurchasedCertificationIds } from "../lib/quizData";
+import {
+  loadQuestions,
+  getPurchasedCertificationIds,
+  type PurchasedCertificationAccess,
+} from "../lib/quizData";
+import { useCheckoutSuccessPoll } from "../lib/useCheckoutSuccessPoll";
 import type { LocalizedText, Question } from "../data/types";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n";
@@ -312,7 +317,9 @@ export default function CertificationQuiz() {
   const [cert, setCert] = useState<{ id: string; name: LocalizedText; questions: Question[] } | null>(
     null
   );
-  const [purchasedIds, setPurchasedIds] = useState<Map<string, string>>(new Map());
+  const [purchasedIds, setPurchasedIds] = useState<Map<string, PurchasedCertificationAccess>>(
+    new Map()
+  );
   // Pro users can cap how many questions a run draws from; null = use them all.
   const [customCount, setCustomCount] = useState<number | null>(null);
 
@@ -466,23 +473,7 @@ export default function CertificationQuiz() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cert, mode, profile, purchasedIds, searchParams]);
 
-  useEffect(() => {
-    if (!user || searchParams.get("checkout") !== "success") return;
-    let attempts = 0;
-    const interval = setInterval(async () => {
-      attempts += 1;
-      const ids = await getPurchasedCertificationIds(user.id);
-      setPurchasedIds(ids);
-      if (attempts >= 5) clearInterval(interval);
-    }, 2000);
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.delete("checkout");
-      return next;
-    }, { replace: true });
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  useCheckoutSuccessPoll(user, searchParams, setSearchParams, setPurchasedIds);
 
   const answeredCount = Object.keys(results).length;
   const total = cert?.questions.length ?? 0;

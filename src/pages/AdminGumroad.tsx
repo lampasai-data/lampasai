@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 
 const ADMIN_EMAIL = "mbairo.allatessem@gmail.com";
 const STALE_HOURS = 24;
+const LOGS_PAGE_SIZE = 10;
+const LOGS_FETCH_LIMIT = 500;
 
 interface PendingPurchase {
   id: string;
@@ -24,6 +27,18 @@ interface WebhookLog {
   error_message: string | null;
 }
 
+// The reconcile sweep (cron every 6h, or the admin "reconcile now" button)
+// logs a row every time it runs, even when it finds nothing to do - a
+// heartbeat proving the safety net is alive, not something the admin needs
+// to see. Only genuine Gumroad webhook events and reconcile runs that
+// actually did something (processed/skipped a sale, or errored) are worth
+// showing here.
+function isNoiseHeartbeat(log: WebhookLog): boolean {
+  const isReconcileRun =
+    log.verification_result === "reconcile" || log.verification_result === "reconcile-admin";
+  return isReconcileRun && log.match_result === "processed:0,skipped:0" && !log.error_message;
+}
+
 export default function AdminGumroad() {
   const { user, ready } = useAuth();
   const [pending, setPending] = useState<PendingPurchase[]>([]);
@@ -34,6 +49,7 @@ export default function AdminGumroad() {
   const [feedback, setFeedback] = useState<Record<string, string>>({});
   const [reconciling, setReconciling] = useState(false);
   const [reconcileFeedback, setReconcileFeedback] = useState<string | null>(null);
+  const [logsPage, setLogsPage] = useState(0);
 
   const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
 
@@ -53,11 +69,12 @@ export default function AdminGumroad() {
         .from("gumroad_webhook_logs")
         .select("id, received_at, verification_result, match_result, gumroad_sale_id, error_message")
         .order("received_at", { ascending: false })
-        .limit(50),
+        .limit(LOGS_FETCH_LIMIT),
     ]);
 
     setPending((pendingRows as PendingPurchase[]) ?? []);
-    setLogs((logRows as WebhookLog[]) ?? []);
+    setLogs(((logRows as WebhookLog[]) ?? []).filter((log) => !isNoiseHeartbeat(log)));
+    setLogsPage(0);
     setLoading(false);
   }
 
@@ -120,12 +137,8 @@ export default function AdminGumroad() {
 
   if (!ready) return null;
 
-  if (!isAdmin) {
-    return (
-      <section className="mx-auto max-w-2xl px-6 py-24 text-center">
-        <p className="text-sm text-muted">Accès réservé.</p>
-      </section>
-    );
+  if (!user || !isAdmin) {
+    return <Navigate to="/formations" replace />;
   }
 
   return (
@@ -199,8 +212,17 @@ export default function AdminGumroad() {
       )}
 
       <h2 className="mt-12 font-display text-lg font-semibold text-ink">
-        Derniers événements webhook
+        Événements à surveiller
       </h2>
+      <p className="mt-2 text-sm text-muted">
+        Ventes Gumroad reçues, erreurs, et passages de rapprochement ayant traité quelque chose.
+        Les balayages automatiques qui ne trouvent rien ne sont pas affichés ici.
+      </p>
+      {logs.length === 0 ? (
+        <p className="mt-4 rounded-xl border border-black/8 bg-white p-4 text-sm text-muted">
+          Rien à signaler pour le moment.
+        </p>
+      ) : (
       <div className="mt-4 overflow-x-auto rounded-xl border border-black/8 bg-white">
         <table className="w-full text-left text-xs">
           <thead className="border-b border-black/8 text-muted">
@@ -213,7 +235,7 @@ export default function AdminGumroad() {
             </tr>
           </thead>
           <tbody>
-            {logs.map((log) => (
+            {logs.slice(logsPage * LOGS_PAGE_SIZE, logsPage * LOGS_PAGE_SIZE + LOGS_PAGE_SIZE).map((log) => (
               <tr key={log.id} className="border-b border-black/5 last:border-0">
                 <td className="px-3 py-2 text-muted">
                   {new Date(log.received_at).toLocaleString("fr-FR")}
@@ -227,6 +249,34 @@ export default function AdminGumroad() {
           </tbody>
         </table>
       </div>
+      )}
+      {logs.length > LOGS_PAGE_SIZE && (
+        <div className="mt-3 flex items-center justify-between text-xs text-muted">
+          <button
+            type="button"
+            onClick={() => setLogsPage((p) => Math.max(0, p - 1))}
+            disabled={logsPage === 0}
+            className="rounded-full border border-black/10 px-3 py-1.5 font-medium text-ink transition hover:border-black/20 disabled:opacity-40"
+          >
+            Précédent
+          </button>
+          <span>
+            Page {logsPage + 1} / {Math.ceil(logs.length / LOGS_PAGE_SIZE)}
+          </span>
+          <button
+            type="button"
+            onClick={() =>
+              setLogsPage((p) =>
+                (p + 1) * LOGS_PAGE_SIZE < logs.length ? p + 1 : p
+              )
+            }
+            disabled={(logsPage + 1) * LOGS_PAGE_SIZE >= logs.length}
+            className="rounded-full border border-black/10 px-3 py-1.5 font-medium text-ink transition hover:border-black/20 disabled:opacity-40"
+          >
+            Suivant
+          </button>
+        </div>
+      )}
     </section>
   );
 }

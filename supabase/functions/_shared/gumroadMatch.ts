@@ -158,14 +158,19 @@ interface GumroadSalesPage {
   next_page_url?: string | null;
 }
 
-async function fetchRecentSales(): Promise<GumroadSale[]> {
+// full=true omits the "after" cutoff entirely, so Gumroad returns the
+// buyer's complete sales history instead of just the recent window - used
+// for the admin's manual "reconcile everything now" button.
+async function fetchRecentSales(full = false): Promise<GumroadSale[]> {
   const accessToken = Deno.env.get("GUMROAD_ACCESS_TOKEN")!;
-  const after = new Date(Date.now() - RECONCILE_LOOKBACK_DAYS * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10); // Gumroad expects YYYY-MM-DD
+  const afterParam = full
+    ? ""
+    : `&after=${new Date(Date.now() - RECONCILE_LOOKBACK_DAYS * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10)}`; // Gumroad expects YYYY-MM-DD
 
   const sales: GumroadSale[] = [];
-  let url: string | null = `https://api.gumroad.com/v2/sales?access_token=${accessToken}&after=${after}`;
+  let url: string | null = `https://api.gumroad.com/v2/sales?access_token=${accessToken}${afterParam}`;
 
   // Gumroad paginates via next_page_url; follow it until exhausted. Capped
   // to avoid a runaway loop if Gumroad's response shape ever changes.
@@ -181,13 +186,16 @@ async function fetchRecentSales(): Promise<GumroadSale[]> {
 }
 
 // Shared by the cron-triggered gumroad-reconcile and the admin "reconcile
-// now" button - sweeps recent Gumroad sales and processes any that weren't
-// already recorded (e.g. a lost webhook ping).
+// now" button - sweeps Gumroad sales and processes any that weren't already
+// recorded (e.g. a lost webhook ping). The cron sweep only looks back
+// RECONCILE_LOOKBACK_DAYS; the admin button passes full=true to sweep the
+// entire sales history in one go.
 export async function runReconcileSweep(
   supabase: SupabaseClient,
-  logPrefix = "[reconcile] "
+  logPrefix = "[reconcile] ",
+  full = false
 ): Promise<{ total: number; processed: number; skipped: number }> {
-  const sales = await fetchRecentSales();
+  const sales = await fetchRecentSales(full);
 
   let processed = 0;
   let skipped = 0;

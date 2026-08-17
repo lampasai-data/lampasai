@@ -37,10 +37,12 @@ alter table public.pending_gumroad_purchases enable row level security;
 
 -- No public policies: only the service role (Edge Functions) reads/writes
 -- this table directly, except the admin read/update policies below.
+drop policy if exists "admin reads pending gumroad purchases" on public.pending_gumroad_purchases;
 create policy "admin reads pending gumroad purchases"
   on public.pending_gumroad_purchases for select
   using (auth.jwt() ->> 'email' = 'mbairo.allatessem@gmail.com');
 
+drop policy if exists "admin resolves pending gumroad purchases" on public.pending_gumroad_purchases;
 create policy "admin resolves pending gumroad purchases"
   on public.pending_gumroad_purchases for update
   using (auth.jwt() ->> 'email' = 'mbairo.allatessem@gmail.com');
@@ -59,6 +61,7 @@ create table if not exists public.gumroad_webhook_logs (
 
 alter table public.gumroad_webhook_logs enable row level security;
 
+drop policy if exists "admin reads gumroad webhook logs" on public.gumroad_webhook_logs;
 create policy "admin reads gumroad webhook logs"
   on public.gumroad_webhook_logs for select
   using (auth.jwt() ->> 'email' = 'mbairo.allatessem@gmail.com');

@@ -1,14 +1,11 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from "../_shared/admin.ts";
 
 // Called right after a Google sign-in turns out to have auto-created a
 // brand-new account when the user actually intended to log into an existing
 // one (see AuthContext.tsx). Deletes that just-created orphan account so the
 // user can be told "no account found, sign up first" instead of silently
 // landing in a blank new account. Mirrors the pattern used in the Wonjo app.
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 // Only ever delete accounts created within this window - an extra
 // server-side guardrail so a misuse or bug in the caller can never reach an

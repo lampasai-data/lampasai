@@ -11,16 +11,20 @@ import {
   loadQuestions,
   type CertificationProgress,
   type CertificationSummary,
+  type PurchasedCertificationAccess,
 } from "../lib/quizData";
 import type { LocalizedText, Question } from "../data/types";
 import { CERT_LOGOS } from "../data/certLogos";
 import { CERTIFICATION_DOMAINS } from "../data/certificationDomains";
+import { useCheckoutSuccessPoll } from "../lib/useCheckoutSuccessPoll";
 
 export default function Dashboard({ certs }: { certs: CertificationSummary[] }) {
   const { user, profile, openUpgradeModal } = useAuth();
   const { t, lang } = useLanguage();
   const [progress, setProgress] = useState<Record<string, CertificationProgress>>({});
-  const [purchasedIds, setPurchasedIds] = useState<Map<string, string>>(new Map());
+  const [purchasedIds, setPurchasedIds] = useState<Map<string, PurchasedCertificationAccess>>(
+    new Map()
+  );
   const [allPurchaseDates, setAllPurchaseDates] = useState<Map<string, string>>(new Map());
   const [downloadingSlug, setDownloadingSlug] = useState<string | null>(null);
   const [pdfModal, setPdfModal] = useState<{
@@ -42,25 +46,16 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
     getAllCertificationPurchaseDates(user.id).then(setAllPurchaseDates);
   }, [user]);
 
-  useEffect(() => {
-    if (!user || searchParams.get("checkout") !== "success") return;
-    setShowSuccessBanner(true);
-    let attempts = 0;
-    const interval = setInterval(async () => {
-      attempts += 1;
-      const ids = await getPurchasedCertificationIds(user.id);
+  useCheckoutSuccessPoll(
+    user,
+    searchParams,
+    setSearchParams,
+    (ids) => {
       setPurchasedIds(ids);
-      getAllCertificationPurchaseDates(user.id).then(setAllPurchaseDates);
-      if (attempts >= 5) clearInterval(interval);
-    }, 2000);
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.delete("checkout");
-      return next;
-    }, { replace: true });
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+      getAllCertificationPurchaseDates(user!.id).then(setAllPurchaseDates);
+    },
+    () => setShowSuccessBanner(true)
+  );
 
   async function handleDownloadPdf(cert: CertificationSummary) {
     setDownloadingSlug(cert.slug);
@@ -140,8 +135,10 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
       <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
         {certs.map((cert, i) => {
           const stats = progress[cert.slug];
-          const expiresAt = purchasedIds.get(cert.id);
+          const access = purchasedIds.get(cert.id);
+          const expiresAt = access?.expiresAt;
           const unlocked = isPro || expiresAt !== undefined;
+          const canDownloadPdf = isPro || access?.pdfAllowed === true;
           const isExpired = !isPro && expiresAt === undefined && allPurchaseDates.has(cert.id);
           return (
             <motion.div
@@ -224,15 +221,24 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                     {t.formations.dashboardContinue}
                   </Link>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => openUpgradeModal(cert.slug)}
-                    className="brand-gradient rounded-full px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
-                  >
-                    {t.formations.dashboardGoPro}
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => openUpgradeModal(cert.slug)}
+                      className="brand-gradient rounded-full px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+                    >
+                      {t.formations.dashboardGoPro}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openUpgradeModal(cert.slug, true)}
+                      className="rounded-full border border-teal/40 px-4 py-1.5 text-xs font-medium text-teal-dark transition hover:bg-teal/5"
+                    >
+                      {t.quiz.voucherTitle}
+                    </button>
+                  </>
                 )}
-                {unlocked && (
+                {unlocked && canDownloadPdf && (
                   <button
                     type="button"
                     onClick={() => handleDownloadPdf(cert)}

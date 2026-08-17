@@ -12,6 +12,7 @@ import CertificationQuiz from "./pages/CertificationQuiz";
 import ResetPassword from "./pages/ResetPassword";
 import EmailConfirmed from "./pages/EmailConfirmed";
 import AdminGumroad from "./pages/AdminGumroad";
+import AdminVouchers from "./pages/AdminVouchers";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/email-confirmed" element={<EmailConfirmed />} />
         <Route path="/admin/gumroad" element={<AdminGumroad />} />
+        <Route path="/admin/vouchers" element={<AdminVouchers />} />
       </Routes>
       <Footer />
       <ScrollToTop />

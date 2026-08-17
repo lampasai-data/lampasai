@@ -15,6 +15,8 @@ alter table public.quiz_questions
   alter column correct_indexes drop not null;
 
 alter table public.quiz_questions
+  drop constraint if exists quiz_questions_type_shape;
+alter table public.quiz_questions
   add constraint quiz_questions_type_shape check (
     (type = 'choice' and options is not null and correct_indexes is not null)
     or (type = 'order' and options is not null and correct_order is not null)
