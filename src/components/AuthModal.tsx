@@ -26,7 +26,7 @@ export default function AuthModal() {
           onClick={closeAuthModal}
         >
           <motion.div
-            className="relative w-full max-w-md"
+            className="relative max-h-[90vh] w-full max-w-md overflow-y-auto"
             initial={{ opacity: 0, scale: 0.95, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 12 }}

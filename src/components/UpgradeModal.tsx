@@ -158,7 +158,7 @@ export default function UpgradeModal() {
           onClick={closeUpgradeModal}
         >
           <motion.div
-            className="relative w-full max-w-md rounded-2xl border border-black/8 bg-white p-7 shadow-sm"
+            className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-black/8 bg-white p-7 shadow-sm"
             initial={{ opacity: 0, scale: 0.95, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 12 }}

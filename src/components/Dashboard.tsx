@@ -316,7 +316,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
               exit={{ opacity: 0, y: 12, scale: 0.98 }}
               transition={{ duration: 0.2 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm rounded-2xl border border-black/8 bg-white p-6 shadow-xl"
+              className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-2xl border border-black/8 bg-white p-6 shadow-xl"
             >
               <h3 className="font-display text-base font-semibold text-ink">
                 {t.formations.pdfCountPrompt}
