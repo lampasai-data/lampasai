@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../i18n";
 import BackLink from "../components/BackLink";
 
 export default function ResetPassword() {
   const { updatePassword } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -25,20 +27,18 @@ export default function ResetPassword() {
     <section className="mx-auto max-w-md px-6 py-24">
       <div className="rounded-2xl border border-black/8 bg-white p-7 shadow-sm">
         <h1 className="font-display text-lg font-medium text-ink">
-          Choisis un nouveau mot de passe
+          {t.auth.resetPasswordTitle}
         </h1>
 
         {done ? (
           <>
-            <p className="mt-3 text-sm text-green">
-              Mot de passe mis à jour.
-            </p>
+            <p className="mt-3 text-sm text-green">{t.auth.resetPasswordDone}</p>
             <button
               type="button"
               onClick={() => navigate("/formations")}
               className="brand-gradient mt-5 rounded-full px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
             >
-              Continuer vers les formations
+              {t.auth.resetPasswordContinue}
             </button>
           </>
         ) : (
@@ -47,7 +47,7 @@ export default function ResetPassword() {
               type="password"
               required
               minLength={8}
-              placeholder="Nouveau mot de passe (8+ car., maj., min., chiffre)"
+              placeholder={t.auth.resetPasswordPlaceholder}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink placeholder:text-muted/70 focus:border-teal focus:outline-none"
@@ -58,14 +58,14 @@ export default function ResetPassword() {
               disabled={loading}
               className="brand-gradient mt-1 rounded-full px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
             >
-              {loading ? "..." : "Mettre à jour"}
+              {loading ? t.auth.submitLoading : t.auth.resetPasswordSubmit}
             </button>
           </form>
         )}
       </div>
 
       <div className="mt-6">
-        <BackLink to="/formations" label="Retour aux formations" />
+        <BackLink to="/formations" label={t.auth.resetPasswordBack} />
       </div>
     </section>
   );

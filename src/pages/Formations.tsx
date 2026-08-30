@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { listCertifications, loadQuestions, type CertificationSummary } from "../lib/quizData";
+import {
+  listCertifications,
+  loadQuestions,
+  getCertificationLeaderboardPreview,
+  type CertificationSummary,
+  type LeaderboardPreview,
+} from "../lib/quizData";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n";
 import { localize } from "../lib/i18nText";
@@ -28,12 +34,36 @@ export default function Formations() {
   const [tab, setTab] = useState<Tab>("certifications");
   const [downloadingSlug, setDownloadingSlug] = useState<string | null>(null);
   const [pricingSlug, setPricingSlug] = useState<string>("power-bi");
+  const [leaderboardPreviews, setLeaderboardPreviews] = useState<
+    Record<string, LeaderboardPreview>
+  >({});
   const { user, profile, openAuthModal, openAuthModalForUpgrade } = useAuth();
   const { lang, t } = useLanguage();
 
   useEffect(() => {
     listCertifications().then(setCerts);
   }, []);
+
+  // Anonymized teaser for logged-out visitors only - Dashboard (shown to
+  // logged-in users instead of this page) has its own full leaderboard link.
+  useEffect(() => {
+    if (user || certs.length === 0) return;
+    let cancelled = false;
+    Promise.all(
+      certs.map(async (cert) => {
+        const preview = await getCertificationLeaderboardPreview(cert.id);
+        return [cert.slug, preview] as const;
+      })
+    ).then((results) => {
+      if (cancelled) return;
+      const next: Record<string, LeaderboardPreview> = {};
+      for (const [slug, preview] of results) if (preview) next[slug] = preview;
+      setLeaderboardPreviews(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [certs, user]);
 
   const isPro = profile?.plan === "pro";
 
@@ -264,6 +294,16 @@ export default function Formations() {
                             </li>
                           ))}
                         </ul>
+                      </div>
+                    )}
+
+                    {leaderboardPreviews[cert.slug] && (
+                      <div className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-green/30 bg-green/5 px-3 py-1.5 text-xs font-semibold text-green">
+                        🏆
+                        {t.formations.leaderboardTeaser(
+                          leaderboardPreviews[cert.slug].topPoints,
+                          leaderboardPreviews[cert.slug].totalSessions
+                        )}
                       </div>
                     )}
 

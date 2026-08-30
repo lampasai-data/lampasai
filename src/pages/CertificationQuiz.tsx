@@ -4,6 +4,7 @@ import { motion, AnimatePresence, Reorder } from "motion/react";
 import {
   loadQuestions,
   getPurchasedCertificationIds,
+  recordExamResult,
   type PurchasedCertificationAccess,
 } from "../lib/quizData";
 import { useCheckoutSuccessPoll } from "../lib/useCheckoutSuccessPoll";
@@ -353,6 +354,7 @@ export default function CertificationQuiz() {
   const [examEndsAt, setExamEndsAt] = useState<number | null>(null);
   const [examRemaining, setExamRemaining] = useState(0);
   const [examEnded, setExamEnded] = useState(false);
+  const examResultRecorded = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -482,6 +484,17 @@ export default function CertificationQuiz() {
   const runSize = queue.length;
   const finished = (runSize > 0 && answeredCount >= runSize) || examEnded;
 
+  // Records the run's score once, the first time an exam-mode run finishes,
+  // so it counts toward this certification's monthly points leaderboard
+  // (see get_certification_monthly_leaderboard). Not tied to whether the
+  // chrono was ever started: any completed exam-mode run counts.
+  useEffect(() => {
+    if (!cert || !user || mode !== "exam" || !finished || examResultRecorded.current) return;
+    examResultRecorded.current = true;
+    const correctCount = Object.values(results).filter(Boolean).length;
+    recordExamResult(user.id, cert.id, correctCount, runSize);
+  }, [cert, user, mode, finished, results, runSize]);
+
   useEffect(() => {
     if (!cert || finished || mode === null) return;
     const id = setInterval(() => {
@@ -547,15 +560,25 @@ export default function CertificationQuiz() {
     setMode("training");
   }
 
+  // Exam mode starts untimed by default - the full countdown duration is
+  // shown as a static preview, but the user answers at their own pace until
+  // they choose to start the chrono (startExamTimer) to see if they'd
+  // finish within the real exam's time limit.
   function startExam() {
     const queueLength = hasProAccess() ? (customCount ?? total) : FREE_QUESTION_LIMIT;
-    const duration = queueLength * EXAM_SECONDS_PER_QUESTION;
     resetRun("exam");
-    setExamEndsAt(Date.now() + duration * 1000);
-    setExamRemaining(duration);
+    setExamEndsAt(null);
+    setExamRemaining(queueLength * EXAM_SECONDS_PER_QUESTION);
     setExamEnded(false);
     setQuickExamSetup(false);
     setMode("exam");
+    examResultRecorded.current = false;
+  }
+
+  function startExamTimer() {
+    const duration = runSize * EXAM_SECONDS_PER_QUESTION;
+    setExamEndsAt(Date.now() + duration * 1000);
+    setExamRemaining(duration);
   }
 
   if (!cert) {
@@ -835,13 +858,22 @@ export default function CertificationQuiz() {
                 {t.quiz.modeExamDesc}
               </p>
               {isPro ? (
-                <button
-                  type="button"
-                  onClick={startExam}
-                  className="mt-5 rounded-full border border-teal/40 px-5 py-2.5 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
-                >
-                  {t.quiz.startExam}
-                </button>
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={startExam}
+                    className="rounded-full border border-teal/40 px-5 py-2.5 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
+                  >
+                    {t.quiz.startExam}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/formations/${slug}/classement`)}
+                    className="text-sm font-medium text-teal-dark underline underline-offset-2 transition hover:text-teal"
+                  >
+                    {t.quiz.viewLeaderboard}
+                  </button>
+                </div>
               ) : (
                 <button
                   type="button"
@@ -865,12 +897,16 @@ export default function CertificationQuiz() {
     const passed = mode === "exam" && ratio >= passThreshold;
     const doingWell = ratio >= 0.75;
 
+    // Restarting jumps straight back into the same mode just finished
+    // (a fresh, untimed exam run again, or a new training run) instead of
+    // dropping back to the training/exam choice screen - the user already
+    // made that choice for this session.
     function restartRun() {
-      resetRun("training");
-      setMode(null);
-      setQuickExamSetup(false);
-      setExamEndsAt(null);
-      setExamEnded(false);
+      if (mode === "exam") {
+        startExam();
+      } else {
+        startTraining();
+      }
     }
 
     return (
@@ -949,7 +985,7 @@ export default function CertificationQuiz() {
             </div>
           </div>
 
-          <div className="mt-8 flex justify-center">
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
             <button
               type="button"
               onClick={restartRun}
@@ -957,6 +993,15 @@ export default function CertificationQuiz() {
             >
               {t.quiz.restart}
             </button>
+            {mode === "exam" && (
+              <button
+                type="button"
+                onClick={() => navigate(`/formations/${slug}/classement`)}
+                className="rounded-full border border-teal/40 px-6 py-2.5 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
+              >
+                {t.quiz.viewLeaderboard}
+              </button>
+            )}
           </div>
         </div>
 
@@ -1216,19 +1261,24 @@ export default function CertificationQuiz() {
     <section className="mx-auto max-w-3xl px-6 pt-4 pb-24">
       <BackLink to="/formations" label={backLabel} />
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-b border-black/[0.06] pb-5">
         <div className="flex items-center gap-3">
           <img
             src={CERT_LOGOS[slug] ?? lampasLogo}
             alt=""
-            className="h-9 w-9 object-contain"
+            className="h-10 w-10 object-contain"
           />
-          <h1 className="font-display text-2xl font-semibold text-ink">
-            {localize(cert.name, lang)}
-          </h1>
+          <div>
+            <h1 className="font-display text-xl font-semibold leading-tight text-ink">
+              {localize(cert.name, lang)}
+            </h1>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted">
+              {mode === "exam" ? t.quiz.modeExamTitle : t.quiz.modeTrainingTitle}
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <div className="brand-gradient flex items-center gap-2 rounded-full px-4 py-2 text-white shadow-sm">
             <span className="font-display text-lg font-semibold leading-none">
               {currentScore}
@@ -1237,9 +1287,9 @@ export default function CertificationQuiz() {
               {t.quiz.score}
             </span>
           </div>
-          {mode === "exam" ? (
+          {mode === "exam" && examEndsAt ? (
             <span
-              className={`rounded-full border px-3 py-2 text-sm shadow-sm ${
+              className={`rounded-full border px-3 py-2 text-sm font-medium shadow-sm ${
                 examRemaining <= 60
                   ? "border-red-300 bg-red-50 text-red-600"
                   : "border-black/10 bg-white text-muted"
@@ -1248,6 +1298,14 @@ export default function CertificationQuiz() {
             >
               {formatTime(examRemaining)}
             </span>
+          ) : mode === "exam" ? (
+            <button
+              type="button"
+              onClick={startExamTimer}
+              className="brand-gradient rounded-full px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+            >
+              {t.quiz.startExamTimer}
+            </button>
           ) : (
             isPro && (
               <span className="rounded-full border border-black/10 bg-white px-3 py-2 text-sm text-muted shadow-sm">
@@ -1259,7 +1317,7 @@ export default function CertificationQuiz() {
             <button
               type="button"
               onClick={() => setExamEnded(true)}
-              className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-ink transition hover:bg-teal/5"
+              className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-ink transition hover:border-black/20 hover:bg-black/[0.02]"
             >
               {t.quiz.endExam}
             </button>
@@ -1267,9 +1325,9 @@ export default function CertificationQuiz() {
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-2 text-xs font-medium text-muted">
         <span>
-          {answeredCount}/{runSize}
+          {answeredCount}/{runSize} {t.quiz.answeredLabel}
           {!isPro && (
             <>
               {" "}
@@ -1282,7 +1340,7 @@ export default function CertificationQuiz() {
         )}
       </div>
 
-      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
+      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/[0.06]">
         <motion.div
           className="brand-gradient h-full rounded-full"
           animate={{ width: `${runSize > 0 ? (answeredCount / runSize) * 100 : 0}%` }}
@@ -1302,17 +1360,20 @@ export default function CertificationQuiz() {
           // starts, which otherwise can silently do nothing.
           exit={{ opacity: 0, x: -24, pointerEvents: "none" }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="mt-6 rounded-2xl border border-black/8 bg-white p-7 shadow-sm"
+          className="mt-5 rounded-2xl border border-black/8 bg-white p-7 shadow-[0_1px_2px_rgba(20,20,43,0.04),0_8px_24px_-12px_rgba(20,20,43,0.12)] sm:p-8"
         >
+          <p className="text-xs font-semibold uppercase tracking-wide text-teal-dark">
+            {t.quiz.questionOf(pos + 1, runSize)}
+          </p>
           {question.image && (
             <img
               src={question.image}
               alt=""
-              className="mb-4 w-full max-w-xl rounded-xl border border-black/8"
+              className="mt-3 mb-4 w-full max-w-xl rounded-xl border border-black/8"
             />
           )}
-          <div className="flex items-start justify-between gap-4">
-            <p className="whitespace-pre-line font-display text-base font-medium text-ink">
+          <div className="mt-3 flex items-start justify-between gap-4">
+            <p className="whitespace-pre-line font-display text-lg font-medium leading-snug text-ink">
               {renderQuestionText(localize(question.question, lang))}
             </p>
             <button
@@ -1606,11 +1667,12 @@ export default function CertificationQuiz() {
               })}
             </Reorder.Group>
           ) : (
-            <div className="mt-6 flex flex-col gap-3">
+            <div className="mt-6 flex flex-col gap-2.5">
               {(question.options ?? []).map((option, i) => {
                 const isCorrect = (question.correctIndexes ?? []).includes(i);
                 const isPicked = picked.includes(i);
                 const label = localize(option, lang);
+                const letter = String.fromCharCode(65 + i);
 
                 return (
                   <motion.button
@@ -1619,9 +1681,7 @@ export default function CertificationQuiz() {
                     whileTap={{ scale: 0.98 }}
                     onClick={() => toggleOption(i)}
                     disabled={submitted}
-                    className={`rounded-xl border px-4 py-3 text-left text-sm transition ${
-                      looksLikeCode(label) ? "font-mono text-[13px] tracking-tight" : ""
-                    } ${
+                    className={`flex items-center gap-3.5 rounded-xl border px-4 py-3 text-left text-sm transition ${
                       submitted && isCorrect
                         ? "border-green/40 bg-green/10 text-green"
                         : submitted && isPicked
@@ -1631,7 +1691,31 @@ export default function CertificationQuiz() {
                             : "border-black/10 bg-white text-ink/80 hover:border-teal/30 hover:bg-black/[0.02]"
                     }`}
                   >
-                    {label}
+                    <span
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                        submitted && isCorrect
+                          ? "bg-green/20 text-green"
+                          : submitted && isPicked
+                            ? "bg-red-100 text-red-600"
+                            : !submitted && isPicked
+                              ? "bg-teal/20 text-teal-dark"
+                              : "bg-black/[0.04] text-muted"
+                      }`}
+                    >
+                      {letter}
+                    </span>
+                    <span
+                      className={
+                        looksLikeCode(label) ? "font-mono text-[13px] tracking-tight" : ""
+                      }
+                    >
+                      {label}
+                    </span>
+                    {submitted && (isCorrect || isPicked) && (
+                      <span className="ml-auto shrink-0 text-base leading-none">
+                        {isCorrect ? "✓" : "✕"}
+                      </span>
+                    )}
                   </motion.button>
                 );
               })}

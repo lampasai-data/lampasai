@@ -9,6 +9,7 @@ import GumroadReturnHandler from "./components/GumroadReturnHandler";
 import Home from "./pages/Home";
 import Formations from "./pages/Formations";
 import CertificationQuiz from "./pages/CertificationQuiz";
+import CertificationLeaderboard from "./pages/CertificationLeaderboard";
 import ResetPassword from "./pages/ResetPassword";
 import EmailConfirmed from "./pages/EmailConfirmed";
 import AdminGumroad from "./pages/AdminGumroad";
@@ -22,6 +23,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/formations" element={<Formations />} />
         <Route path="/formations/:slug" element={<CertificationQuiz />} />
+        <Route path="/formations/:slug/classement" element={<CertificationLeaderboard />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/email-confirmed" element={<EmailConfirmed />} />
         <Route path="/admin/gumroad" element={<AdminGumroad />} />

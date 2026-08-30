@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../i18n";
 
 // Landing page for Supabase's signup confirmation link (see emailRedirectTo
 // in AuthContext.signUpWithEmail). Email security scanners (Gmail/Outlook/
@@ -11,6 +12,7 @@ import { useAuth } from "../context/AuthContext";
 // the user on a bare, unexplained page.
 export default function EmailConfirmed() {
   const { user, ready } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [status, setStatus] = useState<"checking" | "success" | "already-used">("checking");
 
@@ -37,23 +39,23 @@ export default function EmailConfirmed() {
     <section className="mx-auto max-w-md px-6 py-24 text-center">
       <div className="rounded-2xl border border-black/8 bg-white p-8 shadow-sm">
         {status === "checking" && (
-          <p className="text-sm text-muted">Vérification en cours…</p>
+          <p className="text-sm text-muted">{t.auth.emailCheckingStatus}</p>
         )}
 
         {status === "success" && (
           <>
             <h1 className="font-display text-lg font-semibold text-ink">
-              Email confirmé 🎉
+              {t.auth.emailConfirmedTitle}
             </h1>
             <p className="mt-3 text-sm leading-relaxed text-muted">
-              Ton compte est validé et tu es connecté.
+              {t.auth.emailConfirmedDesc}
             </p>
             <button
               type="button"
               onClick={() => navigate("/formations")}
               className="brand-gradient mt-6 rounded-full px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
             >
-              Accéder à mon espace
+              {t.auth.emailConfirmedCta}
             </button>
           </>
         )}
@@ -61,20 +63,17 @@ export default function EmailConfirmed() {
         {status === "already-used" && (
           <>
             <h1 className="font-display text-lg font-semibold text-ink">
-              Ce lien a déjà été utilisé
+              {t.auth.emailAlreadyUsedTitle}
             </h1>
             <p className="mt-3 text-sm leading-relaxed text-muted">
-              C'est souvent dû à ta messagerie qui ouvre les liens
-              automatiquement pour vérifier qu'ils sont sûrs, avant même que
-              tu ne cliques. Bonne nouvelle : ton compte est presque
-              certainement déjà validé - connecte-toi directement.
+              {t.auth.emailAlreadyUsedDesc}
             </p>
             <button
               type="button"
               onClick={() => navigate("/formations")}
               className="brand-gradient mt-6 rounded-full px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
             >
-              Me connecter
+              {t.auth.emailAlreadyUsedCta}
             </button>
           </>
         )}

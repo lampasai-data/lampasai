@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useAuth, HAS_LOGGED_IN_KEY, markGoogleAuthIntent } from "../context/AuthContext";
+import { useLanguage } from "../i18n";
 import { isSupabaseConfigured } from "../lib/supabase";
 import {
-  ALREADY_REGISTERED_MESSAGE,
-  GOOGLE_ACCOUNT_ALREADY_EXISTS_MESSAGE,
+  getAlreadyRegisteredMessage,
+  getGoogleAccountAlreadyExistsMessage,
 } from "../lib/authErrors";
 import googleLogo from "../assets/google-logo.png";
 
@@ -32,6 +33,9 @@ export default function AuthPanel({
     googleAccountAlreadyExists,
     dismissGoogleAccountAlreadyExists,
   } = useAuth();
+  const { lang, t } = useLanguage();
+  const alreadyRegisteredMessage = getAlreadyRegisteredMessage(lang);
+  const googleAccountAlreadyExistsMessage = getGoogleAccountAlreadyExistsMessage(lang);
   const [mode, setMode] = useState<Mode>(() =>
     localStorage.getItem(HAS_LOGGED_IN_KEY) ? "signin" : "signup"
   );
@@ -52,11 +56,9 @@ export default function AuthPanel({
   useEffect(() => {
     if (!googleAccountNotFound) return;
     setMode("signup");
-    setError(
-      "Aucun compte n'existe avec cette adresse Google. Crée ton compte ci-dessous."
-    );
+    setError(t.auth.googleAccountNotFoundError);
     dismissGoogleAccountNotFound();
-  }, [googleAccountNotFound, dismissGoogleAccountNotFound]);
+  }, [googleAccountNotFound, dismissGoogleAccountNotFound, t]);
 
   // Set by AuthContext when a Google sign-in attempt from the register panel
   // resolved to an account that already existed - stays on the register
@@ -68,9 +70,9 @@ export default function AuthPanel({
   useEffect(() => {
     if (!googleAccountAlreadyExists) return;
     setMode("signup");
-    setError(GOOGLE_ACCOUNT_ALREADY_EXISTS_MESSAGE);
+    setError(googleAccountAlreadyExistsMessage);
     dismissGoogleAccountAlreadyExists();
-  }, [googleAccountAlreadyExists, dismissGoogleAccountAlreadyExists]);
+  }, [googleAccountAlreadyExists, dismissGoogleAccountAlreadyExists, googleAccountAlreadyExistsMessage]);
 
   async function handleGoogle() {
     setError(null);
@@ -119,24 +121,19 @@ export default function AuthPanel({
   if (!isSupabaseConfigured) {
     return (
       <div className="rounded-2xl border border-amber/30 bg-amber/10 p-6 text-sm text-amber">
-        L'authentification n'est pas encore configurée sur ce site (variables
-        Supabase manquantes). Reviens un peu plus tard.
+        {t.auth.notConfigured}
       </div>
     );
   }
 
   const defaultTitle =
-    mode === "signin"
-      ? "Bon retour !"
-      : mode === "forgot"
-        ? "Mot de passe oublié ?"
-        : "Crée ton compte pour continuer";
+    mode === "signin" ? t.auth.titleSignin : mode === "forgot" ? t.auth.titleForgot : t.auth.titleSignup;
   const defaultSubtitle =
     mode === "signin"
-      ? "Connecte-toi pour continuer ton entraînement."
+      ? t.auth.subtitleSignin
       : mode === "forgot"
-        ? "On t'envoie un lien de réinitialisation par email."
-        : "Tu as terminé les questions gratuites. Connecte-toi pour poursuivre ton entraînement.";
+        ? t.auth.subtitleForgot
+        : t.auth.subtitleSignup;
 
   return (
     <div className="mx-auto max-w-md rounded-2xl border border-black/8 bg-white p-7 shadow-sm">
@@ -152,12 +149,12 @@ export default function AuthPanel({
             className="mt-6 flex w-full items-center justify-center gap-2.5 rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-medium text-ink transition hover:bg-black/[0.02] disabled:opacity-60"
           >
             <img src={googleLogo} alt="" className="h-4 w-4" />
-            {loadingGoogle ? "Redirection..." : "Continuer avec Google"}
+            {loadingGoogle ? t.auth.googleRedirecting : t.auth.continueWithGoogle}
           </button>
 
           <div className="my-5 flex items-center gap-3 text-xs text-muted">
             <span className="h-px flex-1 bg-black/10" />
-            ou par email
+            {t.auth.orByEmail}
             <span className="h-px flex-1 bg-black/10" />
           </div>
         </>
@@ -165,11 +162,11 @@ export default function AuthPanel({
 
       {resetSent ? (
         <p className="rounded-xl border border-green/30 bg-green/10 p-4 text-sm text-green">
-          Un email avec un lien de réinitialisation vient d'être envoyé.
+          {t.auth.resetSentMessage}
         </p>
       ) : sentConfirmation ? (
         <p className="rounded-xl border border-green/30 bg-green/10 p-4 text-sm text-green">
-          Vérifie ta boîte mail pour confirmer ton inscription.
+          {t.auth.confirmationSentMessage}
         </p>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -189,7 +186,7 @@ export default function AuthPanel({
             <input
               type="text"
               required
-              placeholder="Prénom"
+              placeholder={t.auth.firstNamePlaceholder}
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink placeholder:text-muted/70 focus:border-teal focus:outline-none"
@@ -198,7 +195,7 @@ export default function AuthPanel({
           <input
             type="email"
             required
-            placeholder="Email"
+            placeholder={t.auth.emailPlaceholder}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink placeholder:text-muted/70 focus:border-teal focus:outline-none"
@@ -208,20 +205,15 @@ export default function AuthPanel({
               type="password"
               required
               minLength={8}
-              placeholder="Mot de passe (8+ car., maj., min., chiffre)"
+              placeholder={t.auth.passwordPlaceholder}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink placeholder:text-muted/70 focus:border-teal focus:outline-none"
             />
           )}
-          {tooFast && (
-            <p className="text-sm text-amber">
-              Un instant... prends le temps de vérifier tes informations avant de valider.
-            </p>
-          )}
+          {tooFast && <p className="text-sm text-amber">{t.auth.tooFastWarning}</p>}
           {error &&
-          (error === ALREADY_REGISTERED_MESSAGE ||
-            error === GOOGLE_ACCOUNT_ALREADY_EXISTS_MESSAGE) ? (
+          (error === alreadyRegisteredMessage || error === googleAccountAlreadyExistsMessage) ? (
             <p className="text-sm text-red-500">
               {error}{" "}
               <button
@@ -233,7 +225,7 @@ export default function AuthPanel({
                 }}
                 className="font-medium text-teal-dark underline-offset-2 hover:underline"
               >
-                Se connecter
+                {t.auth.signInLink}
               </button>
             </p>
           ) : (
@@ -245,12 +237,12 @@ export default function AuthPanel({
             className="brand-gradient mt-1 rounded-full px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
           >
             {loadingEmail
-              ? "..."
+              ? t.auth.submitLoading
               : mode === "signin"
-                ? "Se connecter"
+                ? t.auth.submitSignin
                 : mode === "signup"
-                  ? "Créer mon compte"
-                  : "Envoyer le lien"}
+                  ? t.auth.submitSignup
+                  : t.auth.submitForgot}
           </button>
 
           {mode === "signin" && (
@@ -262,7 +254,7 @@ export default function AuthPanel({
               }}
               className="text-sm font-medium text-teal-dark underline-offset-2 hover:underline"
             >
-              Mot de passe oublié ?
+              {t.auth.forgotPasswordLink}
             </button>
           )}
 
@@ -276,20 +268,20 @@ export default function AuthPanel({
           >
             {mode === "forgot" ? (
               <span className="font-medium text-teal-dark underline-offset-2 hover:underline">
-                Retour à la connexion
+                {t.auth.backToSignin}
               </span>
             ) : mode === "signin" ? (
               <>
-                Pas encore de compte ?{" "}
+                {t.auth.noAccountYet}{" "}
                 <span className="font-medium text-teal-dark underline-offset-2 hover:underline">
-                  Inscris-toi
+                  {t.auth.signUpLink}
                 </span>
               </>
             ) : (
               <>
-                Déjà un compte ?{" "}
+                {t.auth.alreadyHaveAccount}{" "}
                 <span className="font-medium text-teal-dark underline-offset-2 hover:underline">
-                  Connecte-toi
+                  {t.auth.signInLink}
                 </span>
               </>
             )}

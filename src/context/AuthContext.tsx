@@ -9,6 +9,7 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { mapAuthError, validatePassword } from "../lib/authErrors";
+import { useLanguage } from "../i18n";
 
 const PENDING_UPGRADE_KEY = "lampasai_pending_upgrade_slug";
 export const HAS_LOGGED_IN_KEY = "lampasai_has_logged_in_before";
@@ -65,6 +66,7 @@ interface AuthState {
 const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { lang, t } = useLanguage();
   const [ready, setReady] = useState(!isSupabaseConfigured);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -233,14 +235,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInWithEmail(email: string, password: string) {
-    if (!supabase) return "Supabase n'est pas configuré.";
+    if (!supabase) return t.auth.notConfigured;
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return error ? mapAuthError(error.message) : null;
+    return error ? mapAuthError(error.message, lang) : null;
   }
 
   async function signUpWithEmail(email: string, password: string, firstName?: string) {
-    if (!supabase) return "Supabase n'est pas configuré.";
-    const passwordError = validatePassword(password);
+    if (!supabase) return t.auth.notConfigured;
+    const passwordError = validatePassword(password, lang);
     if (passwordError) return passwordError;
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -255,33 +257,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailRedirectTo: `${window.location.origin}/email-confirmed`,
       },
     });
-    if (error) return mapAuthError(error.message);
+    if (error) return mapAuthError(error.message, lang);
     // Supabase's anti-enumeration behavior: signing up with an email that
     // already has an account returns success with no error, but an empty
     // identities array - no confirmation email is actually sent. Without
     // this check the user would be told to "check their inbox" for an email
     // that never went out.
     if (data.user && data.user.identities?.length === 0) {
-      return mapAuthError("User already registered");
+      return mapAuthError("User already registered", lang);
     }
     return null;
   }
 
   async function sendPasswordReset(email: string) {
-    if (!supabase) return "Supabase n'est pas configuré.";
+    if (!supabase) return t.auth.notConfigured;
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
-    return error ? mapAuthError(error.message) : null;
+    return error ? mapAuthError(error.message, lang) : null;
   }
 
   async function updatePassword(password: string) {
-    if (!supabase) return "Supabase n'est pas configuré.";
-    const passwordError = validatePassword(password);
+    if (!supabase) return t.auth.notConfigured;
+    const passwordError = validatePassword(password, lang);
     if (passwordError) return passwordError;
     const { error } = await supabase.auth.updateUser({ password });
     if (!error) setPasswordRecovery(false);
-    return error ? mapAuthError(error.message) : null;
+    return error ? mapAuthError(error.message, lang) : null;
   }
 
   async function signOut() {

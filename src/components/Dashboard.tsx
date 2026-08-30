@@ -18,6 +18,27 @@ import { CERT_LOGOS } from "../data/certLogos";
 import { CERTIFICATION_DOMAINS } from "../data/certificationDomains";
 import { useCheckoutSuccessPoll } from "../lib/useCheckoutSuccessPoll";
 
+function TrophyIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M7 4h10v4a5 5 0 01-10 0V4z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M7 5H4v1a4 4 0 004 4M17 5h3v1a4 4 0 01-4 4"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M12 13v4M9 20h6M10 17h4v3h-4z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export default function Dashboard({ certs }: { certs: CertificationSummary[] }) {
   const { user, profile, openUpgradeModal } = useAuth();
   const { t, lang } = useLanguage();
@@ -33,7 +54,10 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
     count: number;
   } | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
+  // Months granted by the purchase that just completed, computed from the
+  // actual expires_at rather than assumed - a voucher grants 1 month, a real
+  // purchase 3, so the banner must reflect whichever one actually happened.
+  const [checkoutBannerMonths, setCheckoutBannerMonths] = useState<number | null>(null);
   const isPro = profile?.plan === "pro";
 
   useEffect(() => {
@@ -46,16 +70,27 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
     getAllCertificationPurchaseDates(user.id).then(setAllPurchaseDates);
   }, [user]);
 
-  useCheckoutSuccessPoll(
-    user,
-    searchParams,
-    setSearchParams,
-    (ids) => {
-      setPurchasedIds(ids);
-      getAllCertificationPurchaseDates(user!.id).then(setAllPurchaseDates);
-    },
-    () => setShowSuccessBanner(true)
-  );
+  useCheckoutSuccessPoll(user, searchParams, setSearchParams, (ids) => {
+    setPurchasedIds(ids);
+    getAllCertificationPurchaseDates(user!.id).then(setAllPurchaseDates);
+    // The just-completed purchase/voucher is the one expiring furthest in
+    // the future - reliable without needing to diff against pre-checkout
+    // state, and avoids ever hardcoding a duration that might be wrong.
+    const newest = [...ids.values()].reduce<PurchasedCertificationAccess | null>(
+      (max, entry) =>
+        !max || new Date(entry.expiresAt) > new Date(max.expiresAt) ? entry : max,
+      null
+    );
+    if (newest) {
+      const months = Math.max(
+        1,
+        Math.round(
+          (new Date(newest.expiresAt).getTime() - Date.now()) / (30 * 24 * 60 * 60 * 1000)
+        )
+      );
+      setCheckoutBannerMonths(months);
+    }
+  });
 
   async function handleDownloadPdf(cert: CertificationSummary) {
     setDownloadingSlug(cert.slug);
@@ -79,13 +114,13 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
 
   return (
     <>
-      {showSuccessBanner && (
+      {checkoutBannerMonths !== null && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-6 rounded-2xl border border-teal/25 bg-teal/5 px-5 py-4 text-sm font-medium text-teal-dark"
         >
-          {t.formations.checkoutSuccessBanner}
+          {t.formations.checkoutSuccessBanner(checkoutBannerMonths)}
         </motion.div>
       )}
 
@@ -249,6 +284,15 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                       ? t.formations.downloadingPdf
                       : t.formations.downloadPdf}
                   </button>
+                )}
+                {unlocked && (
+                  <Link
+                    to={`/formations/${cert.slug}/classement`}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-green/40 bg-green/5 px-4 py-1.5 text-xs font-medium text-green transition hover:bg-green/10"
+                  >
+                    <TrophyIcon className="h-3.5 w-3.5" />
+                    {t.quiz.viewLeaderboard}
+                  </Link>
                 )}
               </div>
 

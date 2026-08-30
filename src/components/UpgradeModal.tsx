@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n";
@@ -23,6 +24,7 @@ export default function UpgradeModal() {
   const { user, upgradeModalOpen, upgradeModalPreselect, upgradeModalOpenVoucher, closeUpgradeModal } =
     useAuth();
   const { lang, t } = useLanguage();
+  const navigate = useNavigate();
   const [certs, setCerts] = useState<CertificationSummary[]>([]);
   const [purchasedIds, setPurchasedIds] = useState<Map<string, PurchasedCertificationAccess>>(
     new Map()
@@ -125,12 +127,14 @@ export default function UpgradeModal() {
       const unlockedCert = certs.find((c) => c.id === certificationId);
       setVoucherUnlockedName(unlockedCert ? localize(unlockedCert.name, lang) : null);
       setVoucherStatus("success");
-      // No shared client-side cache to update from here - the certification
-      // page/dashboard just refetch access on mount. Give the user a moment
-      // to read the confirmation before the reload takes over.
+      // Land back on the dashboard rather than reloading the current
+      // certification page in place - the user unlocked access, so the
+      // natural next step is picking it from their dashboard, not staying
+      // on the (now stale-looking) mode-select screen they upgraded from.
+      // Give them a moment to read the confirmation first.
       setTimeout(() => {
         closeUpgradeModal();
-        window.location.reload();
+        navigate("/formations");
       }, 1400);
     } catch (err) {
       setVoucherStatus("error");

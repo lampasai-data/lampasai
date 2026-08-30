@@ -12,6 +12,53 @@ interface Translations {
     services: string;
     formations: string;
     login: string;
+    logout: string;
+  };
+  auth: {
+    notConfigured: string;
+    googleAccountNotFoundError: string;
+    titleSignin: string;
+    titleForgot: string;
+    titleSignup: string;
+    subtitleSignin: string;
+    subtitleForgot: string;
+    subtitleSignup: string;
+    googleRedirecting: string;
+    continueWithGoogle: string;
+    orByEmail: string;
+    resetSentMessage: string;
+    confirmationSentMessage: string;
+    firstNamePlaceholder: string;
+    emailPlaceholder: string;
+    passwordPlaceholder: string;
+    tooFastWarning: string;
+    submitLoading: string;
+    submitSignin: string;
+    submitSignup: string;
+    submitForgot: string;
+    forgotPasswordLink: string;
+    backToSignin: string;
+    noAccountYet: string;
+    signUpLink: string;
+    alreadyHaveAccount: string;
+    signInLink: string;
+    proUpsellBadge: string;
+    proUpsellTitle: string;
+    proUpsellDesc: (certName: string) => string;
+    proUpsellCta: string;
+    emailCheckingStatus: string;
+    emailConfirmedTitle: string;
+    emailConfirmedDesc: string;
+    emailConfirmedCta: string;
+    emailAlreadyUsedTitle: string;
+    emailAlreadyUsedDesc: string;
+    emailAlreadyUsedCta: string;
+    resetPasswordTitle: string;
+    resetPasswordDone: string;
+    resetPasswordContinue: string;
+    resetPasswordPlaceholder: string;
+    resetPasswordSubmit: string;
+    resetPasswordBack: string;
   };
   hero: {
     eyebrow: string;
@@ -79,6 +126,7 @@ interface Translations {
     tabFormations: string;
     tabPricing: string;
     trainFor: string;
+    leaderboardTeaser: (points: number, sessions: number) => string;
     accessQuiz: string;
     remainingFree: string;
     valueProp: string;
@@ -108,7 +156,7 @@ interface Translations {
     upgradeModalSubmit: string;
     upgradeModalLoading: string;
     upgradeModalError: string;
-    checkoutSuccessBanner: string;
+    checkoutSuccessBanner: (months: number) => string;
     comingSoonTitle: string;
     comingSoonDesc: string;
     comingSoonCta: string;
@@ -153,6 +201,8 @@ interface Translations {
     score: string;
     points: string;
     remainingFree: string;
+    answeredLabel: string;
+    questionOf: (current: number, total: number) => string;
     selectAnswers: string;
     validate: string;
     next: string;
@@ -168,6 +218,17 @@ interface Translations {
     finishedTime: string;
     finishedPoints: string;
     restart: string;
+    viewLeaderboard: string;
+    leaderboardTitle: string;
+    leaderboardLoading: string;
+    leaderboardEmpty: string;
+    leaderboardLoginRequired: string;
+    leaderboardWeek: string;
+    leaderboardMonth: string;
+    leaderboardGoal: (percent: number) => string;
+    leaderboardSessions: (count: number) => string;
+    leaderboardPointsUnit: string;
+    leaderboardYou: (firstName: string) => string;
     explanationLabel: string;
     modeSelectTitle: string;
     modeTrainingTitle: string;
@@ -177,6 +238,7 @@ interface Translations {
     modeExamDesc: string;
     modeExamDescShort: string;
     modeExamLocked: string;
+    startExamTimer: string;
     voucherTitle: string;
     voucherPlaceholder: string;
     voucherSubmit: string;
@@ -223,6 +285,57 @@ const translations: Record<Lang, Translations> = {
       services: "Services",
       formations: "Formations",
       login: "Se connecter",
+      logout: "Déconnexion",
+    },
+    auth: {
+      notConfigured: "Supabase n'est pas configuré.",
+      googleAccountNotFoundError:
+        "Aucun compte n'existe avec cette adresse Google. Crée ton compte ci-dessous.",
+      titleSignin: "Bon retour !",
+      titleForgot: "Mot de passe oublié ?",
+      titleSignup: "Crée ton compte pour continuer",
+      subtitleSignin: "Connecte-toi pour continuer ton entraînement.",
+      subtitleForgot: "On t'envoie un lien de réinitialisation par email.",
+      subtitleSignup:
+        "Tu as terminé les questions gratuites. Connecte-toi pour poursuivre ton entraînement.",
+      googleRedirecting: "Redirection...",
+      continueWithGoogle: "Continuer avec Google",
+      orByEmail: "ou par email",
+      resetSentMessage: "Un email avec un lien de réinitialisation vient d'être envoyé.",
+      confirmationSentMessage: "Vérifie ta boîte mail pour confirmer ton inscription.",
+      firstNamePlaceholder: "Prénom",
+      emailPlaceholder: "Email",
+      passwordPlaceholder: "Mot de passe (8+ car., maj., min., chiffre)",
+      tooFastWarning: "Un instant... prends le temps de vérifier tes informations avant de valider.",
+      submitLoading: "...",
+      submitSignin: "Se connecter",
+      submitSignup: "Créer mon compte",
+      submitForgot: "Envoyer le lien",
+      forgotPasswordLink: "Mot de passe oublié ?",
+      backToSignin: "Retour à la connexion",
+      noAccountYet: "Pas encore de compte ?",
+      signUpLink: "Inscris-toi",
+      alreadyHaveAccount: "Déjà un compte ?",
+      signInLink: "Connecte-toi",
+      proUpsellBadge: "Mode Pro",
+      proUpsellTitle: "Tu as terminé tes 20 questions gratuites",
+      proUpsellDesc: (certName: string) =>
+        `Passe en mode Pro pour continuer à t'entraîner sans limite sur la certification ${certName} pendant toute la durée de ta préparation.`,
+      proUpsellCta: "Passer en mode Pro (9,99 € / 3 mois)",
+      emailCheckingStatus: "Vérification en cours…",
+      emailConfirmedTitle: "Email confirmé 🎉",
+      emailConfirmedDesc: "Ton compte est validé et tu es connecté.",
+      emailConfirmedCta: "Accéder à mon espace",
+      emailAlreadyUsedTitle: "Ce lien a déjà été utilisé",
+      emailAlreadyUsedDesc:
+        "C'est souvent dû à ta messagerie qui ouvre les liens automatiquement pour vérifier qu'ils sont sûrs, avant même que tu ne cliques. Bonne nouvelle : ton compte est presque certainement déjà validé - connecte-toi directement.",
+      emailAlreadyUsedCta: "Me connecter",
+      resetPasswordTitle: "Choisis un nouveau mot de passe",
+      resetPasswordDone: "Mot de passe mis à jour.",
+      resetPasswordContinue: "Continuer vers les formations",
+      resetPasswordPlaceholder: "Nouveau mot de passe (8+ car., maj., min., chiffre)",
+      resetPasswordSubmit: "Mettre à jour",
+      resetPasswordBack: "Retour aux formations",
     },
     hero: {
       eyebrow: "Data & Intelligence Artificielle",
@@ -299,6 +412,8 @@ const translations: Record<Lang, Translations> = {
       tabFormations: "Formations",
       tabPricing: "Pricing",
       trainFor: "S'entraîner",
+      leaderboardTeaser: (points: number, sessions: number) =>
+        `Top du mois : ${points} pts (${sessions} session${sessions > 1 ? "s" : ""})`,
       accessQuiz: "Accéder au quiz",
       remainingFree: "question(s) gratuite(s) restante(s)",
       valueProp: "Nos questions vont droit à l'essentiel : pas de superflu, seulement ce qu'il faut pour réussir ta certification.",
@@ -330,7 +445,8 @@ const translations: Record<Lang, Translations> = {
       upgradeModalSubmit: "Continuer vers le paiement",
       upgradeModalLoading: "Redirection vers le paiement...",
       upgradeModalError: "Impossible de démarrer le paiement. Réessaie dans un instant.",
-      checkoutSuccessBanner: "Paiement confirmé, ton accès illimité est débloqué pour 3 mois 🎉",
+      checkoutSuccessBanner: (months: number) =>
+        `Paiement confirmé, ton accès illimité est débloqué pour ${months} mois 🎉`,
       comingSoonTitle: "Nos formations arrivent bientôt",
       comingSoonDesc: "Nous préparons des parcours de formation complets (Power BI, Snowflake, Dbt, Git ...). Contacte-nous via le formulaire ci-dessous pour être informé en priorité.",
       comingSoonCta: "Voir les certifications",
@@ -380,6 +496,8 @@ const translations: Record<Lang, Translations> = {
       score: "Score",
       points: "Points",
       remainingFree: "gratuite(s) restante(s)",
+      answeredLabel: "répondu(es)",
+      questionOf: (current: number, total: number) => `Question ${current} sur ${total}`,
       selectAnswers: "Sélectionne",
       validate: "Valider",
       next: "Suivante >",
@@ -395,15 +513,27 @@ const translations: Record<Lang, Translations> = {
       finishedTime: "Temps total",
       finishedPoints: "Points obtenus",
       restart: "Recommencer",
+      viewLeaderboard: "Voir le classement",
+      leaderboardTitle: "Classement",
+      leaderboardLoading: "Chargement…",
+      leaderboardEmpty: "Personne n'a encore de session sur cette période. Sois le premier !",
+      leaderboardLoginRequired: "Connecte-toi pour voir le classement.",
+      leaderboardWeek: "Cette semaine",
+      leaderboardMonth: "Ce mois",
+      leaderboardGoal: (percent: number) => `Objectif : ${percent}%`,
+      leaderboardSessions: (count: number) => `${count} session${count > 1 ? "s" : ""}`,
+      leaderboardPointsUnit: "pts",
+      leaderboardYou: (firstName: string) => `${firstName} (toi)`,
       explanationLabel: "💡 Explication",
       modeSelectTitle: "Choisis ton mode d'entraînement",
-      modeTrainingTitle: "Entraînement gratuit",
+      modeTrainingTitle: "Mode gratuit",
       modeTrainingTitlePro: "Entraînement illimité",
       modeTrainingDesc: "Avance à ton rythme, avec explications après chaque question.",
-      modeExamTitle: "Mode examen chronométré",
-      modeExamDesc: "Évalue-toi à l'examen réel : temps limité, résultat réussi/échoué à la fin. Réservé aux comptes en accès illimité.",
-      modeExamDescShort: "Évalue-toi à l'examen réel : temps limité, résultat réussi/échoué à la fin.",
+      modeExamTitle: "Mode examen",
+      modeExamDesc: "Toutes les questions de l'examen réel, résultat réussi/échoué à la fin. Avance à ton rythme, puis lance le chrono quand tu te sens prêt pour voir si tu tiens le temps imparti. Réservé aux comptes en accès illimité.",
+      modeExamDescShort: "Toutes les questions de l'examen réel, résultat réussi/échoué à la fin. Le chrono est optionnel : lance-le quand tu es prêt.",
       modeExamLocked: "Clique pour débloquer",
+      startExamTimer: "Démarrer le chrono",
       voucherTitle: "J'ai un code d'accès",
       voucherPlaceholder: "XXXX-XXXX",
       voucherSubmit: "Valider",
@@ -451,6 +581,56 @@ const translations: Record<Lang, Translations> = {
       services: "Services",
       formations: "Training",
       login: "Sign in",
+      logout: "Sign out",
+    },
+    auth: {
+      notConfigured: "Supabase is not configured yet.",
+      googleAccountNotFoundError:
+        "No account exists with this Google address. Create your account below.",
+      titleSignin: "Welcome back!",
+      titleForgot: "Forgot your password?",
+      titleSignup: "Create your account to continue",
+      subtitleSignin: "Sign in to continue your training.",
+      subtitleForgot: "We'll send you a reset link by email.",
+      subtitleSignup: "You've finished the free questions. Sign in to keep training.",
+      googleRedirecting: "Redirecting...",
+      continueWithGoogle: "Continue with Google",
+      orByEmail: "or by email",
+      resetSentMessage: "An email with a reset link has just been sent.",
+      confirmationSentMessage: "Check your inbox to confirm your signup.",
+      firstNamePlaceholder: "First name",
+      emailPlaceholder: "Email",
+      passwordPlaceholder: "Password (8+ chars, upper, lower, digit)",
+      tooFastWarning: "Just a moment... take the time to check your info before submitting.",
+      submitLoading: "...",
+      submitSignin: "Sign in",
+      submitSignup: "Create my account",
+      submitForgot: "Send the link",
+      forgotPasswordLink: "Forgot your password?",
+      backToSignin: "Back to sign in",
+      noAccountYet: "No account yet?",
+      signUpLink: "Sign up",
+      alreadyHaveAccount: "Already have an account?",
+      signInLink: "Sign in",
+      proUpsellBadge: "Pro mode",
+      proUpsellTitle: "You've finished your 20 free questions",
+      proUpsellDesc: (certName: string) =>
+        `Go Pro to keep training without limits on the ${certName} certification for as long as you need to prepare.`,
+      proUpsellCta: "Go Pro (€9.99 / 3 months)",
+      emailCheckingStatus: "Checking…",
+      emailConfirmedTitle: "Email confirmed 🎉",
+      emailConfirmedDesc: "Your account is verified and you're signed in.",
+      emailConfirmedCta: "Go to my dashboard",
+      emailAlreadyUsedTitle: "This link has already been used",
+      emailAlreadyUsedDesc:
+        "This is often because your mail app opens links automatically to check they're safe, before you even click. Good news: your account is almost certainly already confirmed - just sign in directly.",
+      emailAlreadyUsedCta: "Sign in",
+      resetPasswordTitle: "Choose a new password",
+      resetPasswordDone: "Password updated.",
+      resetPasswordContinue: "Continue to training",
+      resetPasswordPlaceholder: "New password (8+ chars, upper, lower, digit)",
+      resetPasswordSubmit: "Update",
+      resetPasswordBack: "Back to training",
     },
     hero: {
       eyebrow: "Data & Artificial Intelligence",
@@ -527,6 +707,8 @@ const translations: Record<Lang, Translations> = {
       tabFormations: "Training",
       tabPricing: "Pricing",
       trainFor: "Practice",
+      leaderboardTeaser: (points: number, sessions: number) =>
+        `Top this month: ${points} pts (${sessions} session${sessions > 1 ? "s" : ""})`,
       accessQuiz: "Go to quiz",
       remainingFree: "free question(s) left",
       valueProp: "Our questions go straight to the point: nothing superfluous, only what you need to pass your certification.",
@@ -558,7 +740,8 @@ const translations: Record<Lang, Translations> = {
       upgradeModalSubmit: "Continue to payment",
       upgradeModalLoading: "Redirecting to payment...",
       upgradeModalError: "Couldn't start the payment. Please try again in a moment.",
-      checkoutSuccessBanner: "Payment confirmed, your unlimited access is unlocked for 3 months 🎉",
+      checkoutSuccessBanner: (months: number) =>
+        `Payment confirmed, your unlimited access is unlocked for ${months} month${months > 1 ? "s" : ""} 🎉`,
       comingSoonTitle: "Our training paths are coming soon",
       comingSoonDesc: "We're building complete training paths (Power BI, Snowflake, Dbt, Git ...). Contact us via the form below to be notified first.",
       comingSoonCta: "See certifications",
@@ -608,6 +791,8 @@ const translations: Record<Lang, Translations> = {
       score: "Score",
       points: "Points",
       remainingFree: "free left",
+      answeredLabel: "answered",
+      questionOf: (current: number, total: number) => `Question ${current} of ${total}`,
       selectAnswers: "Select",
       validate: "Submit",
       next: "Next question →",
@@ -623,15 +808,27 @@ const translations: Record<Lang, Translations> = {
       finishedTime: "Total time",
       finishedPoints: "Points earned",
       restart: "Restart",
+      viewLeaderboard: "View leaderboard",
+      leaderboardTitle: "Leaderboard",
+      leaderboardLoading: "Loading…",
+      leaderboardEmpty: "No one has a session yet for this period. Be the first!",
+      leaderboardLoginRequired: "Log in to see the leaderboard.",
+      leaderboardWeek: "This week",
+      leaderboardMonth: "This month",
+      leaderboardGoal: (percent: number) => `Goal: ${percent}%`,
+      leaderboardSessions: (count: number) => `${count} session${count > 1 ? "s" : ""}`,
+      leaderboardPointsUnit: "pts",
+      leaderboardYou: (firstName: string) => `${firstName} (you)`,
       explanationLabel: "💡 Explanation",
       modeSelectTitle: "Choose your practice mode",
-      modeTrainingTitle: "Free practice",
+      modeTrainingTitle: "Free mode",
       modeTrainingTitlePro: "Unlimited practice",
       modeTrainingDesc: "Go at your own pace, with explanations after each question.",
-      modeExamTitle: "Timed exam mode",
-      modeExamDesc: "Test yourself on the real exam: limited time, pass/fail result at the end. Reserved for unlimited access accounts.",
-      modeExamDescShort: "Test yourself on the real exam: limited time, pass/fail result at the end.",
+      modeExamTitle: "Exam mode",
+      modeExamDesc: "All the real exam's questions, pass/fail result at the end. Go at your own pace, then start the timer whenever you feel ready to see if you'd finish in time. Reserved for unlimited access accounts.",
+      modeExamDescShort: "All the real exam's questions, pass/fail result at the end. The timer is optional: start it whenever you're ready.",
       modeExamLocked: "Click to unlock",
+      startExamTimer: "Start the timer",
       voucherTitle: "I have an access code",
       voucherPlaceholder: "XXXX-XXXX",
       voucherSubmit: "Redeem",

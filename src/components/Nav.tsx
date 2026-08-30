@@ -93,7 +93,7 @@ export default function Nav() {
                 onClick={signOut}
                 className="rounded-full border border-black/10 px-3 py-1.5 text-sm text-muted transition hover:border-black/20 hover:text-ink"
               >
-                Déconnexion
+                {t.nav.logout}
               </button>
             </div>
           ) : (
@@ -145,6 +145,28 @@ export default function Nav() {
               {t.nav.formations}
             </Link>
           </li>
+          {user?.email?.toLowerCase() === "mbairo.allatessem@gmail.com" && (
+            <>
+              <li>
+                <Link
+                  to="/admin/gumroad"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-lg px-2 py-3 hover:bg-black/[0.03]"
+                >
+                  Admin Gumroad
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/admin/vouchers"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-lg px-2 py-3 hover:bg-black/[0.03]"
+                >
+                  Vouchers examen
+                </Link>
+              </li>
+            </>
+          )}
           <li>
             {user ? (
               <button
@@ -155,7 +177,7 @@ export default function Nav() {
                 }}
                 className="mt-2 block w-full rounded-full border border-black/10 px-4 py-3 text-center font-medium text-muted"
               >
-                Déconnexion
+                {t.nav.logout}
               </button>
             ) : (
               <button

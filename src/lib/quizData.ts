@@ -294,3 +294,82 @@ export async function createCheckoutSession(
   }
   return data.url as string;
 }
+
+// Records one completed exam-mode run so it counts toward the
+// certification's monthly leaderboard (get_certification_monthly_leaderboard
+// sums points earned this calendar month).
+export async function recordExamResult(
+  userId: string,
+  certificationId: string,
+  correctCount: number,
+  totalCount: number
+): Promise<void> {
+  if (!supabase || totalCount <= 0) return;
+  await supabase.from("exam_results").insert({
+    user_id: userId,
+    certification_id: certificationId,
+    correct_count: correctCount,
+    total_count: totalCount,
+  });
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  firstName: string;
+  points: number;
+  sessionCount: number;
+  isYou: boolean;
+}
+
+export type LeaderboardPeriod = "week" | "month";
+
+// Ranked list of every user's points earned this week/month on exam-mode
+// runs for a certification, via the get_certification_period_leaderboard
+// Postgres function (security definer - exposes only first name + points +
+// session count + rank, nothing else).
+export async function getCertificationLeaderboard(
+  certificationId: string,
+  period: LeaderboardPeriod
+): Promise<LeaderboardEntry[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase.rpc("get_certification_period_leaderboard", {
+    p_certification_id: certificationId,
+    p_period: period,
+  });
+  if (error || !data) return [];
+  return (
+    data as {
+      rank: number;
+      first_name: string;
+      points: number;
+      session_count: number;
+      is_you: boolean;
+    }[]
+  ).map((row) => ({
+    rank: row.rank,
+    firstName: row.first_name,
+    points: row.points,
+    sessionCount: row.session_count,
+    isYou: row.is_you,
+  }));
+}
+
+export interface LeaderboardPreview {
+  topPoints: number;
+  totalSessions: number;
+}
+
+// Fully anonymized teaser for logged-out visitors (Formations.tsx): just
+// this month's top score and how many sessions happened, no names - the
+// full leaderboard (getCertificationLeaderboard) requires being logged in.
+export async function getCertificationLeaderboardPreview(
+  certificationId: string
+): Promise<LeaderboardPreview | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase.rpc("get_certification_leaderboard_preview", {
+    p_certification_id: certificationId,
+  });
+  const row = data?.[0] as { top_points: number | null; total_sessions: number } | undefined;
+  if (error || !row || !row.top_points) return null;
+  return { topPoints: row.top_points, totalSessions: row.total_sessions };
+}
