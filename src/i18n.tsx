@@ -232,7 +232,6 @@ interface Translations {
     explanationLabel: string;
     modeSelectTitle: string;
     modeTrainingTitle: string;
-    modeTrainingTitlePro: string;
     modeTrainingDesc: string;
     modeExamTitle: string;
     modeExamDesc: string;
@@ -527,11 +526,10 @@ const translations: Record<Lang, Translations> = {
       explanationLabel: "💡 Explication",
       modeSelectTitle: "Choisis ton mode d'entraînement",
       modeTrainingTitle: "Mode gratuit",
-      modeTrainingTitlePro: "Entraînement illimité",
       modeTrainingDesc: "Avance à ton rythme, avec explications après chaque question.",
       modeExamTitle: "Mode examen",
-      modeExamDesc: "Toutes les questions de l'examen réel, résultat réussi/échoué à la fin. Avance à ton rythme, puis lance le chrono quand tu te sens prêt pour voir si tu tiens le temps imparti. Réservé aux comptes en accès illimité.",
-      modeExamDescShort: "Toutes les questions de l'examen réel, résultat réussi/échoué à la fin. Le chrono est optionnel : lance-le quand tu es prêt.",
+      modeExamDesc: "Toutes les questions, en conditions d'examen : résultat réussi/échoué à la fin. Avance à ton rythme, puis lance le chrono quand tu te sens prêt pour voir si tu tiens le temps imparti.",
+      modeExamDescShort: "Toutes les questions, en conditions d'examen : résultat réussi/échoué à la fin. Le chrono est optionnel : lance-le quand tu es prêt.",
       modeExamLocked: "Clique pour débloquer",
       startExamTimer: "Démarrer le chrono",
       voucherTitle: "J'ai un code d'accès",
@@ -822,11 +820,10 @@ const translations: Record<Lang, Translations> = {
       explanationLabel: "💡 Explanation",
       modeSelectTitle: "Choose your practice mode",
       modeTrainingTitle: "Free mode",
-      modeTrainingTitlePro: "Unlimited practice",
       modeTrainingDesc: "Go at your own pace, with explanations after each question.",
       modeExamTitle: "Exam mode",
-      modeExamDesc: "All the real exam's questions, pass/fail result at the end. Go at your own pace, then start the timer whenever you feel ready to see if you'd finish in time. Reserved for unlimited access accounts.",
-      modeExamDescShort: "All the real exam's questions, pass/fail result at the end. The timer is optional: start it whenever you're ready.",
+      modeExamDesc: "All the questions, exam-condition style: pass/fail result at the end. Go at your own pace, then start the timer whenever you feel ready to see if you'd finish in time.",
+      modeExamDescShort: "All the questions, exam-condition style: pass/fail result at the end. The timer is optional: start it whenever you're ready.",
       modeExamLocked: "Click to unlock",
       startExamTimer: "Start the timer",
       voucherTitle: "I have an access code",

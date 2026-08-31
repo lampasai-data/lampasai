@@ -821,20 +821,19 @@ export default function CertificationQuiz() {
           {questionCountSlider}
 
           <div
-            className={`mt-6 grid grid-cols-1 gap-5 ${
-              user && !isPro ? "sm:max-w-sm" : "sm:grid-cols-2"
-            }`}
+            className={`mt-6 grid grid-cols-1 gap-5 ${!user ? "sm:grid-cols-2" : "sm:max-w-sm"}`}
           >
             {/* Free (quota-limited) training is only offered to logged-out
-                visitors - once signed in without upgrading, the goal is to
-                move the user toward Pro, not keep giving them the free path
-                (logging out gets it back). Pro users keep this card too,
-                since for them it's their own unlimited untimed practice
-                mode, not the free one - just labelled differently. */}
-            {(!user || isPro) && (
+                visitors, to let them try before creating an account. Once
+                signed in, there's no more "free" path to offer - either
+                they're Pro (only the exam card, their unlimited practice
+                already lives inside exam mode's untimed-by-default flow) or
+                they're not yet unlocked (only the locked exam card, pushing
+                them toward unlocking rather than a free consolation mode). */}
+            {!user && (
               <div className="flex h-full flex-col rounded-2xl border border-black/8 bg-white p-6 shadow-sm">
                 <h3 className="font-display text-lg font-medium text-ink">
-                  {isPro ? t.quiz.modeTrainingTitlePro : t.quiz.modeTrainingTitle}
+                  {t.quiz.modeTrainingTitle}
                 </h3>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
                   {t.quiz.modeTrainingDesc}

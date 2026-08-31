@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
+import { useNavigate } from "react-router-dom";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { mapAuthError, validatePassword } from "../lib/authErrors";
 import { useLanguage } from "../i18n";
@@ -67,6 +68,7 @@ const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { lang, t } = useLanguage();
+  const navigate = useNavigate();
   const [ready, setReady] = useState(!isSupabaseConfigured);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -198,7 +200,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUpgradeModalPreselect(pending);
       setUpgradeModalOpenVoucher(false);
       setUpgradeModalOpen(true);
+      // Land on the dashboard first, so the upgrade modal opens on top of
+      // the user's own space instead of the certification's locked
+      // mode-select screen they were on when they clicked "unlock" - that
+      // way, dismissing the modal without completing anything leaves them
+      // somewhere useful instead of stuck looking at a "choose your mode"
+      // dead end for a certification they still can't access.
+      navigate("/formations");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   function openAuthModal() {
