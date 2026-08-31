@@ -228,6 +228,14 @@ interface Translations {
     leaderboardSessions: (count: number) => string;
     leaderboardPointsUnit: string;
     leaderboardYou: (firstName: string) => string;
+    leaderboardLastSession: (percent: number) => string;
+    leaderboardAvgRatio: (percent: number) => string;
+    leaderboardGoalReached: string;
+    leaderboardGoalMissed: string;
+    leaderboardPrev: string;
+    leaderboardNext: string;
+    leaderboardPageOf: (current: number, total: number) => string;
+    leaderboardTopCap: (max: number) => string;
     explanationLabel: string;
     modeSelectTitle: string;
     modeTrainingTitle: string;
@@ -510,17 +518,25 @@ const translations: Record<Lang, Translations> = {
       finishedTime: "Temps total",
       finishedPoints: "Points obtenus",
       restart: "Recommencer",
-      viewLeaderboard: "Voir le classement",
-      leaderboardTitle: "Classement",
+      viewLeaderboard: "Voir le leaderboard",
+      leaderboardTitle: "Leaderboard",
       leaderboardLoading: "Chargement…",
       leaderboardEmpty: "Personne n'a encore de session sur cette période. Sois le premier !",
-      leaderboardLoginRequired: "Connecte-toi pour voir le classement.",
+      leaderboardLoginRequired: "Connecte-toi pour voir le leaderboard.",
       leaderboardWeek: "Cette semaine",
       leaderboardMonth: "Ce mois",
       leaderboardGoal: (percent: number) => `Objectif : ${percent}%`,
       leaderboardSessions: (count: number) => `${count} session${count > 1 ? "s" : ""}`,
       leaderboardPointsUnit: "pts",
       leaderboardYou: (firstName: string) => `${firstName} (toi)`,
+      leaderboardLastSession: (percent: number) => `Dernière session : ${percent}%`,
+      leaderboardAvgRatio: (percent: number) => `moy. ${percent}%`,
+      leaderboardGoalReached: "Objectif atteint",
+      leaderboardGoalMissed: "Objectif non atteint",
+      leaderboardPrev: "Précédent",
+      leaderboardNext: "Suivant",
+      leaderboardPageOf: (current: number, total: number) => `Page ${current} / ${total}`,
+      leaderboardTopCap: (max: number) => `Top ${max}`,
       explanationLabel: "💡 Explication",
       modeSelectTitle: "Choisis ton mode d'entraînement",
       modeTrainingTitle: "Mode gratuit",
@@ -814,6 +830,14 @@ const translations: Record<Lang, Translations> = {
       leaderboardSessions: (count: number) => `${count} session${count > 1 ? "s" : ""}`,
       leaderboardPointsUnit: "pts",
       leaderboardYou: (firstName: string) => `${firstName} (you)`,
+      leaderboardLastSession: (percent: number) => `Last session: ${percent}%`,
+      leaderboardAvgRatio: (percent: number) => `avg. ${percent}%`,
+      leaderboardGoalReached: "Goal reached",
+      leaderboardGoalMissed: "Goal not reached",
+      leaderboardPrev: "Previous",
+      leaderboardNext: "Next",
+      leaderboardPageOf: (current: number, total: number) => `Page ${current} / ${total}`,
+      leaderboardTopCap: (max: number) => `Top ${max}`,
       explanationLabel: "💡 Explanation",
       modeSelectTitle: "Choose your practice mode",
       modeTrainingTitle: "Free mode",

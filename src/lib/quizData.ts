@@ -318,6 +318,15 @@ export interface LeaderboardEntry {
   firstName: string;
   points: number;
   sessionCount: number;
+  // Ratio (0-1) of the user's most recent exam run in the period - shown as
+  // an at-a-glance "where are they right now", independent of the points
+  // ranking. null when the database didn't return it (migration 023 not
+  // applied yet): the UI then hides the indicator rather than rendering a
+  // fake 0%, which would read as "everyone just failed".
+  lastRatio: number | null;
+  // Weighted success rate (0-1) across every session in the period. Same
+  // null-means-unknown rule as lastRatio.
+  avgRatio: number | null;
   isYou: boolean;
 }
 
@@ -343,6 +352,9 @@ export async function getCertificationLeaderboard(
       first_name: string;
       points: number;
       session_count: number;
+      // Absent entirely if migrations 023/024 haven't been applied here.
+      last_ratio?: number | null;
+      avg_ratio?: number | null;
       is_you: boolean;
     }[]
   ).map((row) => ({
@@ -350,6 +362,8 @@ export async function getCertificationLeaderboard(
     firstName: row.first_name,
     points: row.points,
     sessionCount: row.session_count,
+    lastRatio: row.last_ratio == null ? null : Number(row.last_ratio),
+    avgRatio: row.avg_ratio == null ? null : Number(row.avg_ratio),
     isYou: row.is_you,
   }));
 }
