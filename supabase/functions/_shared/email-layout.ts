@@ -32,7 +32,13 @@ export function emailHeader(): string {
               <table cellpadding="0" cellspacing="0" role="presentation" align="center" style="margin:0 auto;">
                 <tr>
                   <td valign="middle" style="padding:0 14px 0 0;">
-                    <img src="https://lampasai.com/email-logo.png" alt="Lampas .ai" width="44" height="39" style="display:block;" />
+                    <table cellpadding="0" cellspacing="0" role="presentation">
+                      <tr>
+                        <td width="56" height="56" align="center" valign="middle" style="background-color:#ffffff;border-radius:28px;">
+                          <img src="https://lampasai.com/email-logo.png" alt="Lampas .ai" width="36" height="32" style="display:block;" />
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                   <td valign="middle" style="padding:0;text-align:left;">
                     <p style="margin:0 0 4px 0;font-family:${BRAND_FONT};font-size:24px;font-weight:700;color:#ffffff;letter-spacing:1px;line-height:1;">Lampas .ai</p>

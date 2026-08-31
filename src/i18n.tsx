@@ -52,7 +52,6 @@ interface Translations {
     emailConfirmedCta: string;
     emailAlreadyUsedTitle: string;
     emailAlreadyUsedDesc: string;
-    emailAlreadyUsedCta: string;
     resetPasswordTitle: string;
     resetPasswordDone: string;
     resetPasswordContinue: string;
@@ -335,7 +334,6 @@ const translations: Record<Lang, Translations> = {
       emailAlreadyUsedTitle: "Ton compte est déjà activé ✅",
       emailAlreadyUsedDesc:
         "Le lien de confirmation ne fonctionne qu'une seule fois, et il a déjà été ouvert. Tu n'as rien de plus à faire : connecte-toi avec ton email et ton mot de passe.",
-      emailAlreadyUsedCta: "Me connecter",
       resetPasswordTitle: "Choisis un nouveau mot de passe",
       resetPasswordDone: "Mot de passe mis à jour.",
       resetPasswordContinue: "Continuer vers les formations",
@@ -530,7 +528,7 @@ const translations: Record<Lang, Translations> = {
       leaderboardPointsUnit: "pts",
       leaderboardYou: (firstName: string) => `${firstName} (toi)`,
       leaderboardLastSession: (percent: number) => `Dernière session : ${percent}%`,
-      leaderboardAvgRatio: (percent: number) => `moy. ${percent}%`,
+      leaderboardAvgRatio: (percent: number) => `Score moyen : ${percent}%`,
       leaderboardGoalReached: "Objectif atteint",
       leaderboardGoalMissed: "Objectif non atteint",
       leaderboardPrev: "Précédent",
@@ -636,7 +634,6 @@ const translations: Record<Lang, Translations> = {
       emailAlreadyUsedTitle: "Your account is already active ✅",
       emailAlreadyUsedDesc:
         "The confirmation link only works once, and it has already been opened. There's nothing else to do: just sign in with your email and password.",
-      emailAlreadyUsedCta: "Sign in",
       resetPasswordTitle: "Choose a new password",
       resetPasswordDone: "Password updated.",
       resetPasswordContinue: "Continue to training",
@@ -831,7 +828,7 @@ const translations: Record<Lang, Translations> = {
       leaderboardPointsUnit: "pts",
       leaderboardYou: (firstName: string) => `${firstName} (you)`,
       leaderboardLastSession: (percent: number) => `Last session: ${percent}%`,
-      leaderboardAvgRatio: (percent: number) => `avg. ${percent}%`,
+      leaderboardAvgRatio: (percent: number) => `Average score: ${percent}%`,
       leaderboardGoalReached: "Goal reached",
       leaderboardGoalMissed: "Goal not reached",
       leaderboardPrev: "Previous",

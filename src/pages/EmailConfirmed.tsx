@@ -68,13 +68,6 @@ export default function EmailConfirmed() {
             <p className="mt-3 text-sm leading-relaxed text-muted">
               {t.auth.emailAlreadyUsedDesc}
             </p>
-            <button
-              type="button"
-              onClick={() => navigate("/formations")}
-              className="brand-gradient mt-6 rounded-full px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
-            >
-              {t.auth.emailAlreadyUsedCta}
-            </button>
           </>
         )}
       </div>
