@@ -300,7 +300,7 @@ export default function Formations() {
                     {leaderboardPreviews[cert.slug] && (
                       <div className="mt-5 flex items-center gap-2.5 rounded-xl border border-amber/30 bg-amber/[0.08] px-4 py-3">
                         <span className="text-lg leading-none">🏆</span>
-                        <p className="text-xs font-semibold text-ink">
+                        <p className="whitespace-pre-line text-xs font-semibold leading-relaxed text-ink">
                           {t.formations.leaderboardTeaser(
                             leaderboardPreviews[cert.slug].topPoints,
                             Math.round(leaderboardPreviews[cert.slug].topRatio * 100)
