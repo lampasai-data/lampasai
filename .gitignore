@@ -25,3 +25,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Agent tooling (skills, plugins, local settings) - réinstallable, propre à
+# chaque machine, sans rapport avec le code du projet.
+.agents/
+.claude/
