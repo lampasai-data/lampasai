@@ -356,12 +356,14 @@ export async function getCertificationLeaderboard(
 
 export interface LeaderboardPreview {
   topPoints: number;
+  topRatio: number;
   totalSessions: number;
 }
 
 // Fully anonymized teaser for logged-out visitors (Formations.tsx): just
-// this month's top score and how many sessions happened, no names - the
-// full leaderboard (getCertificationLeaderboard) requires being logged in.
+// this month's top score, that top scorer's success ratio, and how many
+// sessions happened - no names. The full leaderboard
+// (getCertificationLeaderboard) requires being logged in.
 export async function getCertificationLeaderboardPreview(
   certificationId: string
 ): Promise<LeaderboardPreview | null> {
@@ -369,7 +371,13 @@ export async function getCertificationLeaderboardPreview(
   const { data, error } = await supabase.rpc("get_certification_leaderboard_preview", {
     p_certification_id: certificationId,
   });
-  const row = data?.[0] as { top_points: number | null; total_sessions: number } | undefined;
+  const row = data?.[0] as
+    | { top_points: number | null; top_ratio: number | null; total_sessions: number }
+    | undefined;
   if (error || !row || !row.top_points) return null;
-  return { topPoints: row.top_points, totalSessions: row.total_sessions };
+  return {
+    topPoints: row.top_points,
+    topRatio: row.top_ratio ?? 0,
+    totalSessions: row.total_sessions,
+  };
 }

@@ -301,7 +301,10 @@ export default function Formations() {
                       <div className="mt-5 flex items-center gap-2.5 rounded-xl border border-amber/30 bg-amber/[0.08] px-4 py-3">
                         <span className="text-lg leading-none">🏆</span>
                         <p className="text-xs font-semibold text-ink">
-                          {t.formations.leaderboardTeaser(leaderboardPreviews[cert.slug].topPoints)}
+                          {t.formations.leaderboardTeaser(
+                            leaderboardPreviews[cert.slug].topPoints,
+                            Math.round(leaderboardPreviews[cert.slug].topRatio * 100)
+                          )}
                         </p>
                       </div>
                     )}
