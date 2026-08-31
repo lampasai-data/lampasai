@@ -91,18 +91,33 @@ interface PersistedRun {
   examEndsAt: number | null;
   examEnded: boolean;
   elapsed: number;
+  savedAt: number;
 }
 
 function runStorageKey(slug: string) {
   return `lampasai_quiz_run:${slug}`;
 }
 
+// A run left untouched for this long is treated as abandoned rather than
+// "in progress" - without this, a tab left open for days/weeks (sessionStorage
+// survives as long as the tab does) silently skips straight back into a
+// long-forgotten run instead of showing the training/exam choice screen the
+// user actually expects when they click "S'entraîner" again.
+const RUN_MAX_AGE_MS = 60 * 60 * 1000;
+
 function loadPersistedRun(slug: string, totalQuestions: number): PersistedRun | null {
   try {
     const raw = sessionStorage.getItem(runStorageKey(slug));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as PersistedRun;
-    if (parsed.slug !== slug || parsed.totalQuestions !== totalQuestions || parsed.mode === null) {
+    if (
+      parsed.slug !== slug ||
+      parsed.totalQuestions !== totalQuestions ||
+      parsed.mode === null ||
+      !parsed.savedAt ||
+      Date.now() - parsed.savedAt > RUN_MAX_AGE_MS
+    ) {
+      sessionStorage.removeItem(runStorageKey(slug));
       return null;
     }
     return parsed;
@@ -111,9 +126,12 @@ function loadPersistedRun(slug: string, totalQuestions: number): PersistedRun | 
   }
 }
 
-function savePersistedRun(run: PersistedRun) {
+function savePersistedRun(run: Omit<PersistedRun, "savedAt">) {
   try {
-    sessionStorage.setItem(runStorageKey(run.slug), JSON.stringify(run));
+    sessionStorage.setItem(
+      runStorageKey(run.slug),
+      JSON.stringify({ ...run, savedAt: Date.now() })
+    );
   } catch {
     // ignore storage errors (private browsing, quota, etc.)
   }
@@ -408,10 +426,15 @@ export default function CertificationQuiz() {
 
   // Persist the in-progress run so a page refresh (or accidental tab close)
   // resumes exactly where the user left off instead of dropping back to the
-  // training/exam choice screen.
+  // training/exam choice screen. A run that's already finished is never
+  // persisted - there's nothing left to "resume" once it's done, and doing
+  // so would otherwise silently reopen the results screen (asking for an
+  // explicit "Recommencer" click) instead of the choice screen the user
+  // expects when they navigate away and click "S'entraîner" again.
   useEffect(() => {
     if (!cert) return;
-    if (mode === null) {
+    const isFinished = (queue.length > 0 && Object.keys(results).length >= queue.length) || examEnded;
+    if (mode === null || isFinished) {
       clearPersistedRun(slug);
       return;
     }
@@ -1327,12 +1350,6 @@ export default function CertificationQuiz() {
       <div className="mt-5 flex flex-wrap items-center justify-between gap-2 text-xs font-medium text-muted">
         <span>
           {answeredCount}/{runSize} {t.quiz.answeredLabel}
-          {!isPro && (
-            <>
-              {" "}
-              · {Math.max(runSize - answeredCount, 0)} {t.quiz.remainingFree}
-            </>
-          )}
         </span>
         {remainingFlagged > 0 && (
           <span className="font-medium text-amber">{t.quiz.reviewFlagged(remainingFlagged)}</span>

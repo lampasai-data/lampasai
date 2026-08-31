@@ -1,4 +1,15 @@
 import { createServiceClient } from "../_shared/gumroadMatch.ts";
+import {
+  emailPage,
+  emailCardOpen,
+  emailCardClose,
+  emailHeader,
+  emailFrameOpen,
+  emailFrameClose,
+  emailBody,
+  emailSalutation,
+  emailFooter,
+} from "../_shared/email-layout.ts";
 
 // Daily sweep (pg_cron -> pg_net, see 021_expiry_reminders.sql) that emails
 // anyone whose certification access expires in exactly 7 or 1 day(s), via
@@ -10,11 +21,17 @@ import { createServiceClient } from "../_shared/gumroadMatch.ts";
 const RESEND_FROM = "Lampas .ai <noreply@lampasai.com>";
 const SITE_URL = "https://lampasai.com";
 
+// French date convention: "1er janvier", not "1 janvier".
+function formatFrenchDate(date: Date): string {
+  const day = date.getDate();
+  const rest = date.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  return `${day === 1 ? "1er" : day} ${rest}`;
+}
+
 interface Milestone {
   days: number;
   column: "reminder_7d_sent_at" | "reminder_1d_sent_at";
   subject: string;
-  heading: string;
   body: string;
 }
 
@@ -23,29 +40,35 @@ const MILESTONES: Milestone[] = [
     days: 7,
     column: "reminder_7d_sent_at",
     subject: "Ton accès {cert} expire dans 7 jours",
-    heading: "Ton accès expire bientôt",
-    body: "Ton accès illimité à <strong>{cert}</strong> expire le <strong>{date}</strong> (dans 7 jours). Renouvelle-le dès maintenant pour continuer à t'entraîner sans interruption.",
+    body: "Ton accès illimité à <strong>{cert}</strong> expire le <strong>{date}</strong> (dans 7 jours). Renouvelle-le pour continuer à t'entraîner sans interruption.",
   },
   {
     days: 1,
     column: "reminder_1d_sent_at",
     subject: "Dernier jour : ton accès {cert} expire demain",
-    heading: "Dernier jour !",
-    body: "Ton accès illimité à <strong>{cert}</strong> expire <strong>demain, le {date}</strong>. C'est le moment de renouveler si tu veux garder ton entraînement au mode examen et le classement.",
+    body: "Ton accès illimité à <strong>{cert}</strong> expire <strong>demain, le {date}</strong>. C'est le moment de renouveler si tu veux continuer à t'entraîner en mode examen.",
   },
 ];
 
-function renderEmailHtml(heading: string, body: string, ctaUrl: string): string {
-  return `
-    <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; color: #14142b;">
-      <h1 style="font-size: 20px; margin: 0 0 16px;">${heading}</h1>
-      <p style="font-size: 14px; line-height: 1.6; color: #5b5b70;">${body}</p>
-      <a href="${ctaUrl}" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #4a8896; color: #ffffff; text-decoration: none; border-radius: 999px; font-size: 14px; font-weight: 500;">
-        Renouveler mon accès
-      </a>
-      <p style="margin-top: 32px; font-size: 12px; color: #9a9aab;">Lampas .ai</p>
-    </div>
-  `;
+function renderEmailHtml(firstName: string | null, body: string, ctaUrl: string): string {
+  const content = `
+${emailSalutation(firstName)}
+<p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#5B5B70;">${body}</p>
+<table cellpadding="0" cellspacing="0" role="presentation"><tr><td style="border-radius:999px;background-color:#4A8896;">
+  <a href="${ctaUrl}" style="display:inline-block;padding:12px 28px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;">Renouveler mon accès</a>
+</td></tr></table>`;
+
+  return emailPage(`
+${emailCardOpen()}
+        <tr>
+${emailHeader()}
+        </tr>
+${emailFrameOpen()}
+${emailBody(content)}
+${emailFooter()}
+${emailFrameClose()}
+${emailCardClose()}
+  `);
 }
 
 async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
@@ -111,32 +134,33 @@ Deno.serve(async (req) => {
     // tables for PostgREST to embed, so profiles are fetched separately.
     const { data: profileRows } = await supabase
       .from("profiles")
-      .select("id, email")
+      .select("id, email, first_name")
       .in(
         "id",
         rows.map((r) => r.user_id)
       );
-    const emailByUserId = new Map((profileRows ?? []).map((p) => [p.id, p.email as string | null]));
+    const profileByUserId = new Map(
+      (profileRows ?? []).map((p) => [
+        p.id,
+        { email: p.email as string | null, firstName: p.first_name as string | null },
+      ])
+    );
 
     let sent = 0;
     for (const row of rows) {
       const cert = row.certifications as unknown as { name: string } | null;
-      const email = emailByUserId.get(row.user_id);
-      if (!email || !cert) continue;
+      const profile = profileByUserId.get(row.user_id);
+      if (!profile?.email || !cert) continue;
 
-      const expiresDate = new Date(row.expires_at).toLocaleDateString("fr-FR", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
+      const expiresDate = formatFrenchDate(new Date(row.expires_at));
       const subject = milestone.subject.replace("{cert}", cert.name);
       const html = renderEmailHtml(
-        milestone.heading,
+        profile.firstName,
         milestone.body.replace("{cert}", cert.name).replace("{date}", expiresDate),
         `${SITE_URL}/formations`
       );
 
-      const ok = await sendEmail(email, subject, html);
+      const ok = await sendEmail(profile.email, subject, html);
       if (ok) {
         await supabase
           .from("certification_purchases")

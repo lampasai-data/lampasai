@@ -298,12 +298,11 @@ export default function Formations() {
                     )}
 
                     {leaderboardPreviews[cert.slug] && (
-                      <div className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-green/30 bg-green/5 px-3 py-1.5 text-xs font-semibold text-green">
-                        🏆
-                        {t.formations.leaderboardTeaser(
-                          leaderboardPreviews[cert.slug].topPoints,
-                          leaderboardPreviews[cert.slug].totalSessions
-                        )}
+                      <div className="mt-5 flex items-center gap-2.5 rounded-xl border border-amber/30 bg-amber/[0.08] px-4 py-3">
+                        <span className="text-lg leading-none">🏆</span>
+                        <p className="text-xs font-semibold text-ink">
+                          {t.formations.leaderboardTeaser(leaderboardPreviews[cert.slug].topPoints)}
+                        </p>
                       </div>
                     )}
 

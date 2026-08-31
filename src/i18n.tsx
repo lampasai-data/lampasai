@@ -126,7 +126,7 @@ interface Translations {
     tabFormations: string;
     tabPricing: string;
     trainFor: string;
-    leaderboardTeaser: (points: number, sessions: number) => string;
+    leaderboardTeaser: (points: number) => string;
     accessQuiz: string;
     remainingFree: string;
     valueProp: string;
@@ -200,7 +200,6 @@ interface Translations {
     backDashboard: string;
     score: string;
     points: string;
-    remainingFree: string;
     answeredLabel: string;
     questionOf: (current: number, total: number) => string;
     selectAnswers: string;
@@ -325,9 +324,9 @@ const translations: Record<Lang, Translations> = {
       emailConfirmedTitle: "Email confirmé 🎉",
       emailConfirmedDesc: "Ton compte est validé et tu es connecté.",
       emailConfirmedCta: "Accéder à mon espace",
-      emailAlreadyUsedTitle: "Ce lien a déjà été utilisé",
+      emailAlreadyUsedTitle: "Ton compte est déjà activé ✅",
       emailAlreadyUsedDesc:
-        "C'est souvent dû à ta messagerie qui ouvre les liens automatiquement pour vérifier qu'ils sont sûrs, avant même que tu ne cliques. Bonne nouvelle : ton compte est presque certainement déjà validé - connecte-toi directement.",
+        "Le lien de confirmation ne fonctionne qu'une seule fois, et il a déjà été ouvert. Tu n'as rien de plus à faire : connecte-toi avec ton email et ton mot de passe.",
       emailAlreadyUsedCta: "Me connecter",
       resetPasswordTitle: "Choisis un nouveau mot de passe",
       resetPasswordDone: "Mot de passe mis à jour.",
@@ -411,8 +410,7 @@ const translations: Record<Lang, Translations> = {
       tabFormations: "Formations",
       tabPricing: "Pricing",
       trainFor: "S'entraîner",
-      leaderboardTeaser: (points: number, sessions: number) =>
-        `Top du mois : ${points} pts (${sessions} session${sessions > 1 ? "s" : ""})`,
+      leaderboardTeaser: (points: number) => `Top du mois : ${points} pts — à toi de faire mieux !`,
       accessQuiz: "Accéder au quiz",
       remainingFree: "question(s) gratuite(s) restante(s)",
       valueProp: "Nos questions vont droit à l'essentiel : pas de superflu, seulement ce qu'il faut pour réussir ta certification.",
@@ -494,7 +492,6 @@ const translations: Record<Lang, Translations> = {
       backDashboard: "Retour à mon espace",
       score: "Score",
       points: "Points",
-      remainingFree: "gratuite(s) restante(s)",
       answeredLabel: "répondu(es)",
       questionOf: (current: number, total: number) => `Question ${current} sur ${total}`,
       selectAnswers: "Sélectionne",
@@ -619,9 +616,9 @@ const translations: Record<Lang, Translations> = {
       emailConfirmedTitle: "Email confirmed 🎉",
       emailConfirmedDesc: "Your account is verified and you're signed in.",
       emailConfirmedCta: "Go to my dashboard",
-      emailAlreadyUsedTitle: "This link has already been used",
+      emailAlreadyUsedTitle: "Your account is already active ✅",
       emailAlreadyUsedDesc:
-        "This is often because your mail app opens links automatically to check they're safe, before you even click. Good news: your account is almost certainly already confirmed - just sign in directly.",
+        "The confirmation link only works once, and it has already been opened. There's nothing else to do: just sign in with your email and password.",
       emailAlreadyUsedCta: "Sign in",
       resetPasswordTitle: "Choose a new password",
       resetPasswordDone: "Password updated.",
@@ -705,8 +702,7 @@ const translations: Record<Lang, Translations> = {
       tabFormations: "Training",
       tabPricing: "Pricing",
       trainFor: "Practice",
-      leaderboardTeaser: (points: number, sessions: number) =>
-        `Top this month: ${points} pts (${sessions} session${sessions > 1 ? "s" : ""})`,
+      leaderboardTeaser: (points: number) => `Top this month: ${points} pts — can you beat it?`,
       accessQuiz: "Go to quiz",
       remainingFree: "free question(s) left",
       valueProp: "Our questions go straight to the point: nothing superfluous, only what you need to pass your certification.",
@@ -788,7 +784,6 @@ const translations: Record<Lang, Translations> = {
       backDashboard: "Back to my dashboard",
       score: "Score",
       points: "Points",
-      remainingFree: "free left",
       answeredLabel: "answered",
       questionOf: (current: number, total: number) => `Question ${current} of ${total}`,
       selectAnswers: "Select",

@@ -9,7 +9,7 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
-import { mapAuthError, validatePassword } from "../lib/authErrors";
+import { mapAuthError, validatePassword, getAlreadyRegisteredMessage } from "../lib/authErrors";
 import { useLanguage } from "../i18n";
 
 const PENDING_UPGRADE_KEY = "lampasai_pending_upgrade_slug";
@@ -254,27 +254,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return t.auth.notConfigured;
     const passwordError = validatePassword(password, lang);
     if (passwordError) return passwordError;
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { first_name: firstName || null },
-        // Without this, Supabase's confirmation link redirects to the bare
-        // site_url with no page able to explain what happened - especially
-        // when a mail scanner has already consumed the one-time link before
-        // the user's own click (account still gets confirmed either way,
-        // but the user's click then hits an "already used" error).
-        emailRedirectTo: `${window.location.origin}/email-confirmed`,
+    // Routed through our own Edge Function (admin API + Resend) instead of
+    // supabase.auth.signUp() directly, so the confirmation email is sent by
+    // us with our own branding - not Supabase's default mailer/SMTP - while
+    // the confirmation link itself is still a real Supabase-signed token.
+    const { data, error } = await supabase.functions.invoke("signup-with-custom-email", {
+      body: {
+        email,
+        password,
+        firstName: firstName || null,
+        redirectTo: `${window.location.origin}/email-confirmed`,
       },
     });
-    if (error) return mapAuthError(error.message, lang);
-    // Supabase's anti-enumeration behavior: signing up with an email that
-    // already has an account returns success with no error, but an empty
-    // identities array - no confirmation email is actually sent. Without
-    // this check the user would be told to "check their inbox" for an email
-    // that never went out.
-    if (data.user && data.user.identities?.length === 0) {
-      return mapAuthError("User already registered", lang);
+    const errorCode = data?.errorCode as string | null | undefined;
+    if (error || errorCode) {
+      if (errorCode === "already_registered") return getAlreadyRegisteredMessage(lang);
+      if (errorCode === "weak_password") return mapAuthError("password should be at least", lang);
+      return mapAuthError(error?.message ?? "unknown error", lang);
     }
     return null;
   }
