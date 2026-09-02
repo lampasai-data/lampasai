@@ -302,7 +302,8 @@ export async function recordExamResult(
   userId: string,
   certificationId: string,
   correctCount: number,
-  totalCount: number
+  totalCount: number,
+  points: number
 ): Promise<void> {
   if (!supabase || totalCount <= 0) return;
   await supabase.from("exam_results").insert({
@@ -310,6 +311,7 @@ export async function recordExamResult(
     certification_id: certificationId,
     correct_count: correctCount,
     total_count: totalCount,
+    points,
   });
 }
 

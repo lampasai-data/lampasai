@@ -244,6 +244,9 @@ interface Translations {
     modeExamDescShort: string;
     modeExamLocked: string;
     startExamTimer: string;
+    pauseExamTimer: string;
+    resumeExamTimer: string;
+    resetExamTimer: string;
     voucherTitle: string;
     voucherPlaceholder: string;
     voucherSubmit: string;
@@ -497,9 +500,9 @@ const translations: Record<Lang, Translations> = {
     quiz: {
       back: "Retour aux certifications",
       backDashboard: "Retour à mon espace",
-      score: "Score",
+      score: "pts",
       points: "Points",
-      answeredLabel: "répondu(es)",
+      answeredLabel: "questions traitées",
       questionOf: (current: number, total: number) => `Question ${current} sur ${total}`,
       selectAnswers: "Sélectionne",
       validate: "Valider",
@@ -544,6 +547,9 @@ const translations: Record<Lang, Translations> = {
       modeExamDescShort: "Toutes les questions, en conditions d'examen : résultat réussi/échoué à la fin. Le chrono est optionnel : lance-le quand tu es prêt.",
       modeExamLocked: "Clique pour débloquer",
       startExamTimer: "Démarrer le chrono",
+      pauseExamTimer: "Mettre en pause le chrono",
+      resumeExamTimer: "Reprendre le chrono",
+      resetExamTimer: "Remettre le chrono à zéro",
       voucherTitle: "J'ai un code d'accès",
       voucherPlaceholder: "XXXX-XXXX",
       voucherSubmit: "Valider",
@@ -797,7 +803,7 @@ const translations: Record<Lang, Translations> = {
     quiz: {
       back: "Back to training",
       backDashboard: "Back to my dashboard",
-      score: "Score",
+      score: "pts",
       points: "Points",
       answeredLabel: "answered",
       questionOf: (current: number, total: number) => `Question ${current} of ${total}`,
@@ -844,6 +850,9 @@ const translations: Record<Lang, Translations> = {
       modeExamDescShort: "All the questions, exam-condition style: pass/fail result at the end. The timer is optional: start it whenever you're ready.",
       modeExamLocked: "Click to unlock",
       startExamTimer: "Start the timer",
+      pauseExamTimer: "Pause the timer",
+      resumeExamTimer: "Resume the timer",
+      resetExamTimer: "Reset the timer",
       voucherTitle: "I have an access code",
       voucherPlaceholder: "XXXX-XXXX",
       voucherSubmit: "Redeem",

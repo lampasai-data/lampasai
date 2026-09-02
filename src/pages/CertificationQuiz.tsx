@@ -32,7 +32,11 @@ function ClockIcon({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
-const POINTS_PER_CORRECT = 10;
+// Points are awarded per correct sub-answer, not per question: a 2-answer
+// pick question is worth 10 (5 x 2), a 4-item ordering question 20 (5 x 4),
+// and each is credited proportionally to how many sub-answers were correct
+// (e.g. 1 correct out of 2 picks = 5).
+const POINTS_PER_CORRECT_ANSWER = 5;
 const EXAM_SECONDS_PER_QUESTION = 60;
 const PASS_THRESHOLD = 0.7;
 // SnowPro Core's real exam scores out of 1000 with a 750 pass mark (75%),
@@ -90,7 +94,9 @@ interface PersistedRun {
   answerLog: Record<number, AnswerLog>;
   examEndsAt: number | null;
   examEnded: boolean;
+  examPaused: boolean;
   elapsed: number;
+  resultPoints: Record<number, number>;
   savedAt: number;
 }
 
@@ -352,6 +358,7 @@ export default function CertificationQuiz() {
   const [history, setHistory] = useState<number[]>([]);
   const [flagged, setFlagged] = useState<Set<number>>(new Set());
   const [results, setResults] = useState<Record<number, boolean>>({});
+  const [resultPoints, setResultPoints] = useState<Record<number, number>>({});
   const [picked, setPicked] = useState<number[]>([]);
   const [orderArrangement, setOrderArrangement] = useState<number[]>([]);
   // "match" (drag-drop): matchAssign[targetIndex] = pool index dropped there (or null).
@@ -372,6 +379,7 @@ export default function CertificationQuiz() {
   const [examEndsAt, setExamEndsAt] = useState<number | null>(null);
   const [examRemaining, setExamRemaining] = useState(0);
   const [examEnded, setExamEnded] = useState(false);
+  const [examPaused, setExamPaused] = useState(false);
   const examResultRecorded = useRef(false);
 
   useEffect(() => {
@@ -391,6 +399,7 @@ export default function CertificationQuiz() {
         setPos(saved.pos);
         setFlagged(new Set(saved.flagged));
         setResults(saved.results);
+        setResultPoints(saved.resultPoints ?? {});
         setPicked(saved.picked);
         setOrderArrangement(saved.orderArrangement);
         setMatchAssign(saved.matchAssign);
@@ -403,6 +412,7 @@ export default function CertificationQuiz() {
         setElapsed(saved.elapsed);
         setExamEndsAt(saved.examEndsAt);
         setExamEnded(saved.examEnded);
+        setExamPaused(saved.examPaused);
         setQuickExamSetup(saved.quickExamSetup);
         setMode(saved.mode);
         return;
@@ -412,12 +422,14 @@ export default function CertificationQuiz() {
       setPos(0);
       setFlagged(new Set());
       setResults({});
+      setResultPoints({});
       startedAt.current = Date.now();
       setElapsed(0);
       setMode(null);
       setQuickExamSetup(false);
       setExamEndsAt(null);
       setExamEnded(false);
+      setExamPaused(false);
     });
     return () => {
       cancelled = true;
@@ -456,7 +468,9 @@ export default function CertificationQuiz() {
       answerLog,
       examEndsAt,
       examEnded,
+      examPaused,
       elapsed,
+      resultPoints,
     });
   }, [
     cert,
@@ -476,7 +490,9 @@ export default function CertificationQuiz() {
     answerLog,
     examEndsAt,
     examEnded,
+    examPaused,
     elapsed,
+    resultPoints,
   ]);
 
   useEffect(() => {
@@ -515,26 +531,27 @@ export default function CertificationQuiz() {
     if (!cert || !user || mode !== "exam" || !finished || examResultRecorded.current) return;
     examResultRecorded.current = true;
     const correctCount = Object.values(results).filter(Boolean).length;
-    recordExamResult(user.id, cert.id, correctCount, runSize);
-  }, [cert, user, mode, finished, results, runSize]);
+    const points = Object.values(resultPoints).reduce((sum, p) => sum + p, 0);
+    recordExamResult(user.id, cert.id, correctCount, runSize, points);
+  }, [cert, user, mode, finished, results, resultPoints, runSize]);
 
   useEffect(() => {
-    if (!cert || finished || mode === null) return;
+    if (!cert || finished || mode === null || (mode === "exam" && examPaused)) return;
     const id = setInterval(() => {
       setElapsed(Math.floor((Date.now() - startedAt.current) / 1000));
     }, 1000);
     return () => clearInterval(id);
-  }, [cert, finished, mode]);
+  }, [cert, finished, mode, examPaused]);
 
   useEffect(() => {
-    if (mode !== "exam" || examEnded || finished || !examEndsAt) return;
+    if (mode !== "exam" || examEnded || finished || !examEndsAt || examPaused) return;
     const id = setInterval(() => {
       const remaining = Math.max(0, Math.round((examEndsAt - Date.now()) / 1000));
       setExamRemaining(remaining);
       if (remaining <= 0) setExamEnded(true);
     }, 1000);
     return () => clearInterval(id);
-  }, [mode, examEndsAt, examEnded, finished]);
+  }, [mode, examEndsAt, examEnded, finished, examPaused]);
 
   // Pro access is granted either by the legacy account-wide admin override
   // (profile.plan) or by a per-certification Stripe purchase.
@@ -564,6 +581,7 @@ export default function CertificationQuiz() {
     setHistory([]);
     setFlagged(new Set());
     setResults({});
+    setResultPoints({});
     setPicked([]);
     setSubmitted(false);
     setAnswerLog({});
@@ -593,6 +611,7 @@ export default function CertificationQuiz() {
     setExamEndsAt(null);
     setExamRemaining(queueLength * EXAM_SECONDS_PER_QUESTION);
     setExamEnded(false);
+    setExamPaused(false);
     setQuickExamSetup(false);
     setMode("exam");
     examResultRecorded.current = false;
@@ -602,6 +621,26 @@ export default function CertificationQuiz() {
     const duration = runSize * EXAM_SECONDS_PER_QUESTION;
     setExamEndsAt(Date.now() + duration * 1000);
     setExamRemaining(duration);
+    setExamPaused(false);
+  }
+
+  // Pausing just stops the countdown interval (see the exam-timer effect);
+  // resuming re-anchors examEndsAt on the frozen examRemaining so the clock
+  // picks up exactly where it left off instead of jumping ahead by however
+  // long the pause lasted.
+  function toggleExamTimerPause() {
+    if (examPaused) {
+      setExamEndsAt(Date.now() + examRemaining * 1000);
+      setExamPaused(false);
+    } else {
+      setExamPaused(true);
+    }
+  }
+
+  function resetExamTimer() {
+    const duration = runSize * EXAM_SECONDS_PER_QUESTION;
+    setExamRemaining(duration);
+    if (!examPaused) setExamEndsAt(Date.now() + duration * 1000);
   }
 
   if (!cert) {
@@ -614,6 +653,7 @@ export default function CertificationQuiz() {
 
   const isPro = hasProAccess();
   const currentScore = Object.values(results).filter(Boolean).length;
+  const currentPoints = Object.values(resultPoints).reduce((sum, p) => sum + p, 0);
   // Logged-in users land back on their Dashboard at /formations, not the
   // public marketing page, so the back link should say so.
   const backLabel = user ? t.quiz.backDashboard : t.quiz.back;
@@ -913,7 +953,7 @@ export default function CertificationQuiz() {
   }
 
   if (finished) {
-    const points = currentScore * POINTS_PER_CORRECT;
+    const points = currentPoints;
     const ratio = runSize > 0 ? currentScore / runSize : 0;
     const passThreshold = getPassThreshold(slug);
     const passed = mode === "exam" && ratio >= passThreshold;
@@ -1164,9 +1204,10 @@ export default function CertificationQuiz() {
     }
   }
 
-  async function commitResult(correct: boolean) {
+  async function commitResult(correct: boolean, earnedPoints: number) {
     setSubmitted(true);
     setResults((prev) => ({ ...prev, [qIndex]: correct }));
+    setResultPoints((prev) => ({ ...prev, [qIndex]: earnedPoints }));
 
     // Record the attempt for signed-in users (analytics only). Free questions are
     // repeatable per session and independent per certification, so nothing gates.
@@ -1179,25 +1220,35 @@ export default function CertificationQuiz() {
     }
   }
 
+  // Each correct sub-answer (a matched pick, a rightly-placed item, a
+  // correctly-filled blank...) is worth POINTS_PER_CORRECT_ANSWER, credited
+  // proportionally even when the question as a whole isn't fully correct.
   function commitAnswer(answer: number[]) {
-    commitResult(sameAnswers(answer, question.correctIndexes ?? []));
+    const correctIndexes = question.correctIndexes ?? [];
+    const correctCount = answer.filter((a) => correctIndexes.includes(a)).length;
+    commitResult(sameAnswers(answer, correctIndexes), correctCount * POINTS_PER_CORRECT_ANSWER);
   }
 
   // Validate the current question according to its type.
   function handleValidate() {
     if (question.type === "order") {
+      const correctOrder = question.correctOrder ?? [];
+      const correctCount = orderArrangement.filter((v, i) => v === correctOrder[i]).length;
       logAnswer(qIndex, { order: orderArrangement });
-      commitResult(arraysEqualInOrder(orderArrangement, question.correctOrder ?? []));
+      commitResult(
+        arraysEqualInOrder(orderArrangement, correctOrder),
+        correctCount * POINTS_PER_CORRECT_ANSWER
+      );
     } else if (question.type === "match") {
+      const targets = question.targets ?? [];
+      const correctCount = targets.filter((tg, i) => matchAssign[i] === tg.correctPoolIndex).length;
       logAnswer(qIndex, { match: matchAssign });
-      commitResult(
-        (question.targets ?? []).every((tg, i) => matchAssign[i] === tg.correctPoolIndex)
-      );
+      commitResult(correctCount === targets.length, correctCount * POINTS_PER_CORRECT_ANSWER);
     } else if (question.type === "hotspot") {
+      const blanks = question.blanks ?? [];
+      const correctCount = blanks.filter((bl, i) => hotspotPicks[i] === bl.correctIndex).length;
       logAnswer(qIndex, { hotspot: hotspotPicks });
-      commitResult(
-        (question.blanks ?? []).every((bl, i) => hotspotPicks[i] === bl.correctIndex)
-      );
+      commitResult(correctCount === blanks.length, correctCount * POINTS_PER_CORRECT_ANSWER);
     } else {
       logAnswer(qIndex, { picked });
       commitAnswer(picked);
@@ -1301,25 +1352,37 @@ export default function CertificationQuiz() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <div className="brand-gradient flex items-center gap-2 rounded-full px-4 py-2 text-white shadow-sm">
-            <span className="font-display text-lg font-semibold leading-none">
-              {currentScore}
-            </span>
-            <span className="text-xs font-medium uppercase tracking-wide opacity-90">
-              {t.quiz.score}
-            </span>
-          </div>
           {mode === "exam" && examEndsAt ? (
-            <span
-              className={`rounded-full border px-3 py-2 text-sm font-medium shadow-sm ${
-                examRemaining <= 60
-                  ? "border-red-300 bg-red-50 text-red-600"
-                  : "border-black/10 bg-white text-muted"
-              }`}
-              title={t.quiz.examTimeLeft}
-            >
-              {formatTime(examRemaining)}
-            </span>
+            <>
+              <span
+                className={`inline-block min-w-[4.75rem] rounded-full border px-3 py-2 text-center text-sm font-medium tabular-nums shadow-sm ${
+                  examRemaining <= 60
+                    ? "border-red-300 bg-red-50 text-red-600"
+                    : "border-black/10 bg-white text-muted"
+                }`}
+                title={t.quiz.examTimeLeft}
+              >
+                {formatTime(examRemaining)}
+              </span>
+              <button
+                type="button"
+                onClick={toggleExamTimerPause}
+                title={examPaused ? t.quiz.resumeExamTimer : t.quiz.pauseExamTimer}
+                aria-label={examPaused ? t.quiz.resumeExamTimer : t.quiz.pauseExamTimer}
+                className="min-w-[2.75rem] rounded-full border border-black/10 bg-white px-3 py-2 text-sm font-medium text-ink shadow-sm transition hover:border-black/20 hover:bg-black/[0.02]"
+              >
+                {examPaused ? "▶" : "⏸"}
+              </button>
+              <button
+                type="button"
+                onClick={resetExamTimer}
+                title={t.quiz.resetExamTimer}
+                aria-label={t.quiz.resetExamTimer}
+                className="rounded-full border border-black/10 bg-white px-3 py-2 text-sm font-medium text-ink shadow-sm transition hover:border-black/20 hover:bg-black/[0.02]"
+              >
+                ↺
+              </button>
+            </>
           ) : mode === "exam" ? (
             <button
               type="button"
@@ -1330,7 +1393,7 @@ export default function CertificationQuiz() {
             </button>
           ) : (
             isPro && (
-              <span className="rounded-full border border-black/10 bg-white px-3 py-2 text-sm text-muted shadow-sm">
+              <span className="inline-block min-w-[4.75rem] rounded-full border border-black/10 bg-white px-3 py-2 text-center text-sm tabular-nums text-muted shadow-sm">
                 {formatTime(elapsed)}
               </span>
             )
@@ -1339,11 +1402,21 @@ export default function CertificationQuiz() {
             <button
               type="button"
               onClick={() => setExamEnded(true)}
-              className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-ink transition hover:border-black/20 hover:bg-black/[0.02]"
+              title={t.quiz.endExam}
+              aria-label={t.quiz.endExam}
+              className="rounded-full border border-black/10 bg-white px-3 py-2 text-sm font-medium text-ink shadow-sm transition hover:border-black/20 hover:bg-black/[0.02]"
             >
-              {t.quiz.endExam}
+              ⏹
             </button>
           )}
+          <div className="brand-gradient flex items-center gap-2 rounded-full px-4 py-2 text-white shadow-sm">
+            <span className="font-display text-lg font-semibold leading-none">
+              {currentPoints}
+            </span>
+            <span className="text-xs font-medium uppercase tracking-wide opacity-90">
+              {t.quiz.score}
+            </span>
+          </div>
         </div>
       </div>
 
