@@ -18,7 +18,7 @@ import {
   buildGumroadCheckoutUrl,
 } from "../lib/paymentConfig";
 
-const CERT_PRICE_EUR = 9.99;
+const CERT_PRICE_EUR = 4.99;
 
 export default function UpgradeModal() {
   const { user, upgradeModalOpen, upgradeModalPreselect, upgradeModalOpenVoucher, closeUpgradeModal } =
@@ -213,7 +213,7 @@ export default function UpgradeModal() {
                     className="flex items-center justify-between gap-3 rounded-xl border border-black/10 px-4 py-3 text-left text-sm transition hover:border-teal/40 hover:bg-teal/[0.04]"
                   >
                     <span className="text-ink">{localize(cert.name, lang)}</span>
-                    <span className="shrink-0 font-medium text-teal-dark">9,99 €</span>
+                    <span className="shrink-0 font-medium text-teal-dark">4,99 €</span>
                   </button>
                 ))}
               </div>
@@ -237,7 +237,7 @@ export default function UpgradeModal() {
                       />
                       <span className="text-ink">{localize(cert.name, lang)}</span>
                     </span>
-                    <span className="shrink-0 font-medium text-muted">9,99 €</span>
+                    <span className="shrink-0 font-medium text-muted">4,99 €</span>
                   </label>
                 ))}
               </div>

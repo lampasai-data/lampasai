@@ -6,7 +6,7 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2026-06-24.dahlia",
 });
 
-const CERT_PRICE_CENTS = 999; // 9,99 €, matches src/i18n.tsx t.formations.offerPrice
+const CERT_PRICE_CENTS = 499; // 4,99 €, matches src/i18n.tsx t.formations.offerPrice
 
 function randomSuffix() {
   const alphabet = "abcdefghijklmnopqrstuvwxyz";

@@ -247,11 +247,11 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                 </div>
               )}
 
-              <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-black/5 pt-5">
+              <div className="mt-5 flex flex-nowrap items-center gap-x-2 overflow-x-auto border-t border-black/5 pt-5">
                 {unlocked ? (
                   <Link
                     to={`/formations/${cert.slug}?mode=exam`}
-                    className="rounded-full border border-teal/40 px-4 py-1.5 text-xs font-medium text-teal-dark transition hover:bg-teal/5"
+                    className="shrink-0 rounded-full border border-teal/40 px-3 py-1.5 text-xs font-medium text-teal-dark transition hover:bg-teal/5"
                   >
                     {t.formations.dashboardContinue}
                   </Link>
@@ -260,14 +260,14 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                     <button
                       type="button"
                       onClick={() => openUpgradeModal(cert.slug)}
-                      className="brand-gradient rounded-full px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+                      className="shrink-0 brand-gradient rounded-full px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
                     >
                       {t.formations.dashboardGoPro}
                     </button>
                     <button
                       type="button"
                       onClick={() => openUpgradeModal(cert.slug, true)}
-                      className="rounded-full border border-teal/40 px-4 py-1.5 text-xs font-medium text-teal-dark transition hover:bg-teal/5"
+                      className="shrink-0 rounded-full border border-teal/40 px-3 py-1.5 text-xs font-medium text-teal-dark transition hover:bg-teal/5"
                     >
                       {t.quiz.voucherTitle}
                     </button>
@@ -278,7 +278,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                     type="button"
                     onClick={() => handleDownloadPdf(cert)}
                     disabled={downloadingSlug === cert.slug}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-4 py-1.5 text-xs font-medium text-ink transition hover:bg-teal/5 disabled:opacity-50"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium text-ink transition hover:bg-teal/5 disabled:opacity-50"
                   >
                     {downloadingSlug === cert.slug
                       ? t.formations.downloadingPdf
@@ -288,7 +288,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                 {unlocked && (
                   <Link
                     to={`/formations/${cert.slug}/classement`}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-green/40 bg-green/5 px-4 py-1.5 text-xs font-medium text-green transition hover:bg-green/10"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-green/40 bg-green/5 px-3 py-1.5 text-xs font-medium text-green transition hover:bg-green/10"
                   >
                     <TrophyIcon className="h-3.5 w-3.5" />
                     {t.quiz.viewLeaderboard}

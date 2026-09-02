@@ -6,7 +6,7 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
 });
 const cryptoProvider = Stripe.createSubtleCryptoProvider();
 
-const CERT_PRICE_CENTS = 999;
+const CERT_PRICE_CENTS = 499;
 const THREE_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 3;
 
 Deno.serve(async (req) => {
