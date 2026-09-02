@@ -99,7 +99,7 @@ export default function Formations() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0 }}
-        className="max-w-2xl font-display text-4xl font-semibold text-ink md:text-5xl"
+        className="max-w-2xl font-sans text-4xl font-semibold text-ink md:text-5xl"
       >
         {t.formations.title}
       </motion.h1>
@@ -107,7 +107,7 @@ export default function Formations() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.08 }}
-        className="mt-5 max-w-2xl leading-relaxed text-muted"
+        className="mt-5 max-w-2xl whitespace-nowrap leading-relaxed text-muted"
       >
         {t.formations.lead}
       </motion.p>
@@ -115,7 +115,7 @@ export default function Formations() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.16 }}
-        className="mt-3 max-w-2xl text-sm font-medium text-teal-dark"
+        className="mt-3 max-w-2xl whitespace-nowrap text-sm font-medium text-teal-dark"
       >
         {t.formations.valueProp}
       </motion.p>
@@ -354,7 +354,7 @@ export default function Formations() {
           >
             <Reveal delay={40} className="flex w-full max-w-xl">
               <div className="relative flex w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-teal/25 bg-white p-6 shadow-sm">
-                <span className="brand-gradient inline-flex rounded-full px-3 py-1 text-xs font-semibold text-white">
+                <span className="brand-gradient inline-flex w-fit self-start rounded-full px-3 py-1 text-xs font-semibold text-white">
                   {t.formations.offerBadge}
                 </span>
                 <div className="mt-3 flex flex-wrap items-end gap-2">

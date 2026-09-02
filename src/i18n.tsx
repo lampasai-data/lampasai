@@ -417,7 +417,7 @@ const translations: Record<Lang, Translations> = {
       tabPricing: "Pricing",
       trainFor: "S'entraîner",
       leaderboardTeaser: (points: number, ratioPercent: number) =>
-        `Top du mois en mode Examen : ${points} pts, ${ratioPercent}% de réussite.\nÀ toi de faire mieux !`,
+        `Top score : ${points} pts, ${ratioPercent}% de réussite. À toi de faire mieux !`,
       accessQuiz: "Accéder au quiz",
       remainingFree: "question(s) gratuite(s) restante(s)",
       valueProp: "Nos questions vont droit à l'essentiel : pas de superflu, seulement ce qu'il faut pour réussir ta certification.",
@@ -717,7 +717,7 @@ const translations: Record<Lang, Translations> = {
       tabPricing: "Pricing",
       trainFor: "Practice",
       leaderboardTeaser: (points: number, ratioPercent: number) =>
-        `Top this month in Exam mode: ${points} pts, ${ratioPercent}% correct.\nCan you beat it?`,
+        `Top score: ${points} pts, ${ratioPercent}% correct. Can you beat it?`,
       accessQuiz: "Go to quiz",
       remainingFree: "free question(s) left",
       valueProp: "Our questions go straight to the point: nothing superfluous, only what you need to pass your certification.",
