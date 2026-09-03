@@ -248,7 +248,22 @@ export async function redeemExamVoucher(
   });
 
   if (error || data?.error) {
-    throw new Error(data?.error ?? error?.message ?? "Erreur lors de la validation du code.");
+    // On a non-2xx response, supabase-js sets `data` to null and `error` to a
+    // generic FunctionsHttpError ("Edge Function returned a non-2xx status
+    // code") rather than the actual { error: "..." } body the function sent
+    // (e.g. "Ce voucher n'est pas utilisable...") - that body only lives on
+    // error.context, the raw fetch Response, and has to be parsed out
+    // manually.
+    let message = data?.error ?? "Ce voucher n'est pas utilisable. Réessaie ou vérifie le code.";
+    if (!data?.error && error && "context" in error && error.context instanceof Response) {
+      try {
+        const body = await error.context.json();
+        if (body?.error) message = body.error;
+      } catch {
+        // ignore - fall back to the generic message below
+      }
+    }
+    throw new Error(message);
   }
   return { certificationId: data.certificationId };
 }

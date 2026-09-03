@@ -2,11 +2,11 @@ import { createServiceClient } from "../_shared/gumroadMatch.ts";
 import { corsHeaders } from "../_shared/admin.ts";
 
 const ERROR_MESSAGES: Record<string, string> = {
-  not_found: "Code invalide.",
+  not_found: "Ce voucher n'est pas utilisable : vérifie le code et réessaie.",
   expired: "Ce code a expiré.",
   exhausted: "Ce code a atteint son nombre maximal d'utilisations.",
   already_redeemed_by_user: "Tu as déjà utilisé ce code.",
-  wrong_certification: "Ce code ne correspond pas à la certification sélectionnée.",
+  wrong_certification: "Ce voucher n'est pas utilisable pour cette certification.",
 };
 
 // Redeems an exam voucher for the calling (authenticated) user. The

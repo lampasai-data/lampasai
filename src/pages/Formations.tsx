@@ -11,7 +11,6 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n";
 import { localize } from "../lib/i18nText";
-import Reveal from "../components/Reveal";
 import Dashboard from "../components/Dashboard";
 import TrainingRequestForm from "../components/TrainingRequestForm";
 import { CERTIFICATION_DOMAINS, EXAM_QUESTION_COUNTS } from "../data/certificationDomains";
@@ -81,7 +80,7 @@ export default function Formations() {
 
   if (user) {
     return (
-      <section className="mx-auto max-w-6xl px-6 pt-4 pb-24">
+      <section className="mx-auto max-w-6xl px-6 pt-4 pb-14">
         <Dashboard certs={certs} />
       </section>
     );
@@ -94,31 +93,18 @@ export default function Formations() {
   ];
 
   return (
-    <section className="mx-auto max-w-6xl px-6 pt-10 pb-24">
-      <motion.h1
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0 }}
-        className="max-w-2xl font-sans text-4xl font-semibold text-ink md:text-5xl"
-      >
+    <section className="mx-auto max-w-6xl px-6 pt-4 pb-14">
+      {/* Texte d'en-tête sans animation d'entrée : il doit être lisible dès
+          l'arrivée sur la page, pas se déplier sous les yeux du visiteur. */}
+      <h1 className="font-heading max-w-3xl text-3xl text-ink md:text-4xl">
         {t.formations.title}
-      </motion.h1>
-      <motion.p
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.08 }}
-        className="mt-5 max-w-2xl whitespace-nowrap leading-relaxed text-muted"
-      >
+      </h1>
+      <p className="text-block mt-5 max-w-2xl leading-relaxed text-muted">
         {t.formations.lead}
-      </motion.p>
-      <motion.p
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.16 }}
-        className="mt-3 max-w-2xl whitespace-nowrap text-sm font-medium text-teal-dark"
-      >
+      </p>
+      <p className="mt-3 max-w-2xl text-sm font-medium text-teal-dark">
         {t.formations.valueProp}
-      </motion.p>
+      </p>
 
       <div className="mt-10 flex items-center gap-8 border-b border-black/8">
         {tabs.map((item) => (
@@ -142,7 +128,9 @@ export default function Formations() {
         ))}
       </div>
 
-      <AnimatePresence mode="wait">
+      {/* initial={false} : le premier rendu s'affiche tel quel ; l'animation
+          de glissement ne joue qu'au changement d'onglet. */}
+      <AnimatePresence mode="wait" initial={false}>
         {tab === "formations" ? (
           <motion.div
             key="formations"
@@ -170,7 +158,7 @@ export default function Formations() {
               </button>
             </div>
 
-            <Reveal delay={60} className="mt-8 flex flex-col">
+            <div className="mt-8 flex flex-col">
               <h3 className="font-display text-2xl font-semibold text-ink">
                 {t.formations.requestTitle}
               </h3>
@@ -178,7 +166,7 @@ export default function Formations() {
               <div className="mt-6">
                 <TrainingRequestForm />
               </div>
-            </Reveal>
+            </div>
           </motion.div>
         ) : tab === "certifications" ? (
           <motion.div
@@ -188,24 +176,16 @@ export default function Formations() {
             exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.25 }}
           >
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="mt-6 flex items-start gap-3 rounded-2xl border border-amber/30 bg-amber/[0.08] px-5 py-4"
-            >
-              <span className="text-lg leading-none">💡</span>
+            <div className="mt-6 flex items-center gap-3 rounded-2xl border border-amber/30 bg-amber/[0.08] px-5 py-3">
+              <span className="text-lg leading-none">🎓</span>
               <p className="text-sm font-medium leading-relaxed text-ink">
                 {t.formations.certifValue}
               </p>
-            </motion.div>
+            </div>
 
             {!isPro && (
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.18 }}
-                className="mt-6 flex flex-col items-start justify-between gap-4 rounded-2xl border border-black/8 bg-surface p-6 sm:flex-row sm:items-center"
+              <div
+                className="mt-6 flex flex-col items-start justify-between gap-4 rounded-2xl border border-black/8 bg-surface px-6 py-4 sm:flex-row sm:items-center"
               >
                 <div>
                   <p className="font-display text-base font-medium text-ink">
@@ -231,13 +211,13 @@ export default function Formations() {
                   </svg>
                   {t.formations.createAccountCta}
                 </button>
-              </motion.div>
+              </div>
             )}
 
             <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
-              {certs.map((cert, i) => (
-                <Reveal key={cert.slug} delay={i * 80}>
-                  <div className="group h-full rounded-2xl border border-black/8 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-teal/30 hover:shadow-md">
+              {certs.map((cert) => (
+                <div key={cert.slug}>
+                  <div className="group flex h-full flex-col rounded-2xl border border-black/8 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-teal/30 hover:shadow-md">
                     <div className="flex items-start justify-between gap-3">
                       <Link
                         to={`/formations/${cert.slug}`}
@@ -297,10 +277,11 @@ export default function Formations() {
                       </div>
                     )}
 
+                    <div className="mt-auto">
                     {leaderboardPreviews[cert.slug] && (
-                      <div className="mt-5 flex items-center gap-2.5 rounded-xl border border-amber/30 bg-amber/[0.08] px-4 py-3">
+                      <div className="mt-5 flex items-center gap-2.5 rounded-xl border border-amber/30 bg-amber/[0.08] px-4 py-2">
                         <span className="text-lg leading-none">🏆</span>
-                        <p className="whitespace-pre-line text-xs font-semibold leading-relaxed text-ink">
+                        <p className="whitespace-pre-line text-xs font-semibold leading-tight text-ink">
                           {t.formations.leaderboardTeaser(
                             leaderboardPreviews[cert.slug].topPoints,
                             Math.round(leaderboardPreviews[cert.slug].topRatio * 100)
@@ -338,8 +319,9 @@ export default function Formations() {
                         </button>
                       </div>
                     )}
+                    </div>
                   </div>
-                </Reveal>
+                </div>
               ))}
             </div>
           </motion.div>
@@ -352,7 +334,7 @@ export default function Formations() {
             transition={{ duration: 0.25 }}
             className="mt-8 flex justify-center"
           >
-            <Reveal delay={40} className="flex w-full max-w-xl">
+            <div className="flex w-full max-w-xl">
               <div className="relative flex w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-teal/25 bg-white p-6 shadow-sm">
                 <span className="brand-gradient inline-flex w-fit self-start rounded-full px-3 py-1 text-xs font-semibold text-white">
                   {t.formations.offerBadge}
@@ -426,7 +408,7 @@ export default function Formations() {
                   {t.formations.offerCta}
                 </button>
               </div>
-            </Reveal>
+            </div>
           </motion.div>
         ) : null}
       </AnimatePresence>

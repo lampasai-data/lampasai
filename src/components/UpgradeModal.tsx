@@ -21,8 +21,14 @@ import {
 const CERT_PRICE_EUR = 4.99;
 
 export default function UpgradeModal() {
-  const { user, upgradeModalOpen, upgradeModalPreselect, upgradeModalOpenVoucher, closeUpgradeModal } =
-    useAuth();
+  const {
+    user,
+    upgradeModalOpen,
+    upgradeModalPreselect,
+    upgradeModalOpenVoucher,
+    closeUpgradeModal,
+    refreshPurchases,
+  } = useAuth();
   const { lang, t } = useLanguage();
   const navigate = useNavigate();
   const [certs, setCerts] = useState<CertificationSummary[]>([]);
@@ -127,6 +133,10 @@ export default function UpgradeModal() {
       const unlockedCert = certs.find((c) => c.id === certificationId);
       setVoucherUnlockedName(unlockedCert ? localize(unlockedCert.name, lang) : null);
       setVoucherStatus("success");
+      // The Dashboard/quiz page may already be mounted (navigating to
+      // /formations below won't remount it), so it won't otherwise know to
+      // re-fetch purchasedIds and drop the now-stale "Passer en mode Pro".
+      refreshPurchases();
       // Land back on the dashboard rather than reloading the current
       // certification page in place - the user unlocked access, so the
       // natural next step is picking it from their dashboard, not staying
@@ -171,7 +181,7 @@ export default function UpgradeModal() {
           >
             <button
               type="button"
-              aria-label="Fermer"
+              aria-label={t.auth.close}
               onClick={closeUpgradeModal}
               className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-ink shadow-sm transition hover:bg-black/[0.03]"
             >

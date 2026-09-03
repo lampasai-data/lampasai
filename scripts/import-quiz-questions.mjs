@@ -97,9 +97,9 @@ for (const row of dbRows) {
     : nextPosition++;
 }
 
-const { error: upsertError, count } = await supabase
+const { error: upsertError } = await supabase
   .from("quiz_questions")
-  .upsert(dbRows, { onConflict: "source_ref", ignoreDuplicates: false, count: "exact" });
+  .upsert(dbRows, { onConflict: "source_ref", ignoreDuplicates: false });
 
 if (upsertError) {
   console.error("Upsert failed:", upsertError.message);

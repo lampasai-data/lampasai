@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../i18n";
 import AuthPanel from "./AuthPanel";
 
 export default function AuthModal() {
   const { authModalOpen, closeAuthModal } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!authModalOpen) return;
@@ -35,7 +37,7 @@ export default function AuthModal() {
           >
             <button
               type="button"
-              aria-label="Fermer"
+              aria-label={t.auth.close}
               onClick={closeAuthModal}
               className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-ink shadow-sm transition hover:bg-black/[0.03]"
             >

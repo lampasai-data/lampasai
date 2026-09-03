@@ -8,7 +8,6 @@ interface Translations {
     about: string;
     insights: string;
     team: string;
-    clients: string;
     services: string;
     formations: string;
     login: string;
@@ -16,6 +15,8 @@ interface Translations {
   };
   auth: {
     notConfigured: string;
+    rateLimited: string;
+    close: string;
     googleAccountNotFoundError: string;
     titleSignin: string;
     titleForgot: string;
@@ -65,8 +66,10 @@ interface Translations {
     sub: string;
     ctaPrimary: string;
     ctaGhost: string;
-    highlights: [string, string, string];
     toolsLabel: string;
+    pipelineTitle: string;
+    pipelineBadge: string;
+    pipelineSteps: [string, string, string];
   };
   about: {
     tag: string;
@@ -86,17 +89,15 @@ interface Translations {
     lead: string;
     roles: string[];
   };
-  partners: {
-    tag: string;
-    title: string;
-    lead: string;
-    wonjoDesc: string;
-    visitSite: string;
-  };
   services: {
     tag: string;
     title: string;
     lead: string;
+    statsLabel: string;
+    statsValue: string;
+    statsBadge: string;
+    statsCaption: string;
+    stats: { value: string; label: string }[];
   };
   contact: {
     tag: string;
@@ -112,13 +113,12 @@ interface Translations {
     tooFast: string;
   };
   footer: {
-    copyright: string;
+    copyright: (year: number) => string;
     contactLink: string;
     navTitle: string;
     contactTitle: string;
   };
   formations: {
-    tag: string;
     title: string;
     lead: string;
     tabCertifications: string;
@@ -127,7 +127,6 @@ interface Translations {
     trainFor: string;
     leaderboardTeaser: (points: number, ratioPercent: number) => string;
     accessQuiz: string;
-    remainingFree: string;
     valueProp: string;
     certifValue: string;
     skipFreeTitle: string;
@@ -172,7 +171,6 @@ interface Translations {
     requestFormatLabel: string;
     formatOnsite: string;
     formatRemote: string;
-    requestMessage: string;
     requestMessagePlaceholder: string;
     requestSubmit: string;
     requestSent: string;
@@ -192,13 +190,11 @@ interface Translations {
     pdfCountPrompt: string;
     pdfCountConfirm: string;
     pdfCountCancel: string;
-    pdfCountAll: string;
   };
   quiz: {
     back: string;
     backDashboard: string;
     score: string;
-    points: string;
     answeredLabel: string;
     questionOf: (current: number, total: number) => string;
     selectAnswers: string;
@@ -210,7 +206,6 @@ interface Translations {
     unflag: string;
     flaggedNotice: string;
     reviewFlagged: (n: number) => string;
-    timeElapsed: string;
     finishedTitle: string;
     finishedScore: string;
     finishedTime: string;
@@ -234,7 +229,6 @@ interface Translations {
     leaderboardPrev: string;
     leaderboardNext: string;
     leaderboardPageOf: (current: number, total: number) => string;
-    leaderboardTopCap: (max: number) => string;
     explanationLabel: string;
     modeSelectTitle: string;
     modeTrainingTitle: string;
@@ -258,7 +252,6 @@ interface Translations {
     voucherModalDescGeneric: string;
     voucherModalPayInstead: string;
     questionCountLabel: string;
-    questionCountAll: string;
     startTraining: string;
     startExam: string;
     endExam: string;
@@ -271,8 +264,8 @@ interface Translations {
     matchHint: string;
     hotspotHint: string;
     dropHere: string;
+    removeMatch: string;
     choosePlaceholder: string;
-    quotaScoreLabel: string;
     quotaCongrats: string;
     quotaEncourage: string;
     quotaUnlockHint: string;
@@ -289,7 +282,6 @@ const translations: Record<Lang, Translations> = {
       about: "Qui sommes-nous ?",
       insights: "Insights",
       team: "Teams",
-      clients: "Partenaires",
       services: "Services",
       formations: "Formations",
       login: "Se connecter",
@@ -297,6 +289,8 @@ const translations: Record<Lang, Translations> = {
     },
     auth: {
       notConfigured: "Supabase n'est pas configuré.",
+      rateLimited: "Trop de tentatives. Réessaie dans un moment.",
+      close: "Fermer",
       googleAccountNotFoundError:
         "Aucun compte n'existe avec cette adresse Google. Crée ton compte ci-dessous.",
       titleSignin: "Bon retour !",
@@ -350,8 +344,10 @@ const translations: Record<Lang, Translations> = {
       sub: "Lampas .ai accompagne les entreprises dans l'exploitation de leurs données grâce à des solutions d'intelligence artificielle sur-mesure, quantitatives et durables.",
       ctaPrimary: "Discutons de votre projet",
       ctaGhost: "En savoir plus",
-      highlights: ["KPIs & performance", "IA prédictive", "Cloud & données"],
       toolsLabel: "La stack technique que nous maîtrisons",
+      pipelineTitle: "Votre pipeline de données",
+      pipelineBadge: "En flux",
+      pipelineSteps: ["Sources", "Modèles IA", "Décisions"],
     },
     about: {
       tag: "Qui sommes-nous ?",
@@ -375,22 +371,24 @@ const translations: Record<Lang, Translations> = {
       ],
     },
     team: {
-      tag: "Teams",
+      tag: "Notre équipe",
       title: "Une équipe pluridisciplinaire, à vos côtés",
       lead: "Travaillant de concert avec des partenaires technologiques, nous nous engageons à simplifier, accélérer et optimiser vos processus de données et d'entreprise. Pour donner un coup de pouce à votre projet, Lampas .ai réunit avec enthousiasme Analytics Engineers, AI Scientists, Data Engineers, Data Analysts et Développeurs, tous issus de formations prestigieuses. Notre ouverture à de nouveaux partenariats témoigne de notre quête constante d'innovation pour renforcer votre réussite.",
       roles: ["Analytics Engineers", "AI Scientists", "Data Engineers", "Data Analysts", "Développeurs"],
-    },
-    partners: {
-      tag: "Partenaires",
-      title: "Nos partenaires de confiance",
-      lead: "Nous construisons des collaborations solides avec des acteurs tech et académiques qui partagent notre vision de l'IA au service de la performance.",
-      wonjoDesc: "Application de paiement et de transferts d'argent.",
-      visitSite: "Visiter wonjo.app",
     },
     services: {
       tag: "Services",
       title: "La donnée, richesse du 21e siècle",
       lead: "Les données représentent la nouvelle richesse du 21e siècle. Cependant, à l'instar de l'or au 19e siècle, leur exploitation est complexe. Sans la flexibilité du cloud et la puissance expressive des logiciels modernes, il est difficile de tirer pleinement profit de la diversité, de la qualité variable, du volume et du rythme de mise à jour de vos données.",
+      statsLabel: "Volume de données valorisé",
+      statsValue: "2,4 To / jour",
+      statsBadge: "Temps réel",
+      statsCaption: "12 derniers mois",
+      stats: [
+        { value: "×3", label: "vitesse d'analyse" },
+        { value: "+47 %", label: "précision prédictive" },
+        { value: "24/7", label: "pipelines supervisés" },
+      ],
     },
     contact: {
       tag: "Contact",
@@ -406,13 +404,12 @@ const translations: Record<Lang, Translations> = {
       tooFast: "Merci de patienter quelques secondes avant d'envoyer.",
     },
     footer: {
-      copyright: "Copyright © 2026 Lampas .ai",
+      copyright: (year: number) => `Copyright © ${year} Lampas .ai`,
       contactLink: "Nous contacter",
       navTitle: "Navigation",
       contactTitle: "Contact",
     },
     formations: {
-      tag: "Formations",
       title: "Certifications & formations",
       lead: "Prépare tes certifications ou découvre nos prochaines formations pour monter en compétence sur la donnée et l'IA.",
       tabCertifications: "Certifications",
@@ -422,7 +419,6 @@ const translations: Record<Lang, Translations> = {
       leaderboardTeaser: (points: number, ratioPercent: number) =>
         `Top score : ${points} pts, ${ratioPercent}% de réussite. À toi de faire mieux !`,
       accessQuiz: "Accéder au quiz",
-      remainingFree: "question(s) gratuite(s) restante(s)",
       valueProp: "Nos questions vont droit à l'essentiel : pas de superflu, seulement ce qu'il faut pour réussir ta certification.",
       certifValue: "Avoir une certification est une vraie plus-value sur ton CV : prends le temps de bien la préparer.",
       skipFreeTitle: "Pas envie de passer par les questions gratuites ?",
@@ -470,7 +466,6 @@ const translations: Record<Lang, Translations> = {
       requestFormatLabel: "Format de la séance*",
       formatOnsite: "Présentiel",
       formatRemote: "Distanciel",
-      requestMessage: "Précisions sur ton besoin",
       requestMessagePlaceholder: "Objectifs, nombre de participants, dates souhaitées...",
       requestSubmit: "Demander un devis",
       requestSent: "Demande envoyée ✓ Nous te recontactons rapidement.",
@@ -495,16 +490,14 @@ const translations: Record<Lang, Translations> = {
       pdfCountPrompt: "Combien de questions veux-tu exporter ?",
       pdfCountConfirm: "Télécharger",
       pdfCountCancel: "Annuler",
-      pdfCountAll: "Toutes",
     },
     quiz: {
       back: "Retour aux certifications",
       backDashboard: "Retour à mon espace",
       score: "pts",
-      points: "Points",
       answeredLabel: "questions traitées",
-      questionOf: (current: number, total: number) => `Question ${current} sur ${total}`,
-      selectAnswers: "Sélectionne",
+      questionOf: (current: number, total: number) => `Question ${current}/${total}`,
+      selectAnswers: "Choisissez",
       validate: "Valider",
       next: "Suivante >",
       previous: "< Précédente",
@@ -513,7 +506,6 @@ const translations: Record<Lang, Translations> = {
       unflag: "Retirer le marquage",
       flaggedNotice: "Marquée pour plus tard",
       reviewFlagged: (n) => `Revoir les questions marquées (${n})`,
-      timeElapsed: "Temps",
       finishedTitle: "C'est terminé !",
       finishedScore: "Bonnes réponses",
       finishedTime: "Temps total",
@@ -537,8 +529,7 @@ const translations: Record<Lang, Translations> = {
       leaderboardPrev: "Précédent",
       leaderboardNext: "Suivant",
       leaderboardPageOf: (current: number, total: number) => `Page ${current} / ${total}`,
-      leaderboardTopCap: (max: number) => `Top ${max}`,
-      explanationLabel: "💡 Explication",
+      explanationLabel: "Explication",
       modeSelectTitle: "Choisis ton mode d'entraînement",
       modeTrainingTitle: "Mode gratuit",
       modeTrainingDesc: "Avance à ton rythme, avec explications après chaque question.",
@@ -563,7 +554,6 @@ const translations: Record<Lang, Translations> = {
         "Choisis la certification concernée, puis saisis ton code pour débloquer le mode examen pendant 30 jours.",
       voucherModalPayInstead: "Payer plutôt",
       questionCountLabel: "Nombre de questions",
-      questionCountAll: "Toutes",
       startTraining: "Commencer l'entraînement",
       startExam: "Démarrer l'examen",
       endExam: "Terminer l'examen",
@@ -577,8 +567,8 @@ const translations: Record<Lang, Translations> = {
       matchHint: "Fais glisser chaque élément vers la bonne cible",
       hotspotHint: "Choisis la bonne option dans chaque liste",
       dropHere: "Déposer ici",
+      removeMatch: "Retirer et remettre dans la liste",
       choosePlaceholder: "Choisir…",
-      quotaScoreLabel: "Ton score sur les 20 questions gratuites",
       quotaCongrats: "Bravo, de très bons résultats ! Tu es sur la bonne voie pour réussir ta certification.",
       quotaEncourage: "C'est un bon début, encore un peu d'entraînement et tu vas y arriver - ne lâche rien !",
       quotaUnlockHint: "Dans tous les cas, débloque l'accès illimité pour t'entraîner sur toutes les questions et arriver serein le jour J.",
@@ -593,7 +583,6 @@ const translations: Record<Lang, Translations> = {
       about: "About us",
       insights: "Insights",
       team: "Team",
-      clients: "Partners",
       services: "Services",
       formations: "Training",
       login: "Sign in",
@@ -601,6 +590,8 @@ const translations: Record<Lang, Translations> = {
     },
     auth: {
       notConfigured: "Supabase is not configured yet.",
+      rateLimited: "Too many attempts. Try again in a moment.",
+      close: "Close",
       googleAccountNotFoundError:
         "No account exists with this Google address. Create your account below.",
       titleSignin: "Welcome back!",
@@ -653,8 +644,10 @@ const translations: Record<Lang, Translations> = {
       sub: "Lampas .ai helps organizations unlock the value of their data through tailor-made, quantitative and sustainable artificial intelligence solutions.",
       ctaPrimary: "Let's talk about your project",
       ctaGhost: "Learn more",
-      highlights: ["KPIs & performance", "Predictive AI", "Cloud & data"],
       toolsLabel: "Tools we work with",
+      pipelineTitle: "Your data pipeline",
+      pipelineBadge: "Streaming",
+      pipelineSteps: ["Sources", "AI models", "Decisions"],
     },
     about: {
       tag: "About us",
@@ -678,22 +671,24 @@ const translations: Record<Lang, Translations> = {
       ],
     },
     team: {
-      tag: "Team",
+      tag: "Our team",
       title: "A multidisciplinary team, by your side",
       lead: "Working closely with technology partners, we are committed to simplifying, accelerating and optimizing your data and business processes. To give your project a boost, Lampas .ai enthusiastically brings together Analytics Engineers, AI Scientists, Data Engineers, Data Analysts and Developers, all from prestigious backgrounds. Our openness to new partnerships reflects our constant quest for innovation to strengthen your success.",
       roles: ["Analytics Engineers", "AI Scientists", "Data Engineers", "Data Analysts", "Developers"],
-    },
-    partners: {
-      tag: "Partners",
-      title: "Our trusted partners",
-      lead: "We're building strong collaborations with tech and academic players who share our vision of AI-driven performance.",
-      wonjoDesc: "Payments and money transfer application.",
-      visitSite: "Visit wonjo.app",
     },
     services: {
       tag: "Services",
       title: "Data, the wealth of the 21st century",
       lead: "Data represents the new wealth of the 21st century. However, like gold in the 19th century, harnessing it is complex. Without the flexibility of the cloud and the expressive power of modern software, it is difficult to fully benefit from the diversity, variable quality, volume and update pace of your data.",
+      statsLabel: "Data put to work",
+      statsValue: "2.4 TB / day",
+      statsBadge: "Real time",
+      statsCaption: "last 12 months",
+      stats: [
+        { value: "×3", label: "analysis speed" },
+        { value: "+47%", label: "predictive accuracy" },
+        { value: "24/7", label: "monitored pipelines" },
+      ],
     },
     contact: {
       tag: "Contact",
@@ -709,13 +704,12 @@ const translations: Record<Lang, Translations> = {
       tooFast: "Please wait a few seconds before sending.",
     },
     footer: {
-      copyright: "Copyright © 2026 Lampas .ai",
+      copyright: (year: number) => `Copyright © ${year} Lampas .ai`,
       contactLink: "Contact us",
       navTitle: "Navigation",
       contactTitle: "Contact",
     },
     formations: {
-      tag: "Training",
       title: "Data certifications & training",
       lead: "Prepare for your certifications or discover our upcoming training paths to grow your data and AI skills.",
       tabCertifications: "Certifications",
@@ -725,7 +719,6 @@ const translations: Record<Lang, Translations> = {
       leaderboardTeaser: (points: number, ratioPercent: number) =>
         `Top score: ${points} pts, ${ratioPercent}% correct. Can you beat it?`,
       accessQuiz: "Go to quiz",
-      remainingFree: "free question(s) left",
       valueProp: "Our questions go straight to the point: nothing superfluous, only what you need to pass your certification.",
       certifValue: "Having a certification is a real asset on your resume: take the time to prepare it properly.",
       skipFreeTitle: "Don't want to go through the free questions?",
@@ -773,7 +766,6 @@ const translations: Record<Lang, Translations> = {
       requestFormatLabel: "Session format*",
       formatOnsite: "On-site",
       formatRemote: "Remote",
-      requestMessage: "Details about your needs",
       requestMessagePlaceholder: "Goals, number of participants, preferred dates...",
       requestSubmit: "Request a quote",
       requestSent: "Request sent ✓ We'll get back to you shortly.",
@@ -798,25 +790,22 @@ const translations: Record<Lang, Translations> = {
       pdfCountPrompt: "How many questions do you want to export?",
       pdfCountConfirm: "Download",
       pdfCountCancel: "Cancel",
-      pdfCountAll: "All",
     },
     quiz: {
       back: "Back to training",
       backDashboard: "Back to my dashboard",
       score: "pts",
-      points: "Points",
       answeredLabel: "answered",
-      questionOf: (current: number, total: number) => `Question ${current} of ${total}`,
+      questionOf: (current: number, total: number) => `Question ${current}/${total}`,
       selectAnswers: "Select",
       validate: "Submit",
-      next: "Next question →",
-      previous: "← Previous question",
+      next: "Next question >",
+      previous: "< Previous question",
       skip: "Skip",
       flag: "Flag for later",
       unflag: "Remove flag",
       flaggedNotice: "Flagged for later",
       reviewFlagged: (n) => `Review flagged questions (${n})`,
-      timeElapsed: "Time",
       finishedTitle: "All done",
       finishedScore: "Correct answers",
       finishedTime: "Total time",
@@ -840,8 +829,7 @@ const translations: Record<Lang, Translations> = {
       leaderboardPrev: "Previous",
       leaderboardNext: "Next",
       leaderboardPageOf: (current: number, total: number) => `Page ${current} / ${total}`,
-      leaderboardTopCap: (max: number) => `Top ${max}`,
-      explanationLabel: "💡 Explanation",
+      explanationLabel: "Explanation",
       modeSelectTitle: "Choose your practice mode",
       modeTrainingTitle: "Free mode",
       modeTrainingDesc: "Go at your own pace, with explanations after each question.",
@@ -866,7 +854,6 @@ const translations: Record<Lang, Translations> = {
         "Pick the certification, then enter your code to unlock exam mode for 30 days.",
       voucherModalPayInstead: "Pay instead",
       questionCountLabel: "Number of questions",
-      questionCountAll: "All",
       startTraining: "Start practice",
       startExam: "Start exam",
       endExam: "End exam",
@@ -880,8 +867,8 @@ const translations: Record<Lang, Translations> = {
       matchHint: "Drag each item onto the correct target",
       hotspotHint: "Pick the correct option in each dropdown",
       dropHere: "Drop here",
+      removeMatch: "Remove and put back in the list",
       choosePlaceholder: "Choose…",
-      quotaScoreLabel: "Your score on the 20 free questions",
       quotaCongrats: "Great job, solid results! You're on track to pass your certification.",
       quotaEncourage: "That's a good start - a bit more practice and you'll get there, don't give up!",
       quotaUnlockHint: "Either way, unlock unlimited access to train on every question and feel ready on exam day.",

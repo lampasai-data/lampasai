@@ -58,6 +58,8 @@ interface AuthState {
   updatePassword: (password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  purchasesVersion: number;
+  refreshPurchases: () => void;
   googleAccountNotFound: boolean;
   dismissGoogleAccountNotFound: () => void;
   googleAccountAlreadyExists: boolean;
@@ -77,6 +79,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeModalPreselect, setUpgradeModalPreselect] = useState<string | null>(null);
   const [upgradeModalOpenVoucher, setUpgradeModalOpenVoucher] = useState(false);
+  // Bumped whenever a purchase-affecting event completes (voucher
+  // redemption, checkout success) so any mounted page re-fetches
+  // purchasedIds - navigating back to an already-mounted route (e.g. the
+  // voucher modal closing onto /formations) doesn't remount it on its own.
+  const [purchasesVersion, setPurchasesVersion] = useState(0);
   const [googleAccountNotFound, setGoogleAccountNotFound] = useState(false);
   const [googleAccountAlreadyExists, setGoogleAccountAlreadyExists] = useState(false);
   // Supabase fires the session change more than once for a single sign-in
@@ -270,6 +277,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error || errorCode) {
       if (errorCode === "already_registered") return getAlreadyRegisteredMessage(lang);
       if (errorCode === "weak_password") return mapAuthError("password should be at least", lang);
+      if (errorCode === "rate_limited") return t.auth.rateLimited;
       return mapAuthError(error?.message ?? "unknown error", lang);
     }
     return null;
@@ -299,6 +307,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function refreshProfile() {
     if (session) await loadProfile(session.user.id);
+  }
+
+  function refreshPurchases() {
+    setPurchasesVersion((v) => v + 1);
   }
 
   function dismissGoogleAccountNotFound() {
@@ -332,6 +344,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updatePassword,
         signOut,
         refreshProfile,
+        purchasesVersion,
+        refreshPurchases,
         googleAccountNotFound,
         dismissGoogleAccountNotFound,
         googleAccountAlreadyExists,

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useActiveSection } from "../lib/useActiveSection";
 import { useLanguage } from "../i18n";
 import { useAuth } from "../context/AuthContext";
 import lampasLogo from "../assets/lampas-logo.png";
@@ -9,13 +10,21 @@ export default function Nav() {
   const { lang, setLang, t } = useLanguage();
   const { user, profile, signOut, openAuthModal } = useAuth();
 
+  const { pathname } = useLocation();
+  const onHome = pathname === "/";
+
   const links = [
-    { href: "/#home", label: t.nav.home },
-    { href: "/#about", label: t.nav.about },
-    { href: "/#insights", label: t.nav.insights },
-    { href: "/#team", label: t.nav.team },
-    { href: "/#services", label: t.nav.services },
+    { href: "/#home", id: "home", label: t.nav.home },
+    { href: "/#about", id: "about", label: t.nav.about },
+    { href: "/#insights", id: "insights", label: t.nav.insights },
+    { href: "/#team", id: "team", label: t.nav.team },
+    { href: "/#services", id: "services", label: t.nav.services },
   ];
+
+  const activeId = useActiveSection(
+    links.map((link) => link.id),
+    onHome
+  );
 
   return (
     <nav className="sticky top-0 z-50 border-b border-black/5 bg-white/85 backdrop-blur-md">
@@ -29,13 +38,19 @@ export default function Nav() {
           <ul className="flex items-center gap-8 text-sm text-muted">
             {links.map((link) => (
               <li key={link.href}>
-                <Link to={link.href} className="transition hover:text-ink">
+                <Link
+                  to={link.href}
+                  className={`nav-link ${activeId === link.id ? "is-active" : ""}`}
+                >
                   {link.label}
                 </Link>
               </li>
             ))}
             <li>
-              <Link to="/formations" className="transition hover:text-ink">
+              <Link
+                to="/formations"
+                className={`nav-link ${pathname.startsWith("/formations") ? "is-active" : ""}`}
+              >
                 {t.nav.formations}
               </Link>
             </li>
@@ -130,7 +145,11 @@ export default function Nav() {
               <Link
                 to={link.href}
                 onClick={() => setOpen(false)}
-                className="block rounded-lg px-2 py-3 hover:bg-black/[0.03]"
+                className={`block rounded-lg px-2 py-3 hover:bg-black/[0.03] ${
+                  activeId === link.id
+                    ? "border-l-2 border-teal bg-teal/[0.06] font-medium"
+                    : ""
+                }`}
               >
                 {link.label}
               </Link>

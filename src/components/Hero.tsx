@@ -1,4 +1,3 @@
-import { useEffect, useRef, type CSSProperties } from "react";
 import { useLanguage } from "../i18n";
 import snowflakeLogo from "../assets/snowflake.png";
 import powerBiLogo from "../assets/icons8-puissance-bi-2021-96.png";
@@ -9,135 +8,144 @@ import gitLogo from "../assets/icons8-git-96.png";
 import linuxLogo from "../assets/icons8-linux-96.png";
 import sqlLogo from "../assets/icons8-sql-96.png";
 
-// Grouped by category so the layout reads top-to-bottom as Ingestion/ETL,
-// Storage, BI - with the general dev tools (not part of any category) kept
-// in a neutral row at the bottom.
-const CORNER_TOOLS: { name: string; logo: string; style: CSSProperties; float: string }[] = [
-  // Ingestion / ETL - top row
-  { name: "Fivetran", logo: fivetranLogo, style: { top: "6%", left: "32%", transform: "translateX(-50%)" }, float: "11s" },
-  { name: "dbt", logo: dbtLogo, style: { top: "6%", left: "68%", transform: "translateX(-50%)" }, float: "10.5s" },
-  // Storage - left column
-  { name: "Snowflake", logo: snowflakeLogo, style: { top: "36%", left: "5%" }, float: "9s" },
-  { name: "GCP", logo: gcpLogo, style: { top: "62%", left: "5%" }, float: "7.5s" },
-  // BI - right side
-  { name: "Power BI", logo: powerBiLogo, style: { top: "49%", right: "5%", transform: "translateY(-50%)" }, float: "8s" },
-  // General tools - neutral bottom row (not part of any category above)
-  { name: "SQL", logo: sqlLogo, style: { bottom: "5%", left: "30%", transform: "translateX(-50%)" }, float: "9.5s" },
-  { name: "Git", logo: gitLogo, style: { bottom: "5%", left: "56%", transform: "translateX(-50%)" }, float: "8.5s" },
-  { name: "Linux", logo: linuxLogo, style: { bottom: "5%", left: "82%", transform: "translateX(-50%)" }, float: "10s" },
+// Ordonné comme le pipeline se lit : ingestion, transformation, stockage,
+// restitution, puis les outils transverses.
+const STACK_TOOLS: { name: string; logo: string }[] = [
+  { name: "Fivetran", logo: fivetranLogo },
+  { name: "dbt", logo: dbtLogo },
+  { name: "Snowflake", logo: snowflakeLogo },
+  { name: "GCP", logo: gcpLogo },
+  { name: "SQL", logo: sqlLogo },
+  { name: "Power BI", logo: powerBiLogo },
+  { name: "Git", logo: gitLogo },
+  { name: "Linux", logo: linuxLogo },
 ];
 
-function MeshBackground() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+// Géométrie du pipeline, en unités du viewBox.
+const NODE_W = 108;
+const NODE_H = 72;
+const NODE_Y = 16;
+const NODE_X = [6, 176, 346];
+const PIPE_W = 460;
+const PIPE_H = 104;
+const GAP_START = NODE_X[0] + NODE_W;
+const GAP_LEN = NODE_X[1] - GAP_START;
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+/** Source de données : un cylindre. */
+function SourceIcon() {
+  return (
+    <g stroke="#4a8896" strokeWidth="1.6" fill="none">
+      <ellipse cx="0" cy="-8" rx="10" ry="4" />
+      <path d="M-10 -8v16c0 2.2 4.5 4 10 4s10-1.8 10-4V-8" />
+      <path d="M-10 0c0 2.2 4.5 4 10 4s10-1.8 10-4" />
+    </g>
+  );
+}
 
-    const gridSize = 34;
-    const mouse = { x: -9999, y: -9999 };
-    let points: { x: number; y: number; ox: number; oy: number; z: number }[] = [];
-    let rows = 0;
-    let cols = 0;
-    let frameId: number;
+/** Modèle : trois neurones reliés. */
+function ModelIcon() {
+  return (
+    <g stroke="#7d4e2e" strokeWidth="1.6" fill="none">
+      <path d="M-9 -7 L4 -9 M-9 -7 L4 7 M-9 6 L4 -9 M-9 6 L4 7 M4 -9 L9 -1 M4 7 L9 -1" opacity="0.55" />
+      <circle cx="-9" cy="-7" r="2.6" fill="#fff" />
+      <circle cx="-9" cy="6" r="2.6" fill="#fff" />
+      <circle cx="4" cy="-9" r="2.6" fill="#fff" />
+      <circle cx="4" cy="7" r="2.6" fill="#fff" />
+      <circle cx="9" cy="-1" r="2.6" fill="#7d4e2e" />
+    </g>
+  );
+}
 
-    function resize() {
-      const rect = canvas!.getBoundingClientRect();
-      canvas!.width = rect.width;
-      canvas!.height = rect.height;
-      cols = Math.ceil(canvas!.width / gridSize);
-      rows = Math.ceil(canvas!.height / gridSize);
-      points = [];
-      for (let i = 0; i <= cols; i++) {
-        for (let j = 0; j <= rows; j++) {
-          points.push({ x: i * gridSize, y: j * gridSize, ox: i * gridSize, oy: j * gridSize, z: 0 });
-        }
-      }
-    }
+/** Décision : trois barres croissantes. */
+function DecisionIcon() {
+  return (
+    <g fill="#1d9e75">
+      <rect x="-10" y="0" width="5" height="10" rx="2" opacity="0.55" />
+      <rect x="-2.5" y="-5" width="5" height="15" rx="2" opacity="0.75" />
+      <rect x="5" y="-11" width="5" height="21" rx="2" />
+    </g>
+  );
+}
 
-    function animate() {
-      ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
-      const maxDist = 140;
+const STAGE_ICONS = [SourceIcon, ModelIcon, DecisionIcon];
 
-      for (const p of points) {
-        const dx = p.x - mouse.x;
-        const dy = p.y - mouse.y;
-        const dist = Math.hypot(dx, dy);
-        if (dist < maxDist) {
-          const angle = Math.atan2(dy, dx);
-          const force = (maxDist - dist) / maxDist;
-          p.x += Math.cos(angle) * force * 4;
-          p.y += Math.sin(angle) * force * 4;
-          p.z = force * 20;
-        }
-        p.x += (p.ox - p.x) * 0.08;
-        p.y += (p.oy - p.y) * 0.08;
-        p.z += (0 - p.z) * 0.08;
-      }
-
-      const gradient = ctx!.createLinearGradient(0, 0, canvas!.width, canvas!.height);
-      gradient.addColorStop(0, "rgba(74, 136, 150, 0.45)");
-      gradient.addColorStop(1, "rgba(125, 78, 46, 0.35)");
-      ctx!.strokeStyle = gradient;
-
-      for (let i = 0; i < cols; i++) {
-        for (let j = 0; j < rows; j++) {
-          const p1 = points[i * (rows + 1) + j];
-          const pRight = points[(i + 1) * (rows + 1) + j];
-          const pDown = points[i * (rows + 1) + (j + 1)];
-          if (!p1) continue;
-          ctx!.lineWidth = 1 + p1.z / 12;
-          if (pRight) {
-            ctx!.beginPath();
-            ctx!.moveTo(p1.x, p1.y);
-            ctx!.lineTo(pRight.x, pRight.y);
-            ctx!.stroke();
-          }
-          if (pDown) {
-            ctx!.beginPath();
-            ctx!.moveTo(p1.x, p1.y);
-            ctx!.lineTo(pDown.x, pDown.y);
-            ctx!.stroke();
-          }
-        }
-      }
-
-      frameId = requestAnimationFrame(animate);
-    }
-
-    function handleMouseMove(e: MouseEvent) {
-      const rect = canvas!.getBoundingClientRect();
-      mouse.x = e.clientX - rect.left;
-      mouse.y = e.clientY - rect.top;
-    }
-
-    function handleMouseLeave() {
-      mouse.x = -9999;
-      mouse.y = -9999;
-    }
-
-    resize();
-    animate();
-    window.addEventListener("resize", resize);
-    canvas.addEventListener("mousemove", handleMouseMove);
-    canvas.addEventListener("mouseleave", handleMouseLeave);
-
-    return () => {
-      cancelAnimationFrame(frameId);
-      window.removeEventListener("resize", resize);
-      canvas.removeEventListener("mousemove", handleMouseMove);
-      canvas.removeEventListener("mouseleave", handleMouseLeave);
-    };
-  }, []);
+function Pipeline() {
+  const { t } = useLanguage();
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="pointer-events-auto absolute inset-0 h-full w-full"
-      aria-hidden="true"
-    />
+    <div>
+      <svg
+        viewBox={`0 0 ${PIPE_W} ${PIPE_H}`}
+        className="w-full"
+        role="img"
+        aria-label={t.hero.pipelineSteps.join(" → ")}
+      >
+      {/* Connecteurs + points qui circulent */}
+      {[0, 1].map((i) => {
+        const x = NODE_X[i] + NODE_W;
+        const y = NODE_Y + NODE_H / 2;
+        return (
+          <g key={i}>
+            <line
+              x1={x}
+              x2={x + GAP_LEN}
+              y1={y}
+              y2={y}
+              stroke="rgba(20,20,43,0.12)"
+              strokeWidth="1.5"
+              strokeDasharray="3 4"
+            />
+            {[0, 1].map((d) => (
+              <circle
+                key={d}
+                className="pipe-dot"
+                cx={x}
+                cy={y}
+                r="3"
+                fill={i === 0 ? "#4a8896" : "#7d4e2e"}
+                style={{
+                  ["--flow-dist" as string]: `${GAP_LEN}px`,
+                  animationDelay: `${i * 0.5 + d * 1.4}s`,
+                }}
+              />
+            ))}
+          </g>
+        );
+      })}
+
+      {/* Étapes */}
+      {t.hero.pipelineSteps.map((step, i) => {
+        const Icon = STAGE_ICONS[i];
+        const cx = NODE_X[i] + NODE_W / 2;
+        return (
+          <g key={step}>
+            <rect
+              x={NODE_X[i]}
+              y={NODE_Y}
+              width={NODE_W}
+              height={NODE_H}
+              rx="18"
+              fill="rgba(255,255,255,0.92)"
+              stroke="rgba(20,20,43,0.08)"
+            />
+            <g transform={`translate(${cx}, ${NODE_Y + NODE_H / 2})`}>
+              <Icon />
+            </g>
+          </g>
+        );
+      })}
+      </svg>
+
+      {/* Libellés en HTML : ils gardent une taille de texte réelle quel que
+          soit l'écran, contrairement à du <text> mis à l'échelle par le viewBox. */}
+      <div className="mt-1.5 grid grid-cols-3 gap-1 text-center">
+        {t.hero.pipelineSteps.map((step) => (
+          <span key={step} className="font-display text-[0.6875rem] font-medium text-ink sm:text-xs">
+            {step}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -146,13 +154,13 @@ export default function Hero() {
 
   return (
     <header id="home" className="glow-grid relative overflow-hidden">
-      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-6 py-16 md:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10">
+      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-6 py-12 md:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10">
         <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-          <span className="mb-5 animate-[float-slow_9s_ease-in-out_infinite] rounded-full border border-teal/25 bg-teal/[0.07] px-4 py-1.5 text-xs font-medium tracking-wide text-teal-dark">
+          <span className="mb-5 rounded-full border border-teal/25 bg-teal/[0.07] px-4 py-1.5 text-xs font-medium tracking-wide text-teal-dark">
             {t.hero.eyebrow}
           </span>
 
-          <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-ink md:text-5xl">
+          <h1 className="font-heading text-4xl leading-[1.05] text-ink md:text-5xl">
             {t.hero.title[0]}
             <br />
             <span className="brand-gradient-text">{t.hero.title[1]}</span>
@@ -178,7 +186,7 @@ export default function Hero() {
           </div>
         </div>
 
-        <div className="relative mx-auto h-60 w-full max-w-md lg:h-80">
+        <div className="relative mx-auto w-full max-w-lg">
           <div
             className="float-slow absolute -left-6 -top-6 h-20 w-20 rounded-full opacity-30 blur-2xl"
             style={{ background: "radial-gradient(circle, #4a8896, transparent 70%)" }}
@@ -189,27 +197,37 @@ export default function Hero() {
             style={{ background: "radial-gradient(circle, #7d4e2e, transparent 70%)", animation: "float-slow 11s ease-in-out infinite" }}
             aria-hidden="true"
           />
-          <div className="relative h-full w-full overflow-hidden rounded-3xl border border-black/8 bg-white/70 shadow-xl backdrop-blur-sm">
-            <MeshBackground />
 
-            {CORNER_TOOLS.map((tool, i) => (
-              // Positioning transform (e.g. centering a logo) and the float
-              // animation both set `transform`, so they can't share one
-              // element - the animation would silently override any static
-              // transform. Split them: an outer div for position, an inner
-              // one for the animation.
-              <div key={tool.name} className="absolute" style={tool.style} title={tool.name}>
-                <div
-                  className="flex h-14 w-14 items-center justify-center rounded-2xl border border-black/8 bg-white/95 p-2.5 shadow-md backdrop-blur-sm lg:h-16 lg:w-16"
-                  style={{
-                    animation: `float-slow ${tool.float} ease-in-out infinite`,
-                    animationDelay: `${i * 0.5}s`,
-                  }}
-                >
-                  <img src={tool.logo} alt={tool.name} className="h-full w-full object-contain" />
-                </div>
+          <div className="relative overflow-hidden rounded-3xl border border-black/8 bg-white/75 p-5 shadow-xl backdrop-blur-sm">
+            <div className="relative">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-muted">
+                  {t.hero.pipelineTitle}
+                </p>
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-green/10 px-2.5 py-1 text-[0.6875rem] font-medium text-green">
+                  <span className="live-dot h-1.5 w-1.5 rounded-full bg-green" aria-hidden="true" />
+                  {t.hero.pipelineBadge}
+                </span>
               </div>
-            ))}
+
+              <div className="mt-3">
+                <Pipeline />
+              </div>
+
+              {/* Largeurs fluides : les 8 outils tiennent sur une seule ligne
+                  quelle que soit la largeur, en occupant tout l'espace dispo. */}
+              <div className="mt-3 flex items-center gap-1.5 border-t border-black/[0.06] pt-4 sm:gap-2">
+                {STACK_TOOLS.map((tool) => (
+                  <span
+                    key={tool.name}
+                    title={tool.name}
+                    className="flex aspect-square min-w-0 flex-1 items-center justify-center rounded-xl border border-black/[0.07] bg-white/90 p-1.5 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md sm:p-2"
+                  >
+                    <img src={tool.logo} alt={tool.name} className="h-full w-full object-contain" />
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
 
           <p className="mt-4 text-center text-xs font-medium uppercase tracking-widest text-muted">

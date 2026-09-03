@@ -69,8 +69,8 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-white/10 px-6 py-6 text-center text-xs text-white/40">
-        {t.footer.copyright}
+      <div className="border-t border-white/10 px-6 py-6 text-center text-xs text-white/70">
+        {t.footer.copyright(new Date().getFullYear())}
       </div>
     </footer>
   );

@@ -87,6 +87,19 @@ Deno.serve(async (req) => {
 
   const supabase = createServiceClient();
 
+  // This endpoint is necessarily unauthenticated (it's the signup flow
+  // itself), so without a throttle a scripted caller could mass-create
+  // accounts and burn the Resend send quota on every attempt. 5 signups per
+  // IP per hour is generous for a real visitor, tight for a script.
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const { data: attempts, error: rateLimitError } = await supabase.rpc(
+    "record_and_count_rate_limit",
+    { p_bucket: `signup:${ip}`, p_window: "1 hour" }
+  );
+  if (!rateLimitError && (attempts ?? 0) > 5) {
+    return jsonResponse({ errorCode: "rate_limited" }, 429);
+  }
+
   const { data, error } = await supabase.auth.admin.generateLink({
     type: "signup",
     email,

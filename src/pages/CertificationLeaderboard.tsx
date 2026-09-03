@@ -197,7 +197,7 @@ export default function CertificationLeaderboard() {
   }
 
   return (
-    <section className="mx-auto max-w-2xl px-6 py-24">
+    <section className="mx-auto max-w-2xl px-6 pt-6 pb-24">
       <BackLink to="/formations" label={backLabel} />
 
       <div className="mt-6 flex items-center gap-3">
@@ -234,9 +234,6 @@ export default function CertificationLeaderboard() {
         </span>
         <span className="inline-flex items-center rounded-full border border-teal/30 bg-teal/[0.06] px-3 py-1.5 text-xs font-semibold text-teal-dark">
           {t.quiz.leaderboardGoal(Math.round(GOAL_RATIO * 100))}
-        </span>
-        <span className="inline-flex items-center rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs font-medium text-muted shadow-sm">
-          {t.quiz.leaderboardTopCap(MAX_RANKS)}
         </span>
       </div>
 

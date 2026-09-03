@@ -40,7 +40,7 @@ function TrophyIcon({ className = "h-4 w-4" }: { className?: string }) {
 }
 
 export default function Dashboard({ certs }: { certs: CertificationSummary[] }) {
-  const { user, profile, openUpgradeModal } = useAuth();
+  const { user, profile, openUpgradeModal, purchasesVersion } = useAuth();
   const { t, lang } = useLanguage();
   const [progress, setProgress] = useState<Record<string, CertificationProgress>>({});
   const [purchasedIds, setPurchasedIds] = useState<Map<string, PurchasedCertificationAccess>>(
@@ -68,7 +68,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
     if (!user) return;
     getPurchasedCertificationIds(user.id).then(setPurchasedIds);
     getAllCertificationPurchaseDates(user.id).then(setAllPurchaseDates);
-  }, [user]);
+  }, [user, purchasesVersion]);
 
   useCheckoutSuccessPoll(user, searchParams, setSearchParams, (ids) => {
     setPurchasedIds(ids);
@@ -247,7 +247,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                 </div>
               )}
 
-              <div className="mt-5 flex flex-nowrap items-center gap-x-2 overflow-x-auto border-t border-black/5 pt-5">
+              <div className="mt-auto flex flex-nowrap items-center gap-x-2 overflow-x-auto border-t border-black/5 pt-5">
                 {unlocked ? (
                   <Link
                     to={`/formations/${cert.slug}?mode=exam`}
@@ -296,50 +296,59 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                 )}
               </div>
 
-              {!isPro && expiresAt && (
-                <div className="mt-auto flex items-center justify-center gap-2 pt-4 text-xs text-muted">
-                  <span>
-                    {t.formations.dashboardAccessUntil(
-                      new Date(expiresAt).toLocaleDateString(lang === "fr" ? "fr-FR" : "en-US", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })
-                    )}
-                  </span>
-                  <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-green text-white">
-                    <svg viewBox="0 0 24 24" fill="none" className="h-2 w-2">
-                      <path
-                        d="M5 13l4 4L19 7"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                </div>
-              )}
-              {isExpired && (
-                <button
-                  type="button"
-                  onClick={() => openUpgradeModal(cert.slug)}
-                  className="mt-auto flex items-center justify-center gap-2 pt-4 text-xs font-medium text-red-600 transition hover:text-red-700"
-                >
-                  <span>{t.formations.dashboardRenewAccess}</span>
-                  <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-red-500 text-white">
-                    <svg viewBox="0 0 24 24" fill="none" className="h-2 w-2">
-                      <path
-                        d="M6 6l12 12M18 6L6 18"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                </button>
-              )}
+              {/* Always rendered, fixed-height slot - even when neither
+                  condition below applies - so every card reserves the same
+                  amount of space beneath the (mt-auto, bottom-anchored)
+                  button row. Without this, a card with an access-until/renew
+                  message ended up taller below its buttons than one without,
+                  which pushed its button row up and broke the alignment
+                  between cards that all sit in the same grid row. */}
+              <div className="flex min-h-4 items-center justify-center pt-4">
+                {!isPro && expiresAt && (
+                  <div className="flex items-center gap-2 text-xs text-muted">
+                    <span>
+                      {t.formations.dashboardAccessUntil(
+                        new Date(expiresAt).toLocaleDateString(lang === "fr" ? "fr-FR" : "en-US", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })
+                      )}
+                    </span>
+                    <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-green text-white">
+                      <svg viewBox="0 0 24 24" fill="none" className="h-2 w-2">
+                        <path
+                          d="M5 13l4 4L19 7"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  </div>
+                )}
+                {isExpired && (
+                  <button
+                    type="button"
+                    onClick={() => openUpgradeModal(cert.slug)}
+                    className="flex items-center gap-2 text-xs font-medium text-red-600 transition hover:text-red-700"
+                  >
+                    <span>{t.formations.dashboardRenewAccess}</span>
+                    <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-red-500 text-white">
+                      <svg viewBox="0 0 24 24" fill="none" className="h-2 w-2">
+                        <path
+                          d="M6 6l12 12M18 6L6 18"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  </button>
+                )}
+              </div>
             </motion.div>
           );
         })}

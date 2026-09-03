@@ -17,8 +17,10 @@ export function useCheckoutSuccessPoll(
   onTick: (ids: Map<string, PurchasedCertificationAccess>) => void,
   onStart?: () => void
 ) {
+  const checkoutParam = searchParams.get("checkout");
+
   useEffect(() => {
-    if (!user || searchParams.get("checkout") !== "success") return;
+    if (!user || checkoutParam !== "success") return;
     onStart?.();
     let attempts = 0;
     const interval = setInterval(async () => {
@@ -36,5 +38,5 @@ export function useCheckoutSuccessPoll(
     );
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, checkoutParam]);
 }

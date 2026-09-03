@@ -47,16 +47,17 @@ export default function Contact() {
   }
 
   return (
-    <section id="contact" className="border-t border-black/5">
-      <div className="mx-auto max-w-6xl px-6 py-24">
+    <section id="contact">
+      <div className="mx-auto max-w-6xl px-6 py-10 md:py-14">
       <Reveal className="max-w-2xl">
-        <h2 className="font-display text-4xl font-semibold text-ink md:text-5xl">
+        <span className="eyebrow">{t.contact.tag}</span>
+        <h2 className="font-heading text-[1.75rem] text-ink sm:text-[1.875rem]">
           {t.contact.title}
         </h2>
-        <p className="mt-5 leading-relaxed text-muted">{t.contact.lead}</p>
+        <p className="text-block mt-5 leading-relaxed text-muted">{t.contact.lead}</p>
       </Reveal>
 
-      <Reveal delay={120} className="mt-12 max-w-2xl">
+      <Reveal delay={120} className="mt-9 max-w-2xl">
         <form
           onSubmit={handleSubmit}
           className="flex flex-col gap-4 rounded-2xl border border-black/8 bg-white p-7 shadow-sm"

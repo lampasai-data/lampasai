@@ -32,6 +32,22 @@ function ClockIcon({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
+function TrophyIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path d="M7 4h10v4a5 5 0 01-10 0V4z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path
+        d="M7 5H4v1a4 4 0 004 4M17 5h3v1a4 4 0 01-4 4"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M12 13v4M9 20h6M10 17h4v3h-4z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // Points are awarded per correct sub-answer, not per question: a 2-answer
 // pick question is worth 10 (5 x 2), a 4-item ordering question 20 (5 x 4),
 // and each is credited proportionally to how many sub-answers were correct
@@ -90,7 +106,6 @@ interface PersistedRun {
   orderArrangement: number[];
   matchAssign: (number | null)[];
   hotspotPicks: (number | null)[];
-  submitted: boolean;
   answerLog: Record<number, AnswerLog>;
   examEndsAt: number | null;
   examEnded: boolean;
@@ -335,7 +350,7 @@ function formatTime(totalSeconds: number) {
 export default function CertificationQuiz() {
   const { slug = "" } = useParams();
   const navigate = useNavigate();
-  const { user, profile, openAuthModalForUpgrade, openUpgradeModal } = useAuth();
+  const { user, profile, openAuthModalForUpgrade, openUpgradeModal, purchasesVersion } = useAuth();
   const { lang, t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -366,10 +381,10 @@ export default function CertificationQuiz() {
   const [dragPool, setDragPool] = useState<number | null>(null);
   // "hotspot": hotspotPicks[blankIndex] = chosen option index for that dropdown (or null).
   const [hotspotPicks, setHotspotPicks] = useState<(number | null)[]>([]);
-  const [submitted, setSubmitted] = useState(false);
   const [answerLog, setAnswerLog] = useState<Record<number, AnswerLog>>({});
   const [expandedReview, setExpandedReview] = useState<Set<number>>(new Set());
   const [reviewErrorsOnly, setReviewErrorsOnly] = useState(false);
+  const [reviewPage, setReviewPage] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const startedAt = useRef<number>(Date.now());
   const qIndexRef = useRef<number | undefined>(undefined);
@@ -404,7 +419,6 @@ export default function CertificationQuiz() {
         setOrderArrangement(saved.orderArrangement);
         setMatchAssign(saved.matchAssign);
         setHotspotPicks(saved.hotspotPicks);
-        setSubmitted(saved.submitted);
         setAnswerLog(saved.answerLog);
         setCustomCount(saved.customCount);
         qIndexRef.current = saved.queue[saved.pos];
@@ -464,7 +478,6 @@ export default function CertificationQuiz() {
       orderArrangement,
       matchAssign,
       hotspotPicks,
-      submitted,
       answerLog,
       examEndsAt,
       examEnded,
@@ -486,7 +499,6 @@ export default function CertificationQuiz() {
     orderArrangement,
     matchAssign,
     hotspotPicks,
-    submitted,
     answerLog,
     examEndsAt,
     examEnded,
@@ -497,14 +509,21 @@ export default function CertificationQuiz() {
 
   useEffect(() => {
     if (user) getPurchasedCertificationIds(user.id).then(setPurchasedIds);
-  }, [user]);
+  }, [user, purchasesVersion]);
 
   // Direct-to-exam entry point (e.g. from the Dashboard's "Démarrer l'examen"
   // card button, which links here with ?mode=exam): skip the training/exam
-  // choice screen, but still let the user pick the question count.
+  // choice screen, but still let the user pick the question count. No
+  // `mode !== null` guard here - the initial-load effect above only checks
+  // this same param on mount/slug-change, so revisiting the same slug with a
+  // freshly-added ?mode=exam (e.g. clicking "Démarrer l'examen" again while
+  // already on this page) wouldn't otherwise override a stale resumed
+  // training session; this effect is what actually reacts to the param
+  // changing, so it has to be able to override mode here instead.
   useEffect(() => {
-    if (!cert || mode !== null || searchParams.get("mode") !== "exam") return;
+    if (!cert || searchParams.get("mode") !== "exam") return;
     if (!hasProAccess()) return;
+    setMode(null);
     setQuickExamSetup(true);
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
@@ -583,10 +602,10 @@ export default function CertificationQuiz() {
     setResults({});
     setResultPoints({});
     setPicked([]);
-    setSubmitted(false);
     setAnswerLog({});
     setExpandedReview(new Set());
     setReviewErrorsOnly(false);
+    setReviewPage(0);
     startedAt.current = Date.now();
     setElapsed(0);
   }
@@ -920,19 +939,20 @@ export default function CertificationQuiz() {
                 {t.quiz.modeExamDesc}
               </p>
               {isPro ? (
-                <div className="mt-5 flex flex-wrap items-center gap-3">
+                <div className="mt-5 flex flex-nowrap items-center gap-3 overflow-x-auto">
                   <button
                     type="button"
                     onClick={startExam}
-                    className="rounded-full border border-teal/40 px-5 py-2.5 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
+                    className="shrink-0 rounded-full border border-teal/40 px-5 py-2.5 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
                   >
                     {t.quiz.startExam}
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate(`/formations/${slug}/classement`)}
-                    className="text-sm font-medium text-teal-dark underline underline-offset-2 transition hover:text-teal"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-green/40 bg-green/5 px-5 py-2.5 text-sm font-medium text-green transition hover:bg-green/10"
                   >
+                    <TrophyIcon className="h-4 w-4" />
                     {t.quiz.viewLeaderboard}
                   </button>
                 </div>
@@ -958,6 +978,18 @@ export default function CertificationQuiz() {
     const passThreshold = getPassThreshold(slug);
     const passed = mode === "exam" && ratio >= passThreshold;
     const doingWell = ratio >= 0.75;
+
+    const REVIEW_PAGE_SIZE = 5;
+    const reviewIds = Object.keys(results)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .filter((qi) => !reviewErrorsOnly || !results[qi]);
+    const reviewPageCount = Math.max(1, Math.ceil(reviewIds.length / REVIEW_PAGE_SIZE));
+    const currentReviewPage = Math.min(reviewPage, reviewPageCount - 1);
+    const pagedReviewIds = reviewIds.slice(
+      currentReviewPage * REVIEW_PAGE_SIZE,
+      (currentReviewPage + 1) * REVIEW_PAGE_SIZE
+    );
 
     // Restarting jumps straight back into the same mode just finished
     // (a fresh, untimed exam run again, or a new training run) instead of
@@ -1071,19 +1103,42 @@ export default function CertificationQuiz() {
           <div className="mt-8 text-left">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-display text-lg font-semibold text-ink">{t.quiz.reviewTitle}</h2>
+              {reviewPageCount > 1 && (
+                <div className="flex items-center gap-3 text-sm">
+                  <button
+                    type="button"
+                    onClick={() => setReviewPage((p) => Math.max(0, p - 1))}
+                    disabled={currentReviewPage === 0}
+                    className="rounded-full border border-black/10 px-4 py-1.5 text-xs font-medium text-ink transition hover:border-black/20 disabled:opacity-40"
+                  >
+                    {t.quiz.leaderboardPrev}
+                  </button>
+                  <span className="text-xs text-muted">
+                    {t.quiz.leaderboardPageOf(currentReviewPage + 1, reviewPageCount)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setReviewPage((p) => Math.min(reviewPageCount - 1, p + 1))}
+                    disabled={currentReviewPage >= reviewPageCount - 1}
+                    className="rounded-full border border-black/10 px-4 py-1.5 text-xs font-medium text-ink transition hover:border-black/20 disabled:opacity-40"
+                  >
+                    {t.quiz.leaderboardNext}
+                  </button>
+                </div>
+              )}
               <button
                 type="button"
-                onClick={() => setReviewErrorsOnly((v) => !v)}
+                onClick={() => {
+                  setReviewErrorsOnly((v) => !v);
+                  setReviewPage(0);
+                }}
                 className="rounded-full border border-black/10 px-4 py-1.5 text-xs font-medium text-ink transition hover:border-black/20"
               >
                 {reviewErrorsOnly ? t.quiz.reviewAll : t.quiz.reviewErrorsOnly}
               </button>
             </div>
             <div className="space-y-2">
-              {Object.keys(results)
-                .map(Number)
-                .sort((a, b) => a - b)
-                .filter((qi) => !reviewErrorsOnly || !results[qi])
+              {pagedReviewIds
                 .map((qi) => {
                   const q = cert.questions[qi];
                   const correct = results[qi];
@@ -1157,30 +1212,45 @@ export default function CertificationQuiz() {
 
   const qIndex = queue[pos];
   const question = cert.questions[qIndex];
+  // A question that already has a recorded result is permanently locked in -
+  // derived from `results` rather than tracked as separate state, so
+  // navigating back to it (Previous) can never leave it in a re-answerable
+  // state. Answering, then going back and picking a different answer to
+  // "fix" a wrong one - after it already earned/lost its points - was
+  // possible when `submitted` was its own mutable flag that Previous/Next/
+  // Skip simply reset to false regardless of the destination question.
+  const submitted = qIndex in results;
 
-  // Reset the per-type interaction state (order/match/hotspot) the instant
-  // the current question changes, synchronously during render rather than
-  // in a useEffect. An effect-based reset only takes effect *after* this
-  // render already ran with the *previous* question's leftover state, which
-  // crashes as soon as it indexes past the new question's (shorter) options/
-  // targets/blanks - e.g. two "order" questions back-to-back with different
-  // lengths. Local `current*` variables (not the bare state) are what the
-  // JSX below reads, so this render is correct immediately; the setters
-  // additionally persist it so later interactions/re-renders stay in sync.
+  // Reset the per-type interaction state (picked/order/match/hotspot) the
+  // instant the current question changes, synchronously during render
+  // rather than in a useEffect. An effect-based reset only takes effect
+  // *after* this render already ran with the *previous* question's leftover
+  // state, which crashes as soon as it indexes past the new question's
+  // (shorter) options/targets/blanks - e.g. two "order" questions back-to-
+  // back with different lengths. Local `current*` variables (not the bare
+  // state) are what the JSX below reads, so this render is correct
+  // immediately; the setters additionally persist it so later interactions/
+  // re-renders stay in sync. Landing back on an already-submitted question
+  // restores its logged answer instead of blanking it, so Previous shows
+  // what was actually submitted rather than an empty/reshuffled question.
+  let currentPicked = picked;
   let currentOrderArrangement = orderArrangement;
   let currentMatchAssign = matchAssign;
   let currentHotspotPicks = hotspotPicks;
   if (qIndexRef.current !== qIndex) {
     qIndexRef.current = qIndex;
+    const log = answerLog[qIndex];
+    currentPicked = log?.picked ?? [];
     if (question.type === "order") {
-      currentOrderArrangement = shuffledIndexes(question.options?.length ?? 0);
+      currentOrderArrangement = log?.order ?? shuffledIndexes(question.options?.length ?? 0);
     }
     if (question.type === "match") {
-      currentMatchAssign = new Array(question.targets?.length ?? 0).fill(null);
+      currentMatchAssign = log?.match ?? new Array(question.targets?.length ?? 0).fill(null);
     }
     if (question.type === "hotspot") {
-      currentHotspotPicks = new Array(question.blanks?.length ?? 0).fill(null);
+      currentHotspotPicks = log?.hotspot ?? new Array(question.blanks?.length ?? 0).fill(null);
     }
+    setPicked(currentPicked);
     setOrderArrangement(currentOrderArrangement);
     setMatchAssign(currentMatchAssign);
     setHotspotPicks(currentHotspotPicks);
@@ -1194,9 +1264,16 @@ export default function CertificationQuiz() {
   function toggleOption(i: number) {
     if (submitted) return;
     if (isMulti) {
-      setPicked((prev) =>
-        prev.includes(i) ? prev.filter((v) => v !== i) : [...prev, i]
-      );
+      // Cap selection at exactly the number of correct answers the question
+      // calls for (the "Sélectionne N" hint) - picking more than that no
+      // longer silently accumulates extra, unusable picks; deselect one
+      // first to swap it for another.
+      const maxPicks = question.correctIndexes?.length ?? 1;
+      setPicked((prev) => {
+        if (prev.includes(i)) return prev.filter((v) => v !== i);
+        if (prev.length >= maxPicks) return prev;
+        return [...prev, i];
+      });
     } else {
       setPicked([i]);
       logAnswer(qIndex, { picked: [i] });
@@ -1205,7 +1282,6 @@ export default function CertificationQuiz() {
   }
 
   async function commitResult(correct: boolean, earnedPoints: number) {
-    setSubmitted(true);
     setResults((prev) => ({ ...prev, [qIndex]: correct }));
     setResultPoints((prev) => ({ ...prev, [qIndex]: earnedPoints }));
 
@@ -1250,8 +1326,8 @@ export default function CertificationQuiz() {
       logAnswer(qIndex, { hotspot: hotspotPicks });
       commitResult(correctCount === blanks.length, correctCount * POINTS_PER_CORRECT_ANSWER);
     } else {
-      logAnswer(qIndex, { picked });
-      commitAnswer(picked);
+      logAnswer(qIndex, { picked: currentPicked });
+      commitAnswer(currentPicked);
     }
   }
 
@@ -1266,7 +1342,7 @@ export default function CertificationQuiz() {
         ? matchAssign.length > 0 && matchAssign.every((v) => v !== null)
         : question.type === "hotspot"
           ? hotspotPicks.length > 0 && hotspotPicks.every((v) => v !== null)
-          : picked.length > 0;
+          : currentPicked.length === (question.correctIndexes?.length ?? 1);
 
   const needsValidateButton =
     isMulti ||
@@ -1276,9 +1352,17 @@ export default function CertificationQuiz() {
 
   function goToNextInQueue() {
     setHistory((h) => [...h, qIndex]);
-    setPicked([]);
-    setSubmitted(false);
-    setPos((p) => (p + 1 < queue.length ? p + 1 : p));
+    setPos((p) => {
+      if (p + 1 < queue.length) return p + 1;
+      // Ran off the end of the queue - this happens after jumping into a
+      // batch of flagged/skipped questions parked there (skip moves a
+      // question to the end of the queue) and finishing the last of them.
+      // Loop back to the first still-unanswered question instead of
+      // getting stuck at the last position, so reviewing flagged questions
+      // always hands control back to whatever's left rather than stalling.
+      const nextUnanswered = queue.findIndex((qi) => results[qi] === undefined);
+      return nextUnanswered !== -1 ? nextUnanswered : p;
+    });
   }
 
   function handleNext() {
@@ -1298,8 +1382,6 @@ export default function CertificationQuiz() {
       if (idx !== -1) setPos(idx);
       return h.slice(0, -1);
     });
-    setPicked([]);
-    setSubmitted(false);
   }
 
   function handleSkip() {
@@ -1317,8 +1399,6 @@ export default function CertificationQuiz() {
     // question instead of skipping it. Wrap back to the front of the queue
     // in that case so Skip always actually moves to a different question.
     setPos((p) => (p >= queue.length - 1 ? 0 : p));
-    setPicked([]);
-    setSubmitted(false);
   }
 
   function toggleFlag() {
@@ -1330,32 +1410,43 @@ export default function CertificationQuiz() {
     });
   }
 
+  // Jumps straight to the first flagged-for-review question still in the
+  // queue, so clicking the "N questions flagged" counter is actually
+  // actionable instead of just informational. The current question is
+  // pushed onto history first so Previous can still step back to it.
+  function goToFirstFlagged() {
+    const targetQIndex = queue.find((qi) => flagged.has(qi));
+    if (targetQIndex === undefined) return;
+    const idx = queue.indexOf(targetQIndex);
+    if (idx === -1 || idx === pos) return;
+    setHistory((h) => [...h, qIndex]);
+    setPos(idx);
+  }
+
   return (
-    <section className="mx-auto max-w-3xl px-6 pt-4 pb-24">
+    <section className="mx-auto max-w-4xl px-6 pt-4 pb-24">
       <BackLink to="/formations" label={backLabel} />
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-b border-black/[0.06] pb-5">
-        <div className="flex items-center gap-3">
+      <div className="mt-4 flex w-full min-w-0 flex-wrap items-center justify-between gap-4 border-b border-black/[0.06] pb-3">
+        <div className="flex min-w-0 shrink-0 items-center gap-2.5">
           <img
             src={CERT_LOGOS[slug] ?? lampasLogo}
             alt=""
-            className="h-10 w-10 object-contain"
+            className="h-8 w-8 object-contain"
           />
-          <div>
-            <h1 className="font-display text-xl font-semibold leading-tight text-ink">
-              {localize(cert.name, lang)}
-            </h1>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted">
+          <h1 className="flex flex-wrap items-baseline gap-x-2 font-display text-base font-semibold leading-tight text-ink">
+            {localize(cert.name, lang)}
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
               {mode === "exam" ? t.quiz.modeExamTitle : t.quiz.modeTrainingTitle}
-            </p>
-          </div>
+            </span>
+          </h1>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex max-w-full flex-nowrap items-center gap-2.5 overflow-x-auto">
           {mode === "exam" && examEndsAt ? (
             <>
               <span
-                className={`inline-block min-w-[4.75rem] rounded-full border px-3 py-2 text-center text-sm font-medium tabular-nums shadow-sm ${
+                className={`inline-block min-w-[4rem] rounded-full border px-2.5 py-1.5 text-center text-xs font-medium tabular-nums shadow-sm ${
                   examRemaining <= 60
                     ? "border-red-300 bg-red-50 text-red-600"
                     : "border-black/10 bg-white text-muted"
@@ -1369,7 +1460,7 @@ export default function CertificationQuiz() {
                 onClick={toggleExamTimerPause}
                 title={examPaused ? t.quiz.resumeExamTimer : t.quiz.pauseExamTimer}
                 aria-label={examPaused ? t.quiz.resumeExamTimer : t.quiz.pauseExamTimer}
-                className="min-w-[2.75rem] rounded-full border border-black/10 bg-white px-3 py-2 text-sm font-medium text-ink shadow-sm transition hover:border-black/20 hover:bg-black/[0.02]"
+                className="min-w-[2.25rem] rounded-full border border-black/10 bg-white px-2.5 py-1.5 text-xs font-medium text-ink shadow-sm transition hover:border-black/20 hover:bg-black/[0.02]"
               >
                 {examPaused ? "▶" : "⏸"}
               </button>
@@ -1378,7 +1469,7 @@ export default function CertificationQuiz() {
                 onClick={resetExamTimer}
                 title={t.quiz.resetExamTimer}
                 aria-label={t.quiz.resetExamTimer}
-                className="rounded-full border border-black/10 bg-white px-3 py-2 text-sm font-medium text-ink shadow-sm transition hover:border-black/20 hover:bg-black/[0.02]"
+                className="rounded-full border border-black/10 bg-white px-2.5 py-1.5 text-xs font-medium text-ink shadow-sm transition hover:border-black/20 hover:bg-black/[0.02]"
               >
                 ↺
               </button>
@@ -1387,13 +1478,13 @@ export default function CertificationQuiz() {
             <button
               type="button"
               onClick={startExamTimer}
-              className="brand-gradient rounded-full px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+              className="brand-gradient rounded-full px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
             >
               {t.quiz.startExamTimer}
             </button>
           ) : (
             isPro && (
-              <span className="inline-block min-w-[4.75rem] rounded-full border border-black/10 bg-white px-3 py-2 text-center text-sm tabular-nums text-muted shadow-sm">
+              <span className="inline-block min-w-[4rem] rounded-full border border-black/10 bg-white px-2.5 py-1.5 text-center text-xs tabular-nums text-muted shadow-sm">
                 {formatTime(elapsed)}
               </span>
             )
@@ -1402,34 +1493,38 @@ export default function CertificationQuiz() {
             <button
               type="button"
               onClick={() => setExamEnded(true)}
-              title={t.quiz.endExam}
-              aria-label={t.quiz.endExam}
-              className="rounded-full border border-black/10 bg-white px-3 py-2 text-sm font-medium text-ink shadow-sm transition hover:border-black/20 hover:bg-black/[0.02]"
+              className="rounded-full border border-black/10 bg-white px-2.5 py-1.5 text-xs font-medium text-ink shadow-sm transition hover:border-black/20 hover:bg-black/[0.02]"
             >
-              ⏹
+              {t.quiz.endExam}
             </button>
           )}
-          <div className="brand-gradient flex items-center gap-2 rounded-full px-4 py-2 text-white shadow-sm">
-            <span className="font-display text-lg font-semibold leading-none">
+          <div className="brand-gradient flex items-center gap-1.5 rounded-full px-3 py-1.5 text-white shadow-sm">
+            <span className="font-display text-sm font-semibold leading-none">
               {currentPoints}
             </span>
-            <span className="text-xs font-medium uppercase tracking-wide opacity-90">
-              {t.quiz.score}
+            <span className="text-[11px] font-medium uppercase tracking-wide opacity-90">
+              {currentPoints === 0 ? t.quiz.score.replace(/s$/, "") : t.quiz.score}
             </span>
           </div>
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-2 text-xs font-medium text-muted">
+      <div className="mx-auto mt-3 flex w-full max-w-3xl flex-wrap items-center justify-between gap-2 text-xs font-medium text-muted">
         <span>
           {answeredCount}/{runSize} {t.quiz.answeredLabel}
         </span>
         {remainingFlagged > 0 && (
-          <span className="font-medium text-amber">{t.quiz.reviewFlagged(remainingFlagged)}</span>
+          <button
+            type="button"
+            onClick={goToFirstFlagged}
+            className="font-medium text-amber underline decoration-amber/40 underline-offset-2 transition hover:text-amber/80"
+          >
+            {t.quiz.reviewFlagged(remainingFlagged)}
+          </button>
         )}
       </div>
 
-      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/[0.06]">
+      <div className="mx-auto mt-1.5 h-1 w-full max-w-3xl overflow-hidden rounded-full bg-black/[0.06]">
         <motion.div
           className="brand-gradient h-full rounded-full"
           animate={{ width: `${runSize > 0 ? (answeredCount / runSize) * 100 : 0}%` }}
@@ -1449,11 +1544,26 @@ export default function CertificationQuiz() {
           // starts, which otherwise can silently do nothing.
           exit={{ opacity: 0, x: -24, pointerEvents: "none" }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="mt-5 rounded-2xl border border-black/8 bg-white p-7 shadow-[0_1px_2px_rgba(20,20,43,0.04),0_8px_24px_-12px_rgba(20,20,43,0.12)] sm:p-8"
+          className="mt-5 rounded-2xl border border-black/8 bg-white p-7 pt-3 shadow-[0_1px_2px_rgba(20,20,43,0.04),0_8px_24px_-12px_rgba(20,20,43,0.12)] sm:p-8 sm:pt-4"
         >
-          <p className="text-xs font-semibold uppercase tracking-wide text-teal-dark">
-            {t.quiz.questionOf(pos + 1, runSize)}
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold uppercase tracking-wide text-teal-dark">
+              {t.quiz.questionOf(pos + 1, runSize)}
+            </p>
+            <button
+              type="button"
+              onClick={toggleFlag}
+              title={isFlagged ? t.quiz.unflag : t.quiz.flag}
+              aria-pressed={isFlagged}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 shadow-sm transition ${
+                isFlagged
+                  ? "border-amber bg-amber/10 text-amber"
+                  : "border-ink/40 bg-ink/5 text-ink hover:border-ink/70 hover:bg-ink/10"
+              }`}
+            >
+              <span className="text-sm leading-none">{isFlagged ? "🚩" : "⚑"}</span>
+            </button>
+          </div>
           {question.image && (
             <img
               src={question.image}
@@ -1461,29 +1571,14 @@ export default function CertificationQuiz() {
               className="mt-3 mb-4 w-full max-w-xl rounded-xl border border-black/8"
             />
           )}
-          <div className="mt-3 flex items-start justify-between gap-4">
-            <p className="whitespace-pre-line font-display text-lg font-medium leading-snug text-ink">
-              {renderQuestionText(localize(question.question, lang))}
-            </p>
-            <button
-              type="button"
-              onClick={toggleFlag}
-              title={isFlagged ? t.quiz.unflag : t.quiz.flag}
-              aria-pressed={isFlagged}
-              className={`-mr-4 flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-sm font-medium transition ${
-                isFlagged
-                  ? "border-amber/40 bg-amber/10 text-amber"
-                  : "border-black/10 text-muted hover:border-black/20 hover:text-ink"
-              }`}
-            >
-              <span className="text-lg leading-none">{isFlagged ? "🚩" : "⚑"}</span>
-            </button>
-          </div>
+          <p className="mt-3 max-w-[42rem] whitespace-pre-line font-display text-lg font-medium leading-snug text-ink">
+            {renderQuestionText(localize(question.question, lang))}
+          </p>
           {isFlagged && (
             <p className="mt-1 text-xs font-medium text-amber">{t.quiz.flaggedNotice}</p>
           )}
           {isMulti && (
-            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-teal/25 bg-teal/[0.08] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-teal-dark">
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-teal/25 bg-teal/[0.08] px-3.5 py-1.5 text-xs font-semibold tracking-wide text-teal-dark">
               <span className="text-sm">☑</span>
               {t.quiz.selectAnswers} {question.correctIndexes?.length ?? 0}
             </div>
@@ -1496,15 +1591,7 @@ export default function CertificationQuiz() {
           )}
           {question.type === "match" && (
             <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-teal/25 bg-teal/[0.08] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-teal-dark">
-              <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
-                <path
-                  d="M4 12h13M13 7l4 5-4 5"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <span className="text-sm">›</span>
               {t.quiz.matchHint}
             </div>
           )}
@@ -1518,24 +1605,45 @@ export default function CertificationQuiz() {
           {question.type === "match" ? (
             <div className="mt-6 space-y-6">
               <div className="flex flex-wrap gap-2">
-                {(question.pool ?? []).map((item, pi) => (
-                  <button
+                {(question.pool ?? []).map((item, pi) => {
+                  // Already assigned to a target - drop it from the pool so
+                  // it can't be dragged onto a second target, and so the
+                  // pool only ever shows what's still up for grabs.
+                  if (currentMatchAssign.includes(pi)) return null;
+                  return (
+                  // A plain <div> rather than a <button> - native drag-and-drop on
+                  // form controls (<button>/<input>) renders a blank/transparent
+                  // drag ghost in several browsers, since the OS-native widget
+                  // chrome interferes with the snapshot the browser captures for
+                  // the cursor to carry.
+                  <div
                     key={localize(item, lang)}
-                    type="button"
+                    role="button"
+                    tabIndex={submitted ? -1 : 0}
                     draggable={!submitted}
                     onDragStart={() => setDragPool(pi)}
                     onDragEnd={() => setDragPool(null)}
-                    onClick={() => setDragPool((cur) => (cur === pi ? null : pi))}
-                    disabled={submitted}
-                    className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                    onClick={() => {
+                      if (submitted) return;
+                      setDragPool((cur) => (cur === pi ? null : pi));
+                    }}
+                    onKeyDown={(e) => {
+                      if (submitted) return;
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setDragPool((cur) => (cur === pi ? null : pi));
+                      }
+                    }}
+                    className={`select-none rounded-lg border px-3 py-2 text-sm font-medium transition ${
                       dragPool === pi
                         ? "border-teal bg-teal/10 text-ink"
                         : "border-black/10 bg-white text-ink/80 hover:border-teal/30"
                     } ${submitted ? "opacity-60" : "cursor-grab active:cursor-grabbing"}`}
                   >
                     {withCircledNumbers(localize(item, lang))}
-                  </button>
-                ))}
+                  </div>
+                  );
+                })}
               </div>
               <div className="space-y-3">
                 {(question.targets ?? []).map((target, ti) => {
@@ -1562,7 +1670,7 @@ export default function CertificationQuiz() {
                           assignTarget(ti, null);
                         }
                       }}
-                      className={`flex flex-col gap-1.5 rounded-xl border px-4 py-3 transition sm:flex-row sm:items-center sm:gap-4 ${
+                      className={`flex flex-col gap-1.5 rounded-xl border px-4 py-3 transition sm:flex-row sm:items-center sm:gap-2 ${
                         submitted
                           ? isRight
                             ? "border-green/40 bg-green/10"
@@ -1576,7 +1684,7 @@ export default function CertificationQuiz() {
                         {withCircledNumbers(localize(target.label, lang))}
                       </span>
                       <span
-                        className={`flex-1 rounded-lg border px-3 py-2 text-sm ${
+                        className={`flex flex-1 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm ${
                           assigned !== null
                             ? isWrong
                               ? "border-red-300 bg-white text-red-600"
@@ -1584,9 +1692,25 @@ export default function CertificationQuiz() {
                             : "border-dashed border-black/15 bg-black/[0.02] text-muted"
                         }`}
                       >
-                        {assigned !== null
-                          ? localize((question.pool ?? [])[assigned], lang)
-                          : t.quiz.dropHere}
+                        <span>
+                          {assigned !== null
+                            ? localize((question.pool ?? [])[assigned], lang)
+                            : t.quiz.dropHere}
+                        </span>
+                        {assigned !== null && !submitted && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              assignTarget(ti, null);
+                            }}
+                            title={t.quiz.removeMatch}
+                            aria-label={t.quiz.removeMatch}
+                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-ink/40 transition hover:bg-black/[0.06] hover:text-ink"
+                          >
+                            ×
+                          </button>
+                        )}
                       </span>
                       {isWrong && (
                         <span className="text-xs font-medium text-green sm:w-1/4">
@@ -1759,7 +1883,7 @@ export default function CertificationQuiz() {
             <div className="mt-6 flex flex-col gap-2.5">
               {(question.options ?? []).map((option, i) => {
                 const isCorrect = (question.correctIndexes ?? []).includes(i);
-                const isPicked = picked.includes(i);
+                const isPicked = currentPicked.includes(i);
                 const label = localize(option, lang);
                 const letter = String.fromCharCode(65 + i);
 
@@ -1811,47 +1935,47 @@ export default function CertificationQuiz() {
             </div>
           )}
 
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            {!submitted && history.length > 0 && (
-              <button
-                type="button"
-                onClick={handlePrevious}
-                className="rounded-full border border-teal/40 px-6 py-2.5 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
-              >
-                {t.quiz.previous}
-              </button>
-            )}
-            {needsValidateButton && !submitted && (
-              <button
-                type="button"
-                onClick={handleValidate}
-                disabled={!canValidate}
-                className="brand-gradient rounded-full px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40"
-              >
-                {question.type === "order" ? t.quiz.validateOrder : t.quiz.validate}
-              </button>
-            )}
-            {!submitted && (
+          {!submitted && (
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              {history.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handlePrevious}
+                  className="rounded-full border border-teal/40 px-4 py-1.5 text-xs font-medium text-teal-dark transition hover:bg-teal/5"
+                >
+                  {t.quiz.previous}
+                </button>
+              )}
+              {needsValidateButton && (
+                <button
+                  type="button"
+                  onClick={handleValidate}
+                  disabled={!canValidate}
+                  className="brand-gradient rounded-full px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90 disabled:opacity-40"
+                >
+                  {question.type === "order" ? t.quiz.validateOrder : t.quiz.validate}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleSkip}
-                className="rounded-full border border-teal/40 px-6 py-2.5 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
+                className="rounded-full border border-teal/40 px-4 py-1.5 text-xs font-medium text-teal-dark transition hover:bg-teal/5"
               >
                 {t.quiz.skip}
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {submitted && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="mt-6"
+              className="mt-3"
             >
-              {mode === "training" && question.explanation && (
-                <div className="rounded-2xl border border-teal/25 bg-teal/[0.06] p-5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-teal-dark">
+              {results[qIndex] === false && question.explanation && (
+                <div className="rounded-2xl border border-red-100 bg-red-50/50 px-6 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-red-600">
                     {t.quiz.explanationLabel}
                   </p>
                   <p className="mt-2 text-sm leading-relaxed text-ink/80">
@@ -1864,7 +1988,7 @@ export default function CertificationQuiz() {
                   <button
                     type="button"
                     onClick={handlePrevious}
-                    className="rounded-full border border-teal/40 px-6 py-2.5 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
+                    className="rounded-full border border-teal/40 px-4 py-1.5 text-xs font-medium text-teal-dark transition hover:bg-teal/5"
                   >
                     {t.quiz.previous}
                   </button>
@@ -1872,7 +1996,7 @@ export default function CertificationQuiz() {
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="brand-gradient rounded-full px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+                  className="brand-gradient rounded-full px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
                 >
                   {t.quiz.next}
                 </button>

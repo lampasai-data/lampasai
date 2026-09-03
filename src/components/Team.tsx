@@ -1,81 +1,59 @@
+import type { CSSProperties } from "react";
 import { useLanguage } from "../i18n";
 import Reveal from "./Reveal";
 
-const AVATAR_COLORS = ["#4a8896", "#7d4e2e", "#f5a623"];
+const ROLE_COLORS = ["#4a8896", "#7d4e2e", "#f5a623", "#1d9e75", "#3a6b77"];
 
-function PersonIcon({ color }: { color: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      className="h-7 w-7"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="8" r="4" stroke={color} strokeWidth="1.8" />
-      <path
-        d="M4 20c0-3.6 3.6-6 8-6s8 2.4 8 6"
-        stroke={color}
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
+/** "Analytics Engineers" -> "AE", "Développeurs" -> "DÉ" */
+function initials(role: string) {
+  const words = role.split(/[\s/-]+/).filter(Boolean);
+  if (words.length === 1) {
+    return words[0].slice(0, 2).toUpperCase();
+  }
+  return words
+    .slice(0, 2)
+    .map((word) => word[0].toUpperCase())
+    .join("");
 }
 
-function Avatar({ role, color, delay }: { role: string; color: string; delay: number }) {
+function RoleChip({ role, color }: { role: string; color: string }) {
   return (
-    <Reveal delay={delay} className="flex flex-col items-center gap-2">
-      <div
-        className="flex h-16 w-16 items-center justify-center rounded-full border border-black/8 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-        style={{ backgroundColor: `${color}1a` }}
-      >
-        <PersonIcon color={color} />
-      </div>
-      <span className="max-w-[6rem] text-center text-xs font-medium leading-snug text-ink">
-        {role}
+    <span
+      className="role-pill inline-flex items-center gap-2 rounded-full border border-black/[0.07] bg-white/70 py-1 pl-1 pr-3.5 backdrop-blur-sm transition duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_12px_26px_-20px_rgba(20,20,43,0.5)]"
+      style={{ "--role": color } as CSSProperties}
+    >
+      <span className="monogram relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full font-display text-[0.625rem] font-semibold tracking-wide transition-colors duration-300">
+        <span className="monogram-fill absolute inset-0 opacity-0 transition-opacity duration-300" aria-hidden="true" />
+        <span className="relative">{initials(role)}</span>
       </span>
-    </Reveal>
+      <span className="font-display text-xs font-medium text-ink">{role}</span>
+    </span>
   );
 }
 
 export default function Team() {
   const { t } = useLanguage();
-  const topRow = t.team.roles.slice(0, 2);
-  const bottomRow = t.team.roles.slice(2, 5);
 
   return (
-    <section id="team" className="mx-auto max-w-6xl px-6 py-24">
-      <div className="grid grid-cols-1 items-center gap-12 md:grid-cols-2">
-        <Reveal>
-          <h2 className="font-display text-4xl font-semibold text-ink md:text-5xl">
-            {t.team.title}
-          </h2>
-          <p className="mt-5 leading-relaxed text-muted">{t.team.lead}</p>
-        </Reveal>
+    <section id="team" className="mx-auto max-w-6xl px-6 py-10 md:py-14">
+      <Reveal>
+        <span className="eyebrow">{t.team.tag}</span>
+        <h2 className="font-heading heading-fit text-ink">
+          {t.team.title}
+        </h2>
+      </Reveal>
 
-        <div className="flex flex-col items-center gap-6">
-          <div className="flex gap-8">
-            {topRow.map((role, i) => (
-              <Avatar
-                key={role}
-                role={role}
-                color={AVATAR_COLORS[i % AVATAR_COLORS.length]}
-                delay={i * 80}
-              />
-            ))}
-          </div>
-          <div className="flex gap-8">
-            {bottomRow.map((role, i) => (
-              <Avatar
-                key={role}
-                role={role}
-                color={AVATAR_COLORS[(i + 2) % AVATAR_COLORS.length]}
-                delay={(i + 2) * 80}
-              />
-            ))}
-          </div>
+      <Reveal delay={80}>
+        <p className="text-block mt-6 max-w-4xl leading-relaxed text-muted">{t.team.lead}</p>
+      </Reveal>
+
+      <Reveal delay={160}>
+        <div className="mt-7 flex flex-wrap gap-2.5">
+          {t.team.roles.map((role, i) => (
+            <RoleChip key={role} role={role} color={ROLE_COLORS[i % ROLE_COLORS.length]} />
+          ))}
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }
