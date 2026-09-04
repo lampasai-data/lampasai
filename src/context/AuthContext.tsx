@@ -149,13 +149,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const authIntent =
       session.user.app_metadata?.provider === "google" ? storedAuthIntent : null;
 
+    // Shared "this session is genuinely logging the user in" tail - called
+    // either synchronously below, or later from the async orphan-check
+    // branch once it's confirmed the account wasn't actually a fresh orphan.
+    function completeLogin() {
+      setAuthModalOpen(false);
+      // Remembered so the auth panel can default to "sign in" instead of
+      // "sign up" for a browser that has already logged in before.
+      localStorage.setItem(HAS_LOGGED_IN_KEY, "1");
+      // Every login AND signup fires a session here - catch up any Gumroad
+      // purchase that arrived before this account existed, or under an email
+      // that only now matches. Fire-and-forget: never blocks the UI, and a
+      // failure here just means it's retried on the next login (or caught by
+      // the scheduled reconcile sweep / the manual admin catch-up page).
+      supabase!.functions.invoke("reconcile-pending-purchases").catch((err) => {
+        console.error("Failed to reconcile pending Gumroad purchases", err);
+      });
+      // Google sign-in does a full page redirect, which wipes all in-memory
+      // state - sessionStorage is what actually survives to re-open the
+      // upgrade modal once the session comes back.
+      const pending = sessionStorage.getItem(PENDING_UPGRADE_KEY);
+      if (pending) {
+        sessionStorage.removeItem(PENDING_UPGRADE_KEY);
+        setUpgradeModalPreselect(pending);
+        setUpgradeModalOpenVoucher(false);
+        setUpgradeModalOpen(true);
+        // Land on the dashboard first, so the upgrade modal opens on top of
+        // the user's own space instead of the certification's locked
+        // mode-select screen they were on when they clicked "unlock" - that
+        // way, dismissing the modal without completing anything leaves them
+        // somewhere useful instead of stuck looking at a "choose your mode"
+        // dead end for a certification they still can't access.
+        navigate("/formations");
+      }
+    }
+
     if (authIntent === "signin" || authIntent === "signup") {
       const createdAt = new Date(session.user.created_at).getTime();
       const lastSignInAt = session.user.last_sign_in_at
         ? new Date(session.user.last_sign_in_at).getTime()
         : createdAt;
       // A brand-new account's first sign-in timestamp lands within a few
-      // seconds of its creation timestamp - a returning user's won't.
+      // seconds of its creation timestamp - a returning user's won't. This
+      // is only a heuristic, though: right after an OAuth redirect,
+      // last_sign_in_at is sometimes still missing from the session's user
+      // object, which falls back to createdAt above and makes ANY sign-in
+      // look brand-new - so this can false-positive on a genuine returning
+      // user. The server-side check below is what's actually authoritative.
       const isBrandNew = Math.abs(lastSignInAt - createdAt) < 10000;
 
       if (authIntent === "signin" && isBrandNew) {
@@ -164,11 +204,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .functions.invoke("delete-orphan-oauth-user", {
             headers: { Authorization: `Bearer ${accessToken}` },
           })
-          .catch((err) => console.error("Failed to delete orphan OAuth user", err))
-          .finally(async () => {
+          .then(async ({ data, error }) => {
+            // delete-orphan-oauth-user re-checks created_at itself (against
+            // a fresh admin-API lookup, not the client's possibly-stale
+            // session) and refuses to delete anything older than 60s. If it
+            // refused, the client's isBrandNew guess above was a false
+            // alarm on a real returning user - let the login proceed
+            // normally instead of wrongly signing them back out and
+            // telling them their account doesn't exist.
+            if (error || data?.error) {
+              console.error(
+                "delete-orphan-oauth-user refused or failed - treating as a normal login",
+                error ?? data?.error
+              );
+              completeLogin();
+              return;
+            }
             await supabase!.auth.signOut();
             setGoogleAccountNotFound(true);
             setAuthModalOpen(true);
+          })
+          .catch((err) => {
+            console.error(
+              "Failed to call delete-orphan-oauth-user - treating as a normal login",
+              err
+            );
+            completeLogin();
           });
         return;
       }
@@ -186,35 +247,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    setAuthModalOpen(false);
-    // Remembered so the auth panel can default to "sign in" instead of
-    // "sign up" for a browser that has already logged in before.
-    localStorage.setItem(HAS_LOGGED_IN_KEY, "1");
-    // Every login AND signup fires a session here - catch up any Gumroad
-    // purchase that arrived before this account existed, or under an email
-    // that only now matches. Fire-and-forget: never blocks the UI, and a
-    // failure here just means it's retried on the next login (or caught by
-    // the scheduled reconcile sweep / the manual admin catch-up page).
-    supabase.functions.invoke("reconcile-pending-purchases").catch((err) => {
-      console.error("Failed to reconcile pending Gumroad purchases", err);
-    });
-    // Google sign-in does a full page redirect, which wipes all in-memory
-    // state - sessionStorage is what actually survives to re-open the
-    // upgrade modal once the session comes back.
-    const pending = sessionStorage.getItem(PENDING_UPGRADE_KEY);
-    if (pending) {
-      sessionStorage.removeItem(PENDING_UPGRADE_KEY);
-      setUpgradeModalPreselect(pending);
-      setUpgradeModalOpenVoucher(false);
-      setUpgradeModalOpen(true);
-      // Land on the dashboard first, so the upgrade modal opens on top of
-      // the user's own space instead of the certification's locked
-      // mode-select screen they were on when they clicked "unlock" - that
-      // way, dismissing the modal without completing anything leaves them
-      // somewhere useful instead of stuck looking at a "choose your mode"
-      // dead end for a certification they still can't access.
-      navigate("/formations");
-    }
+    completeLogin();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
@@ -247,7 +280,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return;
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.href },
+      // Strip any hash (e.g. "/#about", "/#contact" from the on-page anchor
+      // nav) rather than window.location.href as-is - Supabase appends its
+      // own auth params onto the returned URL's fragment, and starting from
+      // a redirectTo that already has one is an unnecessary way to land on
+      // a malformed callback URL depending on where in the page the user
+      // happened to be when they clicked "sign in".
+      options: { redirectTo: window.location.origin + window.location.pathname },
     });
   }
 

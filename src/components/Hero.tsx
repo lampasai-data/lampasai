@@ -137,10 +137,19 @@ function Pipeline() {
       </svg>
 
       {/* Libellés en HTML : ils gardent une taille de texte réelle quel que
-          soit l'écran, contrairement à du <text> mis à l'échelle par le viewBox. */}
-      <div className="mt-1.5 grid grid-cols-3 gap-1 text-center">
-        {t.hero.pipelineSteps.map((step) => (
-          <span key={step} className="font-display text-[0.6875rem] font-medium text-ink sm:text-xs">
+          soit l'écran, contrairement à du <text> mis à l'échelle par le viewBox.
+          Positionnés en % à partir des mêmes coordonnées que les nœuds du SVG
+          (NODE_X/NODE_W/PIPE_W) plutôt qu'avec un grid-cols-3 à tiers égaux -
+          les nœuds ne sont pas espacés en tiers égaux (le premier est collé au
+          bord gauche), donc un grid régulier désalignait les libellés par
+          rapport aux icônes au-dessus, plus visible sur les petits écrans. */}
+      <div className="relative mt-1.5 h-8 text-center">
+        {t.hero.pipelineSteps.map((step, i) => (
+          <span
+            key={step}
+            className="absolute top-0 w-max max-w-[5.5rem] -translate-x-1/2 font-display text-[0.6875rem] font-medium text-ink sm:text-xs"
+            style={{ left: `${((NODE_X[i] + NODE_W / 2) / PIPE_W) * 100}%` }}
+          >
             {step}
           </span>
         ))}

@@ -29,33 +29,61 @@ export default function Nav() {
   return (
     <nav className="sticky top-0 z-50 border-b border-black/5 bg-white/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center px-6 py-4">
-        <Link to="/" className="flex shrink-0 items-center gap-2 font-display text-xl font-semibold tracking-tight text-ink">
-          <img src={lampasLogo} alt="Lampas .ai" className="h-14 w-auto object-contain" />
-          Lampas <span className="brand-gradient-text">.ai</span>
+        {/* Icon-only, hidden from a11y/tab order - the text link right next
+            to it is the real "go home" target with a proper label, so this
+            is just the decorative mark. Kept as its own flex item (not
+            grouped with the text) specifically so it can be centered
+            against the *whole* row height via the row's items-center,
+            instead of being pulled up to sit on the text baseline below. */}
+        <Link to="/" aria-hidden="true" tabIndex={-1} className="shrink-0 self-center">
+          <img src={lampasLogo} alt="" className="h-14 w-auto object-contain" />
         </Link>
 
-        <div className="ml-auto hidden items-center gap-6 lg:flex">
-          <ul className="flex items-center gap-8 text-sm text-muted">
-            {links.map((link) => (
-              <li key={link.href}>
-                <Link
-                  to={link.href}
-                  className={`nav-link ${activeId === link.id ? "is-active" : ""}`}
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-            <li>
+        {/* Groups the wordmark with the nav links so items-baseline aligns
+            their text baselines with each other - then this whole group
+            (only as tall as its own short line of text) is centered by the
+            row's items-center against the much taller logo image, instead
+            of the group's baseline itself trying to double as the image's
+            center line. */}
+        <div className="ml-2 flex items-baseline">
+          <Link
+            to="/"
+            className="shrink-0 font-display text-xl font-semibold tracking-tight text-ink"
+          >
+            Lampas <span className="brand-gradient-text">.ai</span>
+          </Link>
+
+          {/* Both gaps below are fixed margins, not ml-auto - so neither the
+              logo-to-links gap nor the links-to-auth gap depends on how wide
+              the trailing auth cluster is (avatar + admin icons +
+              "Déconnexion" vs. just "Se connecter") or how short the link
+              labels get in English. The tradeoff: on a very wide viewport,
+              this whole block sits left-anchored rather than the auth
+              cluster being pinned to the far right edge - preferred over a
+              gap that visibly grows/shrinks next to the links. */}
+          <ul className="ml-8 hidden items-center gap-6 text-sm text-muted xl:flex">
+          {links.map((link) => (
+            <li key={link.href} className="whitespace-nowrap">
               <Link
-                to="/formations"
-                className={`nav-link ${pathname.startsWith("/formations") ? "is-active" : ""}`}
+                to={link.href}
+                className={`nav-link ${activeId === link.id ? "is-active" : ""}`}
               >
-                {t.nav.formations}
+                {link.label}
               </Link>
             </li>
+          ))}
+          <li className="whitespace-nowrap">
+            <Link
+              to="/formations"
+              className={`nav-link ${pathname.startsWith("/formations") ? "is-active" : ""}`}
+            >
+              {t.nav.formations}
+            </Link>
+          </li>
           </ul>
+        </div>
 
+        <div className="ml-6 hidden items-center gap-4 xl:flex">
           {user ? (
             <div className="flex items-center gap-3">
               {profile?.first_name && (
@@ -101,6 +129,21 @@ export default function Nav() {
                       <path d="M10 6.5v11" stroke="currentColor" strokeWidth="1.6" strokeDasharray="1.6 1.6" />
                     </svg>
                   </Link>
+                  <Link
+                    to="/admin/stats"
+                    title="Statistiques"
+                    className="text-muted transition hover:text-ink"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+                      <path
+                        d="M4 20V10M11 20V4M18 20v-7"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </Link>
                 </>
               )}
               <button
@@ -125,7 +168,7 @@ export default function Nav() {
           </div>
         </div>
 
-        <div className="ml-auto flex items-center gap-3 lg:hidden">
+        <div className="ml-auto flex items-center gap-3 xl:hidden">
           <LangSwitch lang={lang} setLang={setLang} />
           <button
             type="button"
@@ -139,7 +182,7 @@ export default function Nav() {
       </div>
 
       {open && (
-        <ul className="flex flex-col gap-1 border-t border-black/5 bg-white px-6 py-4 text-ink lg:hidden">
+        <ul className="flex flex-col gap-1 border-t border-black/5 bg-white px-6 py-4 text-ink xl:hidden">
           {links.map((link) => (
             <li key={link.href}>
               <Link
@@ -182,6 +225,15 @@ export default function Nav() {
                   className="block rounded-lg px-2 py-3 hover:bg-black/[0.03]"
                 >
                   Vouchers examen
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/admin/stats"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-lg px-2 py-3 hover:bg-black/[0.03]"
+                >
+                  Statistiques
                 </Link>
               </li>
             </>

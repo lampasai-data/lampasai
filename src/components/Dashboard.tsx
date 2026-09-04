@@ -303,7 +303,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                   message ended up taller below its buttons than one without,
                   which pushed its button row up and broke the alignment
                   between cards that all sit in the same grid row. */}
-              <div className="flex min-h-4 items-center justify-center pt-4">
+              <div className="flex min-h-8 items-center justify-center pt-4">
                 {!isPro && expiresAt && (
                   <div className="flex items-center gap-2 text-xs text-muted">
                     <span>

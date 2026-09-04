@@ -58,13 +58,17 @@ const SUBSTITUTIONS: [RegExp, string][] = [
   [/…/g, "..."],
   // The blank placeholder in fill-in-the-expression questions.
   [/⬚/g, "____"],
-  [/①/g, "(1)"],
-  [/②/g, "(2)"],
-  [/③/g, "(3)"],
-  [/④/g, "(4)"],
-  [/⑤/g, "(5)"],
   [/⣿/g, ""],
 ];
+
+// Circled digits ①-⑳ (U+2460-U+2473, "1" through "20") used elsewhere in the
+// app (see withCircledNumbers) to number sub-parts of a question - handled
+// as a range rather than hardcoding a handful, so a question needing more
+// than the first few doesn't silently lose that digit to clean()'s WinAnsi
+// filter below (it'd just vanish as a stripped space instead of "(6)", "(7)"...).
+function expandCircledDigits(text: string): string {
+  return text.replace(/[①-⑳]/g, (ch) => `(${ch.codePointAt(0)! - 0x2460 + 1})`);
+}
 
 // Characters above U+00FF that WinAnsi still covers.
 const WINANSI_EXTRAS =
@@ -72,7 +76,7 @@ const WINANSI_EXTRAS =
   "‘’“”•–-˜™š›œžŸ";
 
 function clean(text: string): string {
-  let out = text;
+  let out = expandCircledDigits(text);
   for (const [pattern, replacement] of SUBSTITUTIONS) out = out.replace(pattern, replacement);
   return Array.from(out)
     .map((ch) => (ch.charCodeAt(0) <= 0xff || WINANSI_EXTRAS.includes(ch) ? ch : " "))
@@ -327,7 +331,13 @@ export function exportCertificationPdf(certName: string, questions: Question[], 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     setText(TEAL_DARK);
-    doc.text("LAMPAS .AI", MARGIN_X, y, { baseline: "top", charSpace: 1.1 });
+    // No charSpace here (or on any other label in this file) - jsPDF emits
+    // tracked/letter-spaced text as one separate text-show operator per
+    // character, which draws fine but makes the text unreadable if it's
+    // ever copy-pasted or extracted (e.g. "L a m p a s . a i" instead of
+    // "Lampas .ai") - confirmed with a real text-extraction pass over a
+    // generated PDF. Plain text only, everywhere.
+    doc.text("Lampas .ai", MARGIN_X, y, { baseline: "top" });
 
     y += 11;
     write(title, { x: MARGIN_X, width: CONTENT_W, size: 19, style: "bold", color: INK, gapAfter: 3 });
@@ -366,7 +376,7 @@ export function exportCertificationPdf(certName: string, questions: Question[], 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(size);
     setText(TEAL_DARK);
-    doc.text(clean(text).toUpperCase(), BODY_X, y, { baseline: "top", charSpace: 0.5 });
+    doc.text(clean(text).toUpperCase(), BODY_X, y, { baseline: "top" });
     y += lineHeight(size) + 1.8;
   }
 
@@ -429,7 +439,6 @@ export function exportCertificationPdf(certName: string, questions: Question[], 
     setText(TEAL_DARK);
     doc.text(clean(t.explanation).toUpperCase(), BODY_X + padX, top + padY, {
       baseline: "top",
-      charSpace: 0.4,
     });
 
     y = top + padY + labelH;
@@ -526,6 +535,5 @@ export function exportCertificationPdf(certName: string, questions: Question[], 
   coverHeader();
   questions.forEach(questionBlock);
   footers();
-
   doc.save(`lampasai-${fileSlug(title)}.pdf`);
 }

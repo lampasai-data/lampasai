@@ -142,7 +142,7 @@ export default function AdminGumroad() {
   }
 
   return (
-    <section className="mx-auto max-w-4xl px-6 py-24">
+    <section className="mx-auto max-w-4xl px-6 pt-8 pb-24">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink">Rattrapage Gumroad</h1>

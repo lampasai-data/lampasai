@@ -93,7 +93,7 @@ export default function Formations() {
   ];
 
   return (
-    <section className="mx-auto max-w-6xl px-6 pt-4 pb-14">
+    <section className="mx-auto max-w-6xl px-6 pt-8 pb-14">
       {/* Texte d'en-tête sans animation d'entrée : il doit être lisible dès
           l'arrivée sur la page, pas se déplier sous les yeux du visiteur. */}
       <h1 className="font-heading max-w-3xl text-3xl text-ink md:text-4xl">

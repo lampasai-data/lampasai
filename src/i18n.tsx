@@ -113,6 +113,7 @@ interface Translations {
     tooFast: string;
   };
   footer: {
+    tagline: string;
     copyright: (year: number) => string;
     contactLink: string;
     navTitle: string;
@@ -205,6 +206,7 @@ interface Translations {
     flag: string;
     unflag: string;
     flaggedNotice: string;
+    flaggedAnsweredNotice: string;
     reviewFlagged: (n: number) => string;
     finishedTitle: string;
     finishedScore: string;
@@ -404,6 +406,7 @@ const translations: Record<Lang, Translations> = {
       tooFast: "Merci de patienter quelques secondes avant d'envoyer.",
     },
     footer: {
+      tagline: "Des solutions sur-mesure pour exploiter tout le potentiel de vos données.",
       copyright: (year: number) => `Copyright © ${year} Lampas .ai`,
       contactLink: "Nous contacter",
       navTitle: "Navigation",
@@ -505,6 +508,7 @@ const translations: Record<Lang, Translations> = {
       flag: "Marquer pour plus tard",
       unflag: "Retirer le marquage",
       flaggedNotice: "Marquée pour plus tard",
+      flaggedAnsweredNotice: "Marquée · déjà répondu",
       reviewFlagged: (n) => `Revoir les questions marquées (${n})`,
       finishedTitle: "C'est terminé !",
       finishedScore: "Bonnes réponses",
@@ -573,7 +577,7 @@ const translations: Record<Lang, Translations> = {
       quotaEncourage: "C'est un bon début, encore un peu d'entraînement et tu vas y arriver - ne lâche rien !",
       quotaUnlockHint: "Dans tous les cas, débloque l'accès illimité pour t'entraîner sur toutes les questions et arriver serein le jour J.",
       reviewTitle: "Revoir les questions",
-      reviewErrorsOnly: "Voir seulement mes erreurs",
+      reviewErrorsOnly: "Voir mes erreurs",
       reviewAll: "Voir toutes les questions",
     },
   },
@@ -704,6 +708,7 @@ const translations: Record<Lang, Translations> = {
       tooFast: "Please wait a few seconds before sending.",
     },
     footer: {
+      tagline: "Tailor-made AI solutions to unlock the full potential of your data.",
       copyright: (year: number) => `Copyright © ${year} Lampas .ai`,
       contactLink: "Contact us",
       navTitle: "Navigation",
@@ -805,6 +810,7 @@ const translations: Record<Lang, Translations> = {
       flag: "Flag for later",
       unflag: "Remove flag",
       flaggedNotice: "Flagged for later",
+      flaggedAnsweredNotice: "Flagged · already answered",
       reviewFlagged: (n) => `Review flagged questions (${n})`,
       finishedTitle: "All done",
       finishedScore: "Correct answers",
@@ -873,7 +879,7 @@ const translations: Record<Lang, Translations> = {
       quotaEncourage: "That's a good start - a bit more practice and you'll get there, don't give up!",
       quotaUnlockHint: "Either way, unlock unlimited access to train on every question and feel ready on exam day.",
       reviewTitle: "Review the questions",
-      reviewErrorsOnly: "Show only my mistakes",
+      reviewErrorsOnly: "Show my mistakes",
       reviewAll: "Show all questions",
     },
   },

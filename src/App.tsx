@@ -14,6 +14,7 @@ import ResetPassword from "./pages/ResetPassword";
 import EmailConfirmed from "./pages/EmailConfirmed";
 import AdminGumroad from "./pages/AdminGumroad";
 import AdminVouchers from "./pages/AdminVouchers";
+import AdminStats from "./pages/AdminStats";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/email-confirmed" element={<EmailConfirmed />} />
         <Route path="/admin/gumroad" element={<AdminGumroad />} />
         <Route path="/admin/vouchers" element={<AdminVouchers />} />
+        <Route path="/admin/stats" element={<AdminStats />} />
       </Routes>
       <Footer />
       <ScrollToTop />

@@ -51,7 +51,7 @@ export default function Contact() {
       <div className="mx-auto max-w-6xl px-6 py-10 md:py-14">
       <Reveal className="max-w-2xl">
         <span className="eyebrow">{t.contact.tag}</span>
-        <h2 className="font-heading text-[1.75rem] text-ink sm:text-[1.875rem]">
+        <h2 className="font-heading heading-fit text-ink">
           {t.contact.title}
         </h2>
         <p className="text-block mt-5 leading-relaxed text-muted">{t.contact.lead}</p>

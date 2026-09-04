@@ -15,13 +15,13 @@ export default function Footer() {
 
   return (
     <footer className="bg-ink">
-      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 py-14 sm:grid-cols-3">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 pt-14 pb-8 sm:grid-cols-3">
         <div>
           <Link to="/" className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight text-white">
             <img src={lampasLogo} alt="Lampas .ai" className="h-10 w-auto object-contain" />
             Lampas <span className="brand-gradient-text">.ai</span>
           </Link>
-          <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/60">{t.hero.sub}</p>
+          <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/60">{t.footer.tagline}</p>
           <a
             href="https://www.linkedin.com/company/lampasai"
             target="_blank"

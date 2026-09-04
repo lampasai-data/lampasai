@@ -50,6 +50,8 @@ export default function AdminVouchers() {
   const [filterStatus, setFilterStatus] = useState<"" | "disponible" | "epuise" | "expire">("");
   const [filterRedeemer, setFilterRedeemer] = useState("");
   const [page, setPage] = useState(0);
+  const [redeemersModalVoucher, setRedeemersModalVoucher] = useState<VoucherRow | null>(null);
+  const [redeemerSearch, setRedeemerSearch] = useState("");
 
   async function loadData() {
     if (!supabase) return;
@@ -155,15 +157,19 @@ export default function AdminVouchers() {
     return v.max_redemptions > 1 ? `Disponible (${count}/${v.max_redemptions})` : "Disponible";
   }
 
+  function redeemerName(r: RedemptionRow) {
+    const p = redeemers.get(r.user_id);
+    return p?.first_name ?? p?.email ?? r.user_id;
+  }
+
+  // Plain text used for filtering only - the table cell itself renders a
+  // count badge instead of this once redemptions are more than a couple of
+  // names, since a shared voucher (max_redemptions in the hundreds) turned
+  // this into one unreadable comma-separated blob spanning the whole row.
   function redeemerLabel(v: VoucherRow) {
     const rows = redemptionsFor(v.id);
     if (rows.length === 0) return "-";
-    return rows
-      .map((r) => {
-        const p = redeemers.get(r.user_id);
-        return p?.first_name ?? p?.email ?? r.user_id;
-      })
-      .join(", ");
+    return rows.map(redeemerName).join(", ");
   }
 
   const filteredVouchers = vouchers.filter((v) => {
@@ -194,20 +200,20 @@ export default function AdminVouchers() {
   }
 
   return (
-    <section className="mx-auto max-w-4xl px-6 py-16">
+    <section className="mx-auto max-w-5xl px-6 pt-8 pb-16">
       <h1 className="font-display text-2xl font-semibold text-ink">Vouchers examen</h1>
       <p className="mt-2 text-sm text-muted">
-        Génère un code qui débloque le mode examen (30 jours, sans export PDF) pour une
-        certification. Un code peut être utilisable une seule fois ou par plusieurs personnes.
+        Génère un code qui débloque le mode examen (30 jours, sans export PDF) d'une
+        certification, en usage unique ou partagé.
       </p>
 
-      <div className="mt-8 flex flex-wrap items-end gap-3 rounded-2xl border border-black/8 bg-white p-6">
+      <div className="mt-6 flex flex-wrap items-end gap-3 rounded-2xl border border-black/8 bg-white px-6 py-4">
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-muted">Certification</label>
           <select
             value={certificationId}
             onChange={(e) => setCertificationId(e.target.value)}
-            className="rounded-lg border border-black/10 px-3 py-2 text-sm"
+            className="rounded-lg border border-black/10 px-3 py-1.5 text-sm"
           >
             {certs.map((c) => (
               <option key={c.id} value={c.id}>
@@ -224,7 +230,7 @@ export default function AdminVouchers() {
             type="date"
             value={expiresAt}
             onChange={(e) => setExpiresAt(e.target.value)}
-            className="rounded-lg border border-black/10 px-3 py-2 text-sm"
+            className="rounded-lg border border-black/10 px-3 py-1.5 text-sm"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -235,14 +241,14 @@ export default function AdminVouchers() {
             step={1}
             value={maxRedemptions}
             onChange={(e) => setMaxRedemptions(e.target.value)}
-            className="w-28 rounded-lg border border-black/10 px-3 py-2 text-sm"
+            className="w-28 rounded-lg border border-black/10 px-3 py-1.5 text-sm"
           />
         </div>
         <button
           type="button"
           onClick={handleGenerate}
           disabled={generating || !certificationId}
-          className="brand-gradient rounded-full px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+          className="brand-gradient rounded-full px-4 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
         >
           {generating ? "Génération…" : "Générer un code"}
         </button>
@@ -259,15 +265,15 @@ export default function AdminVouchers() {
         </p>
       )}
 
-      <div className="mt-8 overflow-x-auto rounded-2xl border border-black/8 bg-white">
+      <div className="mt-6 overflow-x-auto rounded-2xl border border-black/8 bg-white">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-black/8 text-xs uppercase tracking-wide text-muted">
             <tr>
               <th className="px-4 py-3">Code</th>
-              <th className="px-4 py-3">Certification</th>
+              <th className="whitespace-nowrap px-4 py-3">Certification</th>
               <th className="px-4 py-3">Type</th>
               <th className="px-4 py-3">Créé le</th>
-              <th className="px-4 py-3">Statut</th>
+              <th className="whitespace-nowrap px-4 py-3">Statut</th>
               <th className="px-4 py-3">Utilisé par</th>
             </tr>
             <tr className="border-b border-black/8 bg-surface">
@@ -349,16 +355,36 @@ export default function AdminVouchers() {
                 </td>
               </tr>
             ) : (
-              pagedVouchers.map((v) => (
-                <tr key={v.id} className="border-b border-black/5 last:border-0">
-                  <td className="px-4 py-3 font-mono">{v.code}</td>
-                  <td className="px-4 py-3">{certName(v.certification_id)}</td>
-                  <td className="px-4 py-3">{usageTypeLabel(v)}</td>
-                  <td className="px-4 py-3">{new Date(v.created_at).toLocaleDateString("fr-FR")}</td>
-                  <td className="px-4 py-3">{statusLabel(v)}</td>
-                  <td className="px-4 py-3">{redeemerLabel(v)}</td>
-                </tr>
-              ))
+              pagedVouchers.map((v) => {
+                const rows = redemptionsFor(v.id);
+                return (
+                  <tr key={v.id} className="border-b border-black/5 last:border-0">
+                    <td className="px-4 py-3 font-mono">{v.code}</td>
+                    <td className="whitespace-nowrap px-4 py-3">{certName(v.certification_id)}</td>
+                    <td className="px-4 py-3">{usageTypeLabel(v)}</td>
+                    <td className="px-4 py-3">{new Date(v.created_at).toLocaleDateString("fr-FR")}</td>
+                    <td className="whitespace-nowrap px-4 py-3">{statusLabel(v)}</td>
+                    <td className="px-4 py-3 max-w-[16rem]">
+                      {rows.length === 0 ? (
+                        "-"
+                      ) : rows.length <= 3 ? (
+                        <span className="line-clamp-2">{rows.map(redeemerName).join(", ")}</span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRedeemerSearch("");
+                            setRedeemersModalVoucher(v);
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-teal/30 bg-teal/[0.06] px-3 py-1 text-xs font-medium text-teal-dark transition hover:bg-teal/10"
+                        >
+                          👥 {rows.length} personnes
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -385,6 +411,75 @@ export default function AdminVouchers() {
           >
             Suivant
           </button>
+        </div>
+      )}
+
+      {redeemersModalVoucher && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-6"
+          onClick={() => setRedeemersModalVoucher(null)}
+        >
+          <div
+            className="max-h-[80vh] w-full max-w-md overflow-hidden rounded-2xl border border-black/8 bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-black/8 px-5 py-4">
+              <div>
+                <p className="font-mono text-sm font-semibold text-ink">
+                  {redeemersModalVoucher.code}
+                </p>
+                <p className="text-xs text-muted">
+                  {redemptionsFor(redeemersModalVoucher.id).length} personnes ·{" "}
+                  {certName(redeemersModalVoucher.certification_id)}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRedeemersModalVoucher(null)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-black/10 text-ink transition hover:bg-black/[0.03]"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="border-b border-black/8 px-5 py-3">
+              <input
+                type="text"
+                value={redeemerSearch}
+                onChange={(e) => setRedeemerSearch(e.target.value)}
+                placeholder="Rechercher un nom ou un email…"
+                className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="max-h-[50vh] overflow-y-auto">
+              {redemptionsFor(redeemersModalVoucher.id)
+                .filter((r) => {
+                  if (!redeemerSearch) return true;
+                  const p = redeemers.get(r.user_id);
+                  const haystack = `${p?.first_name ?? ""} ${p?.email ?? ""}`.toLowerCase();
+                  return haystack.includes(redeemerSearch.toLowerCase());
+                })
+                .sort((a, b) => a.redeemed_at.localeCompare(b.redeemed_at))
+                .map((r) => {
+                  const p = redeemers.get(r.user_id);
+                  return (
+                    <div
+                      key={r.user_id}
+                      className="flex items-center justify-between gap-3 border-b border-black/5 px-5 py-2.5 text-sm last:border-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-ink">
+                          {p?.first_name ?? "(sans nom)"}
+                        </p>
+                        {p?.email && <p className="truncate text-xs text-muted">{p.email}</p>}
+                      </div>
+                      <span className="shrink-0 text-xs text-muted">
+                        {new Date(r.redeemed_at).toLocaleDateString("fr-FR")}
+                      </span>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
         </div>
       )}
     </section>

@@ -316,14 +316,31 @@ function withCircledNumbers(text: string) {
 // its own line (e.g. a full DAX expression).
 function renderQuestionText(text: string) {
   const lines = text.split("\n");
-  return lines.map((line, i) => (
-    <span key={i} className={looksLikeCode(line) ? "font-mono text-[13px] tracking-tight" : undefined}>
-      {withCircledNumbers(line).flatMap((part, pi) =>
-        typeof part === "string" ? renderInlineCode(part, `${i}-${pi}`) : [part]
-      )}
-      {i < lines.length - 1 ? "\n" : ""}
-    </span>
-  ));
+  return lines.map((line, i) => {
+    // A whole line of DAX/SQL/etc. reads as an actual formula, not just
+    // monospaced prose - give it a real code-block look (its own row,
+    // background, horizontal scroll for long lines) rather than just
+    // switching the font, so it visually reads as "this is code" the way a
+    // code editor would show it.
+    if (looksLikeCode(line)) {
+      return (
+        <code
+          key={i}
+          className="my-1.5 block overflow-x-auto rounded-lg bg-black/[0.045] px-3 py-2 font-mono text-[13px] leading-relaxed tracking-tight text-ink/90"
+        >
+          {withCircledNumbers(line)}
+        </code>
+      );
+    }
+    return (
+      <span key={i}>
+        {withCircledNumbers(line).flatMap((part, pi) =>
+          typeof part === "string" ? renderInlineCode(part, `${i}-${pi}`) : [part]
+        )}
+        {i < lines.length - 1 ? "\n" : ""}
+      </span>
+    );
+  });
 }
 
 function renderInlineCode(text: string, keyPrefix: string) {
@@ -1102,7 +1119,7 @@ export default function CertificationQuiz() {
         {mode === "exam" && (
           <div className="mt-8 text-left">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="font-display text-lg font-semibold text-ink">{t.quiz.reviewTitle}</h2>
+              <h2 className="font-display text-base font-semibold text-ink">{t.quiz.reviewTitle}</h2>
               {reviewPageCount > 1 && (
                 <div className="flex items-center gap-3 text-sm">
                   <button
@@ -1259,7 +1276,13 @@ export default function CertificationQuiz() {
 
   const isMulti = (question.correctIndexes?.length ?? 0) > 1;
   const isFlagged = flagged.has(qIndex);
-  const remainingFlagged = flagged.size;
+  // Once a flagged question has been answered, it's done - it stays
+  // flagged (the user may still want to revisit it, e.g. to reread the
+  // correction), but it no longer counts as something still "to treat":
+  // the answer is locked in either way, so nothing is actually pending on
+  // it anymore. Keeps the counter/priority-jump meaning "questions I still
+  // need to answer" rather than "questions I ever flagged".
+  const remainingFlagged = [...flagged].filter((qi) => !(qi in results)).length;
 
   function toggleOption(i: number) {
     if (submitted) return;
@@ -1410,12 +1433,14 @@ export default function CertificationQuiz() {
     });
   }
 
-  // Jumps straight to the first flagged-for-review question still in the
-  // queue, so clicking the "N questions flagged" counter is actually
-  // actionable instead of just informational. The current question is
-  // pushed onto history first so Previous can still step back to it.
+  // Jumps straight to the first flagged-and-still-unanswered question in
+  // the queue, matching what the counter it's attached to actually counts
+  // (see remainingFlagged) - a flagged question that's already been
+  // answered has nothing left to "treat", so it's not a jump target here.
+  // The current question is pushed onto history first so Previous can
+  // still step back to it.
   function goToFirstFlagged() {
-    const targetQIndex = queue.find((qi) => flagged.has(qi));
+    const targetQIndex = queue.find((qi) => flagged.has(qi) && !(qi in results));
     if (targetQIndex === undefined) return;
     const idx = queue.indexOf(targetQIndex);
     if (idx === -1 || idx === pos) return;
@@ -1428,16 +1453,16 @@ export default function CertificationQuiz() {
       <BackLink to="/formations" label={backLabel} />
 
       <div className="mt-4 flex w-full min-w-0 flex-wrap items-center justify-between gap-4 border-b border-black/[0.06] pb-3">
-        <div className="flex min-w-0 shrink-0 items-center gap-2.5">
+        <div className="flex min-w-0 items-center gap-2.5">
           <img
             src={CERT_LOGOS[slug] ?? lampasLogo}
             alt=""
             className="h-8 w-8 object-contain"
           />
-          <h1 className="flex flex-wrap items-baseline gap-x-2 font-display text-base font-semibold leading-tight text-ink">
+          <h1 className="flex flex-wrap items-baseline gap-x-1.5 font-display text-base font-semibold leading-tight text-ink">
             {localize(cert.name, lang)}
             <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
-              {mode === "exam" ? t.quiz.modeExamTitle : t.quiz.modeTrainingTitle}
+              · {mode === "exam" ? t.quiz.modeExamTitle : t.quiz.modeTrainingTitle}
             </span>
           </h1>
         </div>
@@ -1547,7 +1572,7 @@ export default function CertificationQuiz() {
           className="mt-5 rounded-2xl border border-black/8 bg-white p-7 pt-3 shadow-[0_1px_2px_rgba(20,20,43,0.04),0_8px_24px_-12px_rgba(20,20,43,0.12)] sm:p-8 sm:pt-4"
         >
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold uppercase tracking-wide text-teal-dark">
+            <p className="text-base font-semibold tracking-wide text-teal-dark">
               {t.quiz.questionOf(pos + 1, runSize)}
             </p>
             <button
@@ -1571,11 +1596,13 @@ export default function CertificationQuiz() {
               className="mt-3 mb-4 w-full max-w-xl rounded-xl border border-black/8"
             />
           )}
-          <p className="mt-3 max-w-[42rem] whitespace-pre-line font-display text-lg font-medium leading-snug text-ink">
+          <p className="mt-3 max-w-[48rem] whitespace-pre-line font-display text-base font-medium leading-snug text-ink">
             {renderQuestionText(localize(question.question, lang))}
           </p>
           {isFlagged && (
-            <p className="mt-1 text-xs font-medium text-amber">{t.quiz.flaggedNotice}</p>
+            <p className="mt-1 text-xs font-medium text-amber">
+              {submitted ? t.quiz.flaggedAnsweredNotice : t.quiz.flaggedNotice}
+            </p>
           )}
           {isMulti && (
             <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-teal/25 bg-teal/[0.08] px-3.5 py-1.5 text-xs font-semibold tracking-wide text-teal-dark">
@@ -1584,13 +1611,13 @@ export default function CertificationQuiz() {
             </div>
           )}
           {question.type === "order" && (
-            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-teal/25 bg-teal/[0.08] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-teal-dark">
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-teal/25 bg-teal/[0.08] px-3.5 py-1.5 text-xs font-semibold tracking-wide text-teal-dark">
               <span className="text-sm">⇅</span>
               {t.quiz.dragHint}
             </div>
           )}
           {question.type === "match" && (
-            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-teal/25 bg-teal/[0.08] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-teal-dark">
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-teal/25 bg-teal/[0.08] px-3.5 py-1.5 text-xs font-semibold tracking-wide text-teal-dark">
               <span className="text-sm">›</span>
               {t.quiz.matchHint}
             </div>
@@ -1894,7 +1921,7 @@ export default function CertificationQuiz() {
                     whileTap={{ scale: 0.98 }}
                     onClick={() => toggleOption(i)}
                     disabled={submitted}
-                    className={`flex items-center gap-3.5 rounded-xl border px-4 py-3 text-left text-sm transition ${
+                    className={`flex items-center gap-3.5 rounded-xl border px-4 py-3 text-left text-[13px] transition ${
                       submitted && isCorrect
                         ? "border-green/40 bg-green/10 text-green"
                         : submitted && isPicked
