@@ -247,7 +247,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                 </div>
               )}
 
-              <div className="scroll-row mt-auto flex items-center gap-x-2 overflow-x-auto border-t border-black/5 pb-1 pt-5">
+              <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-2 border-t border-black/5 pt-5">
                 {unlocked ? (
                   <Link
                     to={`/formations/${cert.slug}?mode=exam`}
