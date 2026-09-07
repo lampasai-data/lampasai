@@ -956,7 +956,7 @@ export default function CertificationQuiz() {
                 {t.quiz.modeExamDesc}
               </p>
               {isPro ? (
-                <div className="mt-5 flex flex-nowrap items-center gap-3 overflow-x-auto">
+                <div className="mt-5 flex flex-wrap items-center gap-3">
                   <button
                     type="button"
                     onClick={startExam}
