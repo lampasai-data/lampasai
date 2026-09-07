@@ -247,7 +247,10 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                 </div>
               )}
 
-              <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-2 border-t border-black/5 pt-5">
+              {/* Centred on phones so a button that wraps onto its own line
+                  doesn't read as orphaned against the left edge; from sm up
+                  the row fits on one line, so it stays left-aligned. */}
+              <div className="mt-auto flex flex-wrap items-center justify-center gap-x-2 gap-y-2 border-t border-black/5 pt-5 sm:justify-start">
                 {unlocked ? (
                   <Link
                     to={`/formations/${cert.slug}?mode=exam`}
