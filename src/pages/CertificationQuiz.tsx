@@ -1623,7 +1623,7 @@ export default function CertificationQuiz() {
             </div>
           )}
           {question.type === "hotspot" && (
-            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-teal/25 bg-teal/[0.08] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-teal-dark">
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-teal/25 bg-teal/[0.08] px-3.5 py-1.5 text-xs font-semibold tracking-wide text-teal-dark">
               <span className="text-sm">▾</span>
               {t.quiz.hotspotHint}
             </div>
