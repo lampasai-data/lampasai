@@ -46,4 +46,10 @@ export interface Question {
   image?: string;
   /** When true, this question is only drawn in exam mode, never in free/training runs. */
   examOnly?: boolean;
+  /**
+   * Exam domain ("rubrique") this question belongs to - a SkillDomain.key from
+   * certificationDomains.ts. Optional: the offline fallback banks are untagged,
+   * and an untagged question is drawn normally, just without a rubric badge.
+   */
+  domain?: string;
 }

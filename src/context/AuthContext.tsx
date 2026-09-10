@@ -39,6 +39,13 @@ interface Profile {
 
 interface AuthState {
   ready: boolean;
+  /**
+   * True once the profile lookup has settled - succeeded, failed, or been
+   * skipped because nobody is signed in. `ready` only covers the session:
+   * a screen whose layout depends on profile.plan (Pro vs locked) has to
+   * wait on this too, or it renders a locked state at a paying user.
+   */
+  profileReady: boolean;
   user: User | null;
   profile: Profile | null;
   passwordRecovery: boolean;
@@ -72,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { lang, t } = useLanguage();
   const navigate = useNavigate();
   const [ready, setReady] = useState(!isSupabaseConfigured);
+  const [profileReady, setProfileReady] = useState(!isSupabaseConfigured);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
@@ -97,12 +105,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function loadProfile(userId: string) {
     if (!supabase) return;
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, email, first_name, plan, free_questions_used")
-      .eq("id", userId)
-      .single();
-    if (data) setProfile(data as Profile);
+    setProfileReady(false);
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, email, first_name, plan, free_questions_used")
+        .eq("id", userId)
+        .single();
+      if (data) setProfile(data as Profile);
+    } finally {
+      // Settled either way: a failed lookup means "no Pro plan known", not
+      // "hold every dependent screen forever".
+      setProfileReady(true);
+    }
   }
 
   useEffect(() => {
@@ -112,13 +127,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(data.session);
       setReady(true);
       if (data.session) loadProfile(data.session.user.id);
+      else setProfileReady(true);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         setSession(newSession);
         if (newSession) loadProfile(newSession.user.id);
-        else setProfile(null);
+        else {
+          setProfile(null);
+          setProfileReady(true);
+        }
         // Supabase parses the recovery link's URL fragment automatically and
         // fires this event - used to route the user to a "set new password" screen.
         if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
@@ -364,6 +383,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         ready,
+        profileReady,
         user: session?.user ?? null,
         profile,
         passwordRecovery,

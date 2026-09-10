@@ -70,7 +70,7 @@ export async function loadQuestions(slug: string): Promise<{
       const { data: rows } = await supabase
         .from("quiz_questions")
         .select(
-          "id, type, question, question_en, options, options_en, correct_indexes, correct_order, pool, pool_en, targets, targets_en, blanks, blanks_en, explanation, explanation_en, exam_only"
+          "id, type, question, question_en, options, options_en, correct_indexes, correct_order, pool, pool_en, targets, targets_en, blanks, blanks_en, explanation, explanation_en, exam_only, domain"
         )
         .eq("certification_id", cert.id)
         .order("position", { ascending: true });
@@ -90,6 +90,7 @@ export async function loadQuestions(slug: string): Promise<{
                 ? toLocalizedPair(r.explanation, r.explanation_en)
                 : undefined,
               examOnly: Boolean(r.exam_only),
+              domain: (r.domain as string | null) ?? undefined,
             };
             if (type === "match") {
               const poolEn = r.pool_en as string[] | null;
@@ -383,6 +384,21 @@ export async function getCertificationLeaderboard(
     avgRatio: row.avg_ratio == null ? null : Number(row.avg_ratio),
     isYou: row.is_you,
   }));
+}
+
+// The signed-in user's own rank on a certification, or null when they haven't
+// ranked in the period at all. Reads the same leaderboard function the
+// leaderboard page uses and picks out the is_you row, rather than adding a
+// dedicated SQL function: with the current player counts that's one small
+// round-trip per certification. If a leaderboard ever grows to hundreds of
+// players this should become its own rank-only RPC instead of shipping the
+// whole table to the browser to read one line of it.
+export async function getMyCertificationRank(
+  certificationId: string,
+  period: LeaderboardPeriod
+): Promise<number | null> {
+  const rows = await getCertificationLeaderboard(certificationId, period);
+  return rows.find((r) => r.isYou)?.rank ?? null;
 }
 
 export interface LeaderboardPreview {

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useLanguage } from "../i18n";
+import { ADMIN_T, adminLocale } from "./adminI18n";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -41,6 +43,8 @@ function isNoiseHeartbeat(log: WebhookLog): boolean {
 
 export default function AdminGumroad() {
   const { user, ready } = useAuth();
+  const { lang } = useLanguage();
+  const a = ADMIN_T[lang];
   const [pending, setPending] = useState<PendingPurchase[]>([]);
   const [logs, setLogs] = useState<WebhookLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -102,11 +106,11 @@ export default function AdminGumroad() {
     setLinking(null);
 
     if (error || data?.error) {
-      setFeedback((prev) => ({ ...prev, [pendingId]: `Erreur : ${data?.error ?? error?.message}` }));
+      setFeedback((prev) => ({ ...prev, [pendingId]: a.errorWith(String(data?.error ?? error?.message)) }));
       return;
     }
 
-    setFeedback((prev) => ({ ...prev, [pendingId]: "Lié avec succès." }));
+    setFeedback((prev) => ({ ...prev, [pendingId]: a.gumroadLinked }));
     loadData();
   }
 
@@ -125,13 +129,11 @@ export default function AdminGumroad() {
     setReconciling(false);
 
     if (error || data?.error) {
-      setReconcileFeedback(`Erreur : ${data?.error ?? error?.message}`);
+      setReconcileFeedback(a.errorWith(String(data?.error ?? error?.message)));
       return;
     }
 
-    setReconcileFeedback(
-      `Terminé : ${data.total} vente(s) vues, ${data.processed} traitée(s), ${data.skipped} déjà connue(s).`
-    );
+    setReconcileFeedback(a.gumroadReconcileDone(data.total, data.processed, data.skipped));
     loadData();
   }
 
@@ -145,9 +147,9 @@ export default function AdminGumroad() {
     <section className="mx-auto max-w-4xl px-6 pt-8 pb-24">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-ink">Rattrapage Gumroad</h1>
+          <h1 className="font-display text-2xl font-semibold text-ink">{a.gumroadTitle}</h1>
           <p className="mt-2 text-sm text-muted">
-            Ventes Gumroad non associées à un compte depuis plus de {STALE_HOURS}h.
+            {a.gumroadSubtitle(STALE_HOURS)}
           </p>
         </div>
         <div className="text-right">
@@ -157,7 +159,7 @@ export default function AdminGumroad() {
             disabled={reconciling}
             className="rounded-full border border-teal/40 px-4 py-2 text-xs font-medium text-teal-dark transition hover:bg-teal/5 disabled:opacity-50"
           >
-            {reconciling ? "Rapprochement en cours…" : "Relancer le rapprochement maintenant"}
+            {reconciling ? a.gumroadReconciling : a.gumroadReconcileNow}
           </button>
           {reconcileFeedback && (
             <p className="mt-2 max-w-xs text-xs text-muted">{reconcileFeedback}</p>
@@ -166,10 +168,10 @@ export default function AdminGumroad() {
       </div>
 
       {loading ? (
-        <p className="mt-8 text-sm text-muted">Chargement…</p>
+        <p className="mt-8 text-sm text-muted">{a.loading}</p>
       ) : pending.length === 0 ? (
         <p className="mt-8 rounded-xl border border-black/8 bg-white p-4 text-sm text-muted">
-          Rien à rattraper pour le moment.
+          {a.gumroadNothingPending}
         </p>
       ) : (
         <div className="mt-6 space-y-3">
@@ -179,15 +181,15 @@ export default function AdminGumroad() {
                 <div>
                   <p className="font-medium text-ink">{row.email}</p>
                   <p className="text-xs text-muted">
-                    sale_id: {row.gumroad_sale_id} · {(row.amount_cents / 100).toFixed(2)} € · reçu le{" "}
-                    {new Date(row.created_at).toLocaleString("fr-FR")}
+                    sale_id: {row.gumroad_sale_id} · {(row.amount_cents / 100).toFixed(2)} € · {a.gumroadReceivedInline}{" "}
+                    {new Date(row.created_at).toLocaleString(adminLocale(lang))}
                   </p>
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <input
                   type="email"
-                  placeholder="email du compte à lier"
+                  placeholder={a.gumroadLinkEmailPlaceholder}
                   value={linkEmails[row.id] ?? ""}
                   onChange={(e) =>
                     setLinkEmails((prev) => ({ ...prev, [row.id]: e.target.value }))
@@ -200,7 +202,7 @@ export default function AdminGumroad() {
                   disabled={linking === row.id || !(linkEmails[row.id] ?? "").trim()}
                   className="brand-gradient rounded-full px-4 py-2 text-xs font-medium text-white transition hover:opacity-90 disabled:opacity-50"
                 >
-                  {linking === row.id ? "Liaison…" : "Lier"}
+                  {linking === row.id ? a.gumroadLinking : a.gumroadLink}
                 </button>
               </div>
               {feedback[row.id] && (
@@ -212,33 +214,32 @@ export default function AdminGumroad() {
       )}
 
       <h2 className="mt-12 font-display text-lg font-semibold text-ink">
-        Événements à surveiller
+        {a.gumroadEventsTitle}
       </h2>
       <p className="mt-2 text-sm text-muted">
-        Ventes Gumroad reçues, erreurs, et passages de rapprochement ayant traité quelque chose.
-        Les balayages automatiques qui ne trouvent rien ne sont pas affichés ici.
+        {a.gumroadEventsLead}
       </p>
       {logs.length === 0 ? (
         <p className="mt-4 rounded-xl border border-black/8 bg-white p-4 text-sm text-muted">
-          Rien à signaler pour le moment.
+          {a.gumroadNoEvents}
         </p>
       ) : (
       <div className="mt-4 overflow-x-auto rounded-xl border border-black/8 bg-white">
         <table className="w-full text-left text-xs">
           <thead className="border-b border-black/8 text-muted">
             <tr>
-              <th className="px-3 py-2">Reçu le</th>
-              <th className="px-3 py-2">Vérification</th>
-              <th className="px-3 py-2">Résultat</th>
+              <th className="px-3 py-2">{a.gumroadReceivedAt}</th>
+              <th className="px-3 py-2">{a.gumroadVerification}</th>
+              <th className="px-3 py-2">{a.gumroadResult}</th>
               <th className="px-3 py-2">sale_id</th>
-              <th className="px-3 py-2">Erreur</th>
+              <th className="px-3 py-2">{a.gumroadError}</th>
             </tr>
           </thead>
           <tbody>
             {logs.slice(logsPage * LOGS_PAGE_SIZE, logsPage * LOGS_PAGE_SIZE + LOGS_PAGE_SIZE).map((log) => (
               <tr key={log.id} className="border-b border-black/5 last:border-0">
                 <td className="px-3 py-2 text-muted">
-                  {new Date(log.received_at).toLocaleString("fr-FR")}
+                  {new Date(log.received_at).toLocaleString(adminLocale(lang))}
                 </td>
                 <td className="px-3 py-2">{log.verification_result}</td>
                 <td className="px-3 py-2">{log.match_result}</td>
@@ -258,10 +259,10 @@ export default function AdminGumroad() {
             disabled={logsPage === 0}
             className="rounded-full border border-black/10 px-3 py-1.5 font-medium text-ink transition hover:border-black/20 disabled:opacity-40"
           >
-            Précédent
+            {a.previous}
           </button>
           <span>
-            Page {logsPage + 1} / {Math.ceil(logs.length / LOGS_PAGE_SIZE)}
+            {a.pageOf(logsPage + 1, Math.ceil(logs.length / LOGS_PAGE_SIZE))}
           </span>
           <button
             type="button"
@@ -273,7 +274,7 @@ export default function AdminGumroad() {
             disabled={(logsPage + 1) * LOGS_PAGE_SIZE >= logs.length}
             className="rounded-full border border-black/10 px-3 py-1.5 font-medium text-ink transition hover:border-black/20 disabled:opacity-40"
           >
-            Suivant
+            {a.next}
           </button>
         </div>
       )}

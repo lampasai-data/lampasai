@@ -381,9 +381,16 @@ export default function Formations() {
                 <p className="mt-4 text-xs font-medium text-teal-dark">{t.formations.domainsLabel}</p>
                 <ul className="mt-2 flex flex-col gap-1.5 text-sm text-ink/80">
                   {(CERTIFICATION_DOMAINS[pricingSlug] ?? []).map((domain) => (
-                    <li key={domain.label.fr} className="flex items-start gap-2">
-                      <span className="mt-0.5 shrink-0 text-teal-dark">✓</span>
-                      {localize(domain.label, lang)}
+                    <li key={domain.key} className="flex items-start justify-between gap-3">
+                      <span className="flex items-start gap-2">
+                        <span className="mt-0.5 shrink-0 text-teal-dark">✓</span>
+                        {localize(domain.label, lang)}
+                      </span>
+                      {/* The official weight, as on the dashboard cards: it
+                          tells a buyer where the exam actually puts its marks. */}
+                      <span className="mt-0.5 shrink-0 text-xs font-medium text-muted">
+                        {domain.weight}
+                      </span>
                     </li>
                   ))}
                 </ul>

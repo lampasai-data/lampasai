@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ADMIN_T, adminLocale } from "./adminI18n";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -27,6 +28,7 @@ interface RedemptionRow {
 export default function AdminVouchers() {
   const { user, ready } = useAuth();
   const { lang } = useLanguage();
+  const a = ADMIN_T[lang];
   const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
 
   const [certs, setCerts] = useState<CertificationSummary[]>([]);
@@ -117,7 +119,7 @@ export default function AdminVouchers() {
     setGenerating(false);
 
     if (invokeError || data?.error) {
-      setError(data?.error ?? invokeError?.message ?? "Erreur inconnue.");
+      setError(data?.error ?? invokeError?.message ?? a.unknownError);
       return;
     }
 
@@ -139,7 +141,7 @@ export default function AdminVouchers() {
   }
 
   function usageTypeLabel(v: VoucherRow) {
-    return usageType(v) === "partage" ? "Partagé" : "Unique";
+    return usageType(v) === "partage" ? a.vouchersShared : a.vouchersUnique;
   }
 
   function statusCategory(v: VoucherRow): "disponible" | "epuise" | "expire" {
@@ -152,9 +154,11 @@ export default function AdminVouchers() {
   function statusLabel(v: VoucherRow) {
     const count = redemptionsFor(v.id).length;
     const category = statusCategory(v);
-    if (category === "epuise") return `Épuisé (${count}/${v.max_redemptions})`;
-    if (category === "expire") return "Expiré";
-    return v.max_redemptions > 1 ? `Disponible (${count}/${v.max_redemptions})` : "Disponible";
+    if (category === "epuise") return a.vouchersExhaustedCount(count, v.max_redemptions);
+    if (category === "expire") return a.vouchersExpired;
+    return v.max_redemptions > 1
+      ? a.vouchersAvailableCount(count, v.max_redemptions)
+      : a.vouchersAvailable;
   }
 
   function redeemerName(r: RedemptionRow) {
@@ -201,15 +205,14 @@ export default function AdminVouchers() {
 
   return (
     <section className="mx-auto max-w-5xl px-6 pt-8 pb-16">
-      <h1 className="font-display text-2xl font-semibold text-ink">Vouchers examen</h1>
+      <h1 className="font-display text-2xl font-semibold text-ink">{a.vouchersTitle}</h1>
       <p className="mt-2 text-sm text-muted">
-        Génère un code qui débloque le mode examen (30 jours, sans export PDF) d'une
-        certification, en usage unique ou partagé.
+        {a.vouchersLead}
       </p>
 
       <div className="mt-6 flex flex-wrap items-end gap-3 rounded-2xl border border-black/8 bg-white px-6 py-4">
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-muted">Certification</label>
+          <label className="text-xs font-medium text-muted">{a.certification}</label>
           <select
             value={certificationId}
             onChange={(e) => setCertificationId(e.target.value)}
@@ -224,7 +227,7 @@ export default function AdminVouchers() {
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-muted">
-            Expiration du code (optionnel)
+            {a.vouchersExpiry}
           </label>
           <input
             type="date"
@@ -234,7 +237,7 @@ export default function AdminVouchers() {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-muted">Nombre d'utilisations</label>
+          <label className="text-xs font-medium text-muted">{a.vouchersMaxRedemptions}</label>
           <input
             type="number"
             min={1}
@@ -250,13 +253,13 @@ export default function AdminVouchers() {
           disabled={generating || !certificationId}
           className="brand-gradient rounded-full px-4 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
         >
-          {generating ? "Génération…" : "Générer un code"}
+          {generating ? a.vouchersGenerating : a.vouchersGenerate}
         </button>
       </div>
 
       {generatedCode && (
         <p className="mt-4 rounded-lg border border-green/30 bg-green/10 px-4 py-3 text-sm text-green">
-          Code généré : <span className="font-mono font-semibold">{generatedCode}</span>
+          {a.vouchersGenerated} <span className="font-mono font-semibold">{generatedCode}</span>
         </p>
       )}
       {error && (
@@ -269,12 +272,12 @@ export default function AdminVouchers() {
         <table className="w-full text-left text-sm">
           <thead className="border-b border-black/8 text-xs uppercase tracking-wide text-muted">
             <tr>
-              <th className="px-4 py-3">Code</th>
-              <th className="whitespace-nowrap px-4 py-3">Certification</th>
-              <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3">Créé le</th>
-              <th className="whitespace-nowrap px-4 py-3">Statut</th>
-              <th className="px-4 py-3">Utilisé par</th>
+              <th className="px-4 py-3">{a.vouchersCode}</th>
+              <th className="whitespace-nowrap px-4 py-3">{a.certification}</th>
+              <th className="px-4 py-3">{a.vouchersType}</th>
+              <th className="px-4 py-3">{a.vouchersCreatedAt}</th>
+              <th className="whitespace-nowrap px-4 py-3">{a.vouchersStatus}</th>
+              <th className="px-4 py-3">{a.vouchersRedeemedBy}</th>
             </tr>
             <tr className="border-b border-black/8 bg-surface">
               <th className="px-4 py-2 font-normal">
@@ -282,7 +285,7 @@ export default function AdminVouchers() {
                   type="text"
                   value={filterCode}
                   onChange={(e) => resetPage(setFilterCode)(e.target.value)}
-                  placeholder="Filtrer…"
+                  placeholder={a.vouchersFilter}
                   className="w-full rounded-md border border-black/10 bg-white px-2 py-1 text-xs normal-case"
                 />
               </th>
@@ -292,7 +295,7 @@ export default function AdminVouchers() {
                   onChange={(e) => resetPage(setFilterCertId)(e.target.value)}
                   className="w-full rounded-md border border-black/10 bg-white px-2 py-1 text-xs normal-case"
                 >
-                  <option value="">Toutes</option>
+                  <option value="">{a.vouchersAllFem}</option>
                   {certs.map((c) => (
                     <option key={c.id} value={c.id}>
                       {localize(c.name, lang)}
@@ -308,9 +311,9 @@ export default function AdminVouchers() {
                   }
                   className="w-full rounded-md border border-black/10 bg-white px-2 py-1 text-xs normal-case"
                 >
-                  <option value="">Tous</option>
-                  <option value="unique">Unique</option>
-                  <option value="partage">Partagé</option>
+                  <option value="">{a.vouchersAll}</option>
+                  <option value="unique">{a.vouchersUnique}</option>
+                  <option value="partage">{a.vouchersShared}</option>
                 </select>
               </th>
               <th className="px-4 py-2" />
@@ -324,10 +327,10 @@ export default function AdminVouchers() {
                   }
                   className="w-full rounded-md border border-black/10 bg-white px-2 py-1 text-xs normal-case"
                 >
-                  <option value="">Tous</option>
-                  <option value="disponible">Disponible</option>
-                  <option value="epuise">Épuisé</option>
-                  <option value="expire">Expiré</option>
+                  <option value="">{a.vouchersAll}</option>
+                  <option value="disponible">{a.vouchersAvailable}</option>
+                  <option value="epuise">{a.vouchersExhausted}</option>
+                  <option value="expire">{a.vouchersExpired}</option>
                 </select>
               </th>
               <th className="px-4 py-2 font-normal">
@@ -335,7 +338,7 @@ export default function AdminVouchers() {
                   type="text"
                   value={filterRedeemer}
                   onChange={(e) => resetPage(setFilterRedeemer)(e.target.value)}
-                  placeholder="Filtrer…"
+                  placeholder={a.vouchersFilter}
                   className="w-full rounded-md border border-black/10 bg-white px-2 py-1 text-xs normal-case"
                 />
               </th>
@@ -345,13 +348,13 @@ export default function AdminVouchers() {
             {loading ? (
               <tr>
                 <td className="px-4 py-4 text-muted" colSpan={6}>
-                  Chargement…
+                  {a.loading}
                 </td>
               </tr>
             ) : filteredVouchers.length === 0 ? (
               <tr>
                 <td className="px-4 py-4 text-muted" colSpan={6}>
-                  {vouchers.length === 0 ? "Aucun voucher généré." : "Aucun voucher ne correspond aux filtres."}
+                  {vouchers.length === 0 ? a.vouchersNone : a.vouchersNoMatch}
                 </td>
               </tr>
             ) : (
@@ -362,7 +365,7 @@ export default function AdminVouchers() {
                     <td className="px-4 py-3 font-mono">{v.code}</td>
                     <td className="whitespace-nowrap px-4 py-3">{certName(v.certification_id)}</td>
                     <td className="px-4 py-3">{usageTypeLabel(v)}</td>
-                    <td className="px-4 py-3">{new Date(v.created_at).toLocaleDateString("fr-FR")}</td>
+                    <td className="px-4 py-3">{new Date(v.created_at).toLocaleDateString(adminLocale(lang))}</td>
                     <td className="whitespace-nowrap px-4 py-3">{statusLabel(v)}</td>
                     <td className="px-4 py-3 max-w-[16rem]">
                       {rows.length === 0 ? (
@@ -378,7 +381,7 @@ export default function AdminVouchers() {
                           }}
                           className="inline-flex items-center gap-1.5 rounded-full border border-teal/30 bg-teal/[0.06] px-3 py-1 text-xs font-medium text-teal-dark transition hover:bg-teal/10"
                         >
-                          👥 {rows.length} personnes
+                          👥 {a.vouchersPeople(rows.length)}
                         </button>
                       )}
                     </td>
@@ -398,10 +401,10 @@ export default function AdminVouchers() {
             disabled={page === 0}
             className="rounded-full border border-black/10 px-3 py-1.5 font-medium text-ink transition hover:border-black/20 disabled:opacity-40"
           >
-            Précédent
+            {a.previous}
           </button>
           <span>
-            Page {page + 1} / {pageCount}
+            {a.pageOf(page + 1, pageCount)}
           </span>
           <button
             type="button"
@@ -409,7 +412,7 @@ export default function AdminVouchers() {
             disabled={page >= pageCount - 1}
             className="rounded-full border border-black/10 px-3 py-1.5 font-medium text-ink transition hover:border-black/20 disabled:opacity-40"
           >
-            Suivant
+            {a.next}
           </button>
         </div>
       )}
@@ -446,7 +449,7 @@ export default function AdminVouchers() {
                 type="text"
                 value={redeemerSearch}
                 onChange={(e) => setRedeemerSearch(e.target.value)}
-                placeholder="Rechercher un nom ou un email…"
+                placeholder={a.vouchersSearchPerson}
                 className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm"
               />
             </div>
@@ -473,7 +476,7 @@ export default function AdminVouchers() {
                         {p?.email && <p className="truncate text-xs text-muted">{p.email}</p>}
                       </div>
                       <span className="shrink-0 text-xs text-muted">
-                        {new Date(r.redeemed_at).toLocaleDateString("fr-FR")}
+                        {new Date(r.redeemed_at).toLocaleDateString(adminLocale(lang))}
                       </span>
                     </div>
                   );

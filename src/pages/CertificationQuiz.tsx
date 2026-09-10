@@ -20,6 +20,7 @@ import ProUpsell from "../components/ProUpsell";
 import BackLink from "../components/BackLink";
 import lampasLogo from "../assets/Logo_Lampas_AI_flavicon.png";
 import { CERT_LOGOS } from "../data/certLogos";
+import { CERTIFICATION_DOMAINS, findDomain } from "../data/certificationDomains";
 import CustomSelect from "../components/CustomSelect";
 
 function ClockIcon({ className = "h-4 w-4" }: { className?: string }) {
@@ -98,6 +99,7 @@ interface PersistedRun {
   mode: "training" | "exam" | null;
   quickExamSetup: boolean;
   customCount: number | null;
+  selectedDomains: string[];
   queue: number[];
   pos: number;
   flagged: number[];
@@ -114,6 +116,8 @@ interface PersistedRun {
   resultPoints: Record<number, number>;
   savedAt: number;
 }
+
+const SHOW_DOMAIN_KEY = "lampasai_show_domain";
 
 function runStorageKey(slug: string) {
   return `lampasai_quiz_run:${slug}`;
@@ -364,10 +368,33 @@ function formatTime(totalSeconds: number) {
   return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
 }
 
+function Tick({ on }: { on: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[5px] border transition ${
+        on ? "border-teal bg-teal text-white" : "border-black/20"
+      }`}
+    >
+      {on && (
+        <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3">
+          <path
+            d="M5 13l4 4L19 7"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )}
+    </span>
+  );
+}
+
 export default function CertificationQuiz() {
   const { slug = "" } = useParams();
   const navigate = useNavigate();
-  const { user, profile, openAuthModalForUpgrade, openUpgradeModal, purchasesVersion } = useAuth();
+  const { ready: authReady, profileReady, user, profile, openAuthModalForUpgrade, openUpgradeModal, purchasesVersion } = useAuth();
   const { lang, t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -379,6 +406,44 @@ export default function CertificationQuiz() {
   );
   // Pro users can cap how many questions a run draws from; null = use them all.
   const [customCount, setCustomCount] = useState<number | null>(null);
+  // Rubrics (SkillDomain.key) a run is restricted to. Empty = no restriction,
+  // i.e. the whole bank - the behaviour that predates per-rubric revision.
+  const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
+  // Whether the rubric badge is shown on each question during an exam run. A
+  // preference rather than run state, so it lives in localStorage and outlives
+  // the session. On by default - knowing which block a question comes from is
+  // what makes the tagging useful - and opting out is for whoever wants the
+  // stricter simulation, since the real exam never names the domain. Training
+  // runs always show it regardless of this flag.
+  const [showDomain, setShowDomain] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(SHOW_DOMAIN_KEY) !== "0";
+    } catch {
+      return true;
+    }
+  });
+  const [domainPickerOpen, setDomainPickerOpen] = useState(false);
+  // An in-progress run recovered from sessionStorage, held back rather than
+  // re-entered automatically. Dropping straight into it hid the mode-choice
+  // screen, so someone who had wandered off mid free run came back, landed in
+  // it again, and never saw that an exam mode existed at all. The safety net
+  // is worth keeping - an accidental refresh shouldn't cost 100 answers - so
+  // the run is restored and offered as a "resume" button instead.
+  const [pendingResume, setPendingResume] = useState<{
+    mode: "training" | "exam";
+    quickExamSetup: boolean;
+  } | null>(null);
+
+  function toggleShowDomain() {
+    setShowDomain((prev) => {
+      try {
+        localStorage.setItem(SHOW_DOMAIN_KEY, prev ? "0" : "1");
+      } catch {
+        // ignore storage errors (private browsing, quota, ...)
+      }
+      return !prev;
+    });
+  }
 
   // Quiz session state
   const [queue, setQueue] = useState<number[]>([]);
@@ -408,12 +473,21 @@ export default function CertificationQuiz() {
 
   const [mode, setMode] = useState<"training" | "exam" | null>(null);
   const [quickExamSetup, setQuickExamSetup] = useState(false);
+  const [purchasesLoaded, setPurchasesLoaded] = useState(false);
   const [examEndsAt, setExamEndsAt] = useState<number | null>(null);
   const [examRemaining, setExamRemaining] = useState(0);
   const [examEnded, setExamEnded] = useState(false);
   const [examPaused, setExamPaused] = useState(false);
   const examResultRecorded = useRef(false);
 
+  // Keyed on the signed-in user, not just the slug: on a hard page load this
+  // effect can fire before Supabase has restored the session, so the query
+  // goes out unauthenticated and RLS withholds every exam_only row. For a
+  // certification whose whole bank is exam_only that returns zero rows, and
+  // loadQuestions then falls back to the bundled offline bank - leaving a Pro
+  // user stuck on a smaller, frozen question set for the rest of the visit.
+  // Re-running once the identity is known re-fetches what that user may
+  // actually see.
   useEffect(() => {
     let cancelled = false;
     loadQuestions(slug).then((data) => {
@@ -438,14 +512,17 @@ export default function CertificationQuiz() {
         setHotspotPicks(saved.hotspotPicks);
         setAnswerLog(saved.answerLog);
         setCustomCount(saved.customCount);
+        // ?? [] rather than a bare read: sessionStorage can still hold a run
+        // persisted before this field existed, and restoring `undefined` here
+        // would crash buildRunQueue on the next "Recommencer".
+        setSelectedDomains(saved.selectedDomains ?? []);
         qIndexRef.current = saved.queue[saved.pos];
         startedAt.current = Date.now() - saved.elapsed * 1000;
         setElapsed(saved.elapsed);
         setExamEndsAt(saved.examEndsAt);
         setExamEnded(saved.examEnded);
         setExamPaused(saved.examPaused);
-        setQuickExamSetup(saved.quickExamSetup);
-        setMode(saved.mode);
+        setPendingResume({ mode: saved.mode, quickExamSetup: saved.quickExamSetup });
         return;
       }
 
@@ -465,7 +542,7 @@ export default function CertificationQuiz() {
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, user?.id]);
 
   // Persist the in-progress run so a page refresh (or accidental tab close)
   // resumes exactly where the user left off instead of dropping back to the
@@ -477,7 +554,13 @@ export default function CertificationQuiz() {
   useEffect(() => {
     if (!cert) return;
     const isFinished = (queue.length > 0 && Object.keys(results).length >= queue.length) || examEnded;
-    if (mode === null || isFinished) {
+    if (mode === null) {
+      // Don't wipe a run that's only waiting to be resumed - clearing here
+      // would delete it the instant the resume button is rendered.
+      if (!pendingResume) clearPersistedRun(slug);
+      return;
+    }
+    if (isFinished) {
       clearPersistedRun(slug);
       return;
     }
@@ -487,6 +570,7 @@ export default function CertificationQuiz() {
       mode,
       quickExamSetup,
       customCount,
+      selectedDomains,
       queue,
       pos,
       flagged: Array.from(flagged),
@@ -506,8 +590,10 @@ export default function CertificationQuiz() {
     cert,
     slug,
     mode,
+    pendingResume,
     quickExamSetup,
     customCount,
+    selectedDomains,
     queue,
     pos,
     flagged,
@@ -525,8 +611,33 @@ export default function CertificationQuiz() {
   ]);
 
   useEffect(() => {
-    if (user) getPurchasedCertificationIds(user.id).then(setPurchasedIds);
+    if (!user) {
+      setPurchasesLoaded(true);
+      return;
+    }
+    setPurchasesLoaded(false);
+    getPurchasedCertificationIds(user.id)
+      .then(setPurchasedIds)
+      // Resolved either way: a failed lookup must not hold the screen
+      // forever, it just means no purchase-based access is known.
+      .finally(() => setPurchasesLoaded(true));
   }, [user, purchasesVersion]);
+
+  // For a user who already has access, the mode-choice screen has nothing to
+  // choose: the free card is only ever offered to logged-out visitors, so it
+  // renders a "Choisis ton mode d'entraînement" heading above a single card,
+  // and its "Démarrer l'examen" button starts a run with no chance to pick a
+  // rubric. Go straight to the quick-exam modal instead, which is where the
+  // question count and the rubric selector live. Not applied while a run is
+  // waiting to be resumed - that offer has to stay reachable. No re-open
+  // guard needed: closing the modal navigates back to /formations rather
+  // than falling through to this screen.
+  useEffect(() => {
+    if (!cert || mode !== null || quickExamSetup || pendingResume) return;
+    if (!hasProAccess()) return;
+    setQuickExamSetup(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cert, mode, quickExamSetup, pendingResume, profile, purchasedIds]);
 
   // Direct-to-exam entry point (e.g. from the Dashboard's "Démarrer l'examen"
   // card button, which links here with ?mode=exam): skip the training/exam
@@ -540,6 +651,10 @@ export default function CertificationQuiz() {
   useEffect(() => {
     if (!cert || searchParams.get("mode") !== "exam") return;
     if (!hasProAccess()) return;
+    // An explicit ?mode=exam supersedes a run left waiting to be resumed -
+    // the user just asked for a fresh exam, so the offer to go back into the
+    // old session shouldn't linger behind the quick-start modal.
+    setPendingResume(null);
     setMode(null);
     setQuickExamSetup(true);
     setSearchParams((prev) => {
@@ -602,7 +717,12 @@ export default function CertificationQuiz() {
   function buildRunQueue(targetMode: "training" | "exam") {
     const eligible = (cert?.questions ?? [])
       .map((_, i) => i)
-      .filter((i) => targetMode === "exam" || !cert?.questions[i].examOnly);
+      .filter((i) => targetMode === "exam" || !cert?.questions[i].examOnly)
+      .filter(
+        (i) =>
+          selectedDomains.length === 0 ||
+          selectedDomains.includes(cert?.questions[i].domain ?? "")
+      );
     const shuffled = eligible
       .map((i) => ({ i, r: Math.random() }))
       .sort((a, b) => a.r - b.r)
@@ -611,8 +731,12 @@ export default function CertificationQuiz() {
     return customCount ? shuffled.slice(0, customCount) : shuffled;
   }
 
+  // Returns the queue it just built. startExam needs the run's real length to
+  // size the countdown, and reading `queue` back would give the pre-update
+  // value - React hasn't re-rendered yet at that point.
   function resetRun(targetMode: "training" | "exam") {
-    setQueue(buildRunQueue(targetMode));
+    const nextQueue = buildRunQueue(targetMode);
+    setQueue(nextQueue);
     setPos(0);
     setHistory([]);
     setFlagged(new Set());
@@ -625,6 +749,7 @@ export default function CertificationQuiz() {
     setReviewPage(0);
     startedAt.current = Date.now();
     setElapsed(0);
+    return nextQueue;
   }
 
   function logAnswer(qi: number, data: AnswerLog) {
@@ -632,6 +757,7 @@ export default function CertificationQuiz() {
   }
 
   function startTraining() {
+    setPendingResume(null);
     resetRun("training");
     setQuickExamSetup(false);
     setMode("training");
@@ -642,10 +768,13 @@ export default function CertificationQuiz() {
   // they choose to start the chrono (startExamTimer) to see if they'd
   // finish within the real exam's time limit.
   function startExam() {
-    const queueLength = hasProAccess() ? (customCount ?? total) : FREE_QUESTION_LIMIT;
-    resetRun("exam");
+    setPendingResume(null);
+    // Sized from the queue actually built, not from `customCount ?? total`:
+    // with a rubric filter on, the bank total over-states the run and the
+    // countdown preview would promise more time than the exam is worth.
+    const nextQueue = resetRun("exam");
     setExamEndsAt(null);
-    setExamRemaining(queueLength * EXAM_SECONDS_PER_QUESTION);
+    setExamRemaining(nextQueue.length * EXAM_SECONDS_PER_QUESTION);
     setExamEnded(false);
     setExamPaused(false);
     setQuickExamSetup(false);
@@ -679,7 +808,12 @@ export default function CertificationQuiz() {
     if (!examPaused) setExamEndsAt(Date.now() + duration * 1000);
   }
 
-  if (!cert) {
+  // Waits on everything hasProAccess() reads, not just the question bank:
+  // the session, the profile (plan === "pro") and the purchase lookup. Access
+  // decides which screen renders, so answering before it is known flashed the
+  // mode-choice screen - and for a Pro-plan user with no purchase row, it
+  // flashed the *locked* card at someone who had paid.
+  if (!cert || !authReady || !profileReady || !purchasesLoaded) {
     return (
       <section className="mx-auto max-w-3xl px-6 py-24 text-muted">
         Chargement…
@@ -799,11 +933,44 @@ export default function CertificationQuiz() {
     );
   }
 
+  // How many questions each rubric actually holds in this bank. Drives both
+  // the per-chip count and the exclusion of a rubric nothing is tagged with -
+  // offering an empty one would silently produce a zero-question run.
+  const domainCounts = new Map<string, number>();
+  for (const q of cert.questions) {
+    if (q.domain) domainCounts.set(q.domain, (domainCounts.get(q.domain) ?? 0) + 1);
+  }
+  const availableDomains = (CERTIFICATION_DOMAINS[slug] ?? []).filter(
+    (d) => (domainCounts.get(d.key) ?? 0) > 0
+  );
+
+  // Changing the rubric selection changes the pool, so a count picked against
+  // the previous one no longer means anything - reset it rather than show a
+  // number the run won't honour.
+  function toggleDomain(key: string) {
+    setCustomCount(null);
+    setSelectedDomains((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  }
+
+  function clearDomains() {
+    setCustomCount(null);
+    setSelectedDomains([]);
+  }
+
+  // How many questions the current rubric selection actually offers. Empty
+  // selection = the whole bank, which is the unfiltered behaviour.
+  const domainPoolCount =
+    selectedDomains.length === 0
+      ? total
+      : cert.questions.filter((q) => selectedDomains.includes(q.domain ?? "")).length;
+
   const questionCountSlider = isPro
     ? (() => {
         const stepValues = Array.from(
-          { length: Math.ceil(total / 20) },
-          (_, i) => Math.min((i + 1) * 20, total)
+          { length: Math.ceil(domainPoolCount / 20) },
+          (_, i) => Math.min((i + 1) * 20, domainPoolCount)
         );
         if (stepValues.length <= 1) return null;
         const sliderIndex =
@@ -815,7 +982,7 @@ export default function CertificationQuiz() {
             <div className="mb-2 flex items-center justify-between">
               <span className="text-xs font-medium text-muted">{t.quiz.questionCountLabel}</span>
               <span className="text-sm font-semibold text-ink">
-                {customCount === null ? total : customCount}
+                {customCount === null ? domainPoolCount : customCount}
               </span>
             </div>
             <input
@@ -826,7 +993,7 @@ export default function CertificationQuiz() {
               value={sliderIndex}
               onChange={(e) => {
                 const v = stepValues[Number(e.target.value)];
-                setCustomCount(v >= total ? null : v);
+                setCustomCount(v >= domainPoolCount ? null : v);
               }}
               className="w-full accent-teal"
             />
@@ -834,6 +1001,107 @@ export default function CertificationQuiz() {
         );
       })()
     : null;
+
+  // Rendered on both run-setup surfaces (the quick-exam modal and the full
+  // mode-choice screen) from this one definition, the same way
+  // questionCountSlider is - so the two entry points can't drift apart.
+  // Hidden entirely while no question carries a rubric, which is the state of
+  // the offline fallback bank and of any certification not yet tagged.
+  const domainOptions =
+    availableDomains.length > 0 ? (
+      <div className="mt-5 max-w-sm text-left">
+        <button
+          type="button"
+          onClick={() => setDomainPickerOpen((v) => !v)}
+          aria-expanded={domainPickerOpen}
+          className="flex w-full items-center justify-between gap-3 rounded-xl border border-teal/30 bg-teal/[0.05] px-3.5 py-2.5 text-left transition hover:border-teal/50 hover:bg-teal/[0.08]"
+        >
+          <span className="min-w-0">
+            <span className="block text-[11px] font-semibold uppercase tracking-wide text-teal-dark">
+              {t.quiz.domainFilterLabel}
+            </span>
+            <span className="mt-0.5 block truncate text-[13px] font-medium text-ink">
+              {selectedDomains.length === 0
+                ? t.quiz.domainFilterAll
+                : availableDomains
+                    .filter((d) => selectedDomains.includes(d.key))
+                    .map((d) => localize(d.shortLabel, lang))
+                    .join(", ")}
+            </span>
+          </span>
+          {/* No pool-size badge here on purpose: sitting next to the question
+              -count slider, "172" read as a contradiction of the slider's
+              "60". The slider is the single answer to "how many questions do
+              I get"; per-rubric availability lives on the rows below, where
+              it can't be mistaken for the run length. */}
+          <span className="flex shrink-0 items-center gap-2">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+              className={`h-4 w-4 text-muted transition-transform ${
+                domainPickerOpen ? "rotate-180" : ""
+              }`}
+            >
+              <path
+                d="M6 9l6 6 6-6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+        </button>
+
+        {domainPickerOpen && (
+          <ul className="mt-2 overflow-hidden rounded-xl border border-black/10 bg-white">
+            <li>
+              <button
+                type="button"
+                onClick={clearDomains}
+                className="flex w-full items-center justify-between gap-3 border-b border-black/5 px-3.5 py-2 text-left transition hover:bg-teal/[0.04]"
+              >
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <Tick on={selectedDomains.length === 0} />
+                  <span className="truncate text-xs text-ink/80">{t.quiz.domainFilterAll}</span>
+                </span>
+                <span className="shrink-0 text-[11px] text-muted">
+                  {t.quiz.domainQuestionCount(total)}
+                </span>
+              </button>
+            </li>
+            {availableDomains.map((d) => (
+              <li key={d.key}>
+                <button
+                  type="button"
+                  onClick={() => toggleDomain(d.key)}
+                  className="flex w-full items-center justify-between gap-3 border-b border-black/5 px-3.5 py-2 text-left transition last:border-0 hover:bg-teal/[0.04]"
+                >
+                  <span className="flex min-w-0 items-center gap-2.5">
+                    <Tick on={selectedDomains.includes(d.key)} />
+                    <span className="truncate text-xs text-ink/80">{localize(d.shortLabel, lang)}</span>
+                  </span>
+                  <span className="shrink-0 text-[11px] text-muted">
+                    {t.quiz.domainQuestionCount(domainCounts.get(d.key) ?? 0)}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <label className="mt-3 flex cursor-pointer items-center gap-2 text-xs text-muted">
+          <input
+            type="checkbox"
+            checked={showDomain}
+            onChange={toggleShowDomain}
+            className="h-3.5 w-3.5 accent-teal"
+          />
+          {t.quiz.showDomainLabel}
+        </label>
+      </div>
+    ) : null;
 
   if (mode === null && quickExamSetup) {
     const previewQuestion = cert.questions[queue[0] ?? 0];
@@ -892,6 +1160,7 @@ export default function CertificationQuiz() {
             <p className="mt-2 text-sm leading-relaxed text-muted">{t.quiz.modeExamDescShort}</p>
 
             {questionCountSlider}
+            {domainOptions}
 
             <button
               type="button"
@@ -917,7 +1186,35 @@ export default function CertificationQuiz() {
             {t.quiz.modeSelectTitle}
           </h1>
 
-          {questionCountSlider}
+          {pendingResume && (
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-teal/25 bg-teal/5 px-5 py-4">
+              {/* Names the mode and the progress: "resume" on its own left
+                  the user guessing whether they were about to fall back into
+                  the free run or the exam. */}
+              <span className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-sm">
+                <span className="text-muted">{t.quiz.resumeRunHint}</span>
+                <span className="rounded-full border border-teal/30 bg-white px-3 py-1 text-xs font-semibold text-teal-dark">
+                  {pendingResume.mode === "exam"
+                    ? t.quiz.modeExamTitle
+                    : t.quiz.modeTrainingTitle}
+                </span>
+                <span className="text-ink/80">
+                  {Object.keys(results).length}/{queue.length} {t.quiz.answeredLabel}
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setQuickExamSetup(pendingResume.quickExamSetup);
+                  setMode(pendingResume.mode);
+                  setPendingResume(null);
+                }}
+                className="shrink-0 rounded-full border border-teal/40 bg-white px-5 py-2 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
+              >
+                {t.quiz.resumeRun}
+              </button>
+            </div>
+          )}
 
           <div
             className={`mt-6 grid grid-cols-1 gap-5 ${!user ? "sm:grid-cols-2" : "sm:max-w-sm"}`}
@@ -956,7 +1253,9 @@ export default function CertificationQuiz() {
                 {t.quiz.modeExamDesc}
               </p>
               {isPro ? (
-                <div className="mt-5 flex flex-wrap items-center gap-3">
+                <>
+                  {questionCountSlider}
+                  <div className="mt-5 flex flex-wrap items-center gap-3">
                   <button
                     type="button"
                     onClick={startExam}
@@ -972,14 +1271,19 @@ export default function CertificationQuiz() {
                     <TrophyIcon className="h-4 w-4" />
                     {t.quiz.viewLeaderboard}
                   </button>
-                </div>
+                  </div>
+                </>
               ) : (
                 <button
                   type="button"
                   onClick={() => (user ? openUpgradeModal(slug) : openAuthModalForUpgrade(slug))}
                   className="brand-gradient mt-5 rounded-full px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
                 >
-                  {t.quiz.modeExamLocked}
+                  {/* Logged out, we have no idea whether this visitor already
+                      owns this certification - so don't assert they need to
+                      unlock it. Once signed in, purchasedIds is known and
+                      "unlock" is accurate. */}
+                  {user ? t.quiz.modeExamLocked : t.quiz.modeExamSignIn}
                 </button>
               )}
             </div>
@@ -991,6 +1295,27 @@ export default function CertificationQuiz() {
 
   if (finished) {
     const points = currentPoints;
+    // Score per rubric, weakest first - that is the actionable order: the top
+    // row is what to revise. Built from the answers actually given, so a run
+    // ended early only reports the rubrics it actually reached, and untagged
+    // questions are simply left out rather than lumped into a bogus bucket.
+    const domainTally = new Map<string, { correct: number; total: number }>();
+    for (const [qi, correct] of Object.entries(results)) {
+      const key = cert.questions[Number(qi)]?.domain;
+      if (!key) continue;
+      const row = domainTally.get(key) ?? { correct: 0, total: 0 };
+      row.total += 1;
+      if (correct) row.correct += 1;
+      domainTally.set(key, row);
+    }
+    const domainBreakdown = [...domainTally.entries()]
+      .flatMap(([key, row]) => {
+        // A key the TypeScript taxonomy no longer knows about is dropped
+        // rather than rendered raw - same degradation as the badge.
+        const domain = findDomain(slug, key);
+        return domain ? [{ key, label: localize(domain.shortLabel, lang), ...row }] : [];
+      })
+      .sort((a, b) => a.correct / a.total - b.correct / b.total);
     const ratio = runSize > 0 ? currentScore / runSize : 0;
     const passThreshold = getPassThreshold(slug);
     const passed = mode === "exam" && ratio >= passThreshold;
@@ -1095,6 +1420,30 @@ export default function CertificationQuiz() {
               </p>
             </div>
           </div>
+
+          {domainBreakdown.length > 0 && (
+            <div className="mt-8 text-left">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted">
+                {t.quiz.domainBreakdownTitle}
+              </p>
+              <ul className="mt-3 flex flex-col gap-2">
+                {domainBreakdown.map((row) => (
+                  <li
+                    key={row.key}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-black/8 px-4 py-2.5"
+                  >
+                    <span className="min-w-0 text-sm text-ink/80">{row.label}</span>
+                    <span className="shrink-0 text-sm font-semibold text-ink">
+                      {row.correct}/{row.total}
+                      <span className="ml-2 text-xs font-normal text-muted">
+                        {Math.round((row.correct / row.total) * 100)}%
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <button
@@ -1275,6 +1624,7 @@ export default function CertificationQuiz() {
   }
 
   const isMulti = (question.correctIndexes?.length ?? 0) > 1;
+  const questionDomain = findDomain(slug, question.domain);
   const isFlagged = flagged.has(qIndex);
   // Once a flagged question has been answered, it's done - it stays
   // flagged (the user may still want to revisit it, e.g. to reread the
@@ -1572,9 +1922,21 @@ export default function CertificationQuiz() {
           className="mt-5 rounded-2xl border border-black/8 bg-white p-7 pt-3 shadow-[0_1px_2px_rgba(20,20,43,0.04),0_8px_24px_-12px_rgba(20,20,43,0.12)] sm:p-8 sm:pt-4"
         >
           <div className="flex items-center justify-between gap-3">
-            <p className="text-base font-semibold tracking-wide text-teal-dark">
-              {t.quiz.questionOf(pos + 1, runSize)}
-            </p>
+            <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+              <p className="text-base font-semibold tracking-wide text-teal-dark">
+                {t.quiz.questionOf(pos + 1, runSize)}
+              </p>
+              {/* Neutral grey rather than the teal of the type hints just
+                  below: this labels where the question comes from, it is not
+                  an instruction about how to answer it. Training always shows
+                  it; an exam hides it unless the user opted in, since the real
+                  exam never tells you which domain a question belongs to. */}
+              {questionDomain && (mode === "training" || showDomain) && (
+                <span className="inline-flex items-center rounded-full border border-black/10 bg-black/[0.03] px-2.5 py-1 text-[11px] font-medium text-muted">
+                  {localize(questionDomain.shortLabel, lang)}
+                </span>
+              )}
+            </div>
             <button
               type="button"
               onClick={toggleFlag}

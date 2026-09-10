@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ADMIN_T, adminLocale } from "./adminI18n";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -36,13 +37,14 @@ interface PurchaseRow {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function formatEur(cents: number) {
-  return (cents / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
+function formatEur(cents: number, locale: string) {
+  return (cents / 100).toLocaleString(locale, { style: "currency", currency: "EUR" });
 }
 
 export default function AdminStats() {
   const { user, ready } = useAuth();
   const { lang } = useLanguage();
+  const a = ADMIN_T[lang];
   const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
 
   const [certs, setCerts] = useState<CertificationSummary[]>([]);
@@ -141,24 +143,24 @@ export default function AdminStats() {
 
   return (
     <section className="mx-auto max-w-5xl px-6 pt-8 pb-16">
-      <h1 className="font-display text-2xl font-semibold text-ink">Statistiques</h1>
+      <h1 className="font-display text-2xl font-semibold text-ink">{a.statsTitle}</h1>
       <p className="mt-2 text-sm text-muted">
-        Vue d'ensemble de l'activité du site : inscriptions, sessions d'examen et revenus.
+        {a.statsSubtitle}
       </p>
 
       {loading ? (
-        <p className="mt-8 text-sm text-muted">Chargement…</p>
+        <p className="mt-8 text-sm text-muted">{a.loading}</p>
       ) : (
         <>
           <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <StatCard label="Utilisateurs" value={profiles.length} />
-            <StatCard label="Nouveaux (7j)" value={newUsers7d.length} />
-            <StatCard label="Nouveaux (30j)" value={newUsers30d.length} />
-            <StatCard label="Sessions d'examen" value={results.length} />
-            <StatCard label="Sessions (7j)" value={sessions7d.length} />
-            <StatCard label="Ventes payantes" value={paidPurchases.filter((p) => p.source !== "voucher").length} />
-            <StatCard label="Vouchers utilisés" value={voucherCount} />
-            <StatCard label="Revenu total" value={formatEur(revenueCents)} />
+            <StatCard label={a.statsUsers} value={profiles.length} />
+            <StatCard label={a.statsNewUsers7d} value={newUsers7d.length} />
+            <StatCard label={a.statsNewUsers30d} value={newUsers30d.length} />
+            <StatCard label={a.statsExamSessions} value={results.length} />
+            <StatCard label={a.statsSessions7d} value={sessions7d.length} />
+            <StatCard label={a.statsPaidSales} value={paidPurchases.filter((p) => p.source !== "voucher").length} />
+            <StatCard label={a.statsVouchersUsed} value={voucherCount} />
+            <StatCard label={a.statsTotalRevenue} value={formatEur(revenueCents, adminLocale(lang))} />
           </div>
 
           <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted">
@@ -167,22 +169,22 @@ export default function AdminStats() {
                 key={source}
                 className="rounded-full border border-black/10 bg-white px-3 py-1.5"
               >
-                {source === "stripe" ? "Stripe" : "Gumroad"} : {formatEur(cents)} ({count} vente
-                {count > 1 ? "s" : ""})
+                {source === "stripe" ? "Stripe" : "Gumroad"} : {formatEur(cents, adminLocale(lang))} (
+                {a.statsSaleCount(count)})
               </span>
             ))}
           </div>
 
-          <h2 className="mt-10 font-display text-lg font-semibold text-ink">Par certification</h2>
+          <h2 className="mt-10 font-display text-lg font-semibold text-ink">{a.statsPerCertification}</h2>
           <div className="mt-4 overflow-x-auto rounded-2xl border border-black/8 bg-white">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-black/8 text-xs uppercase tracking-wide text-muted">
                 <tr>
-                  <th className="px-4 py-3">Certification</th>
-                  <th className="px-4 py-3">Ventes</th>
-                  <th className="px-4 py-3">Sessions</th>
-                  <th className="px-4 py-3">Utilisateurs actifs</th>
-                  <th className="px-4 py-3">Score moyen</th>
+                  <th className="px-4 py-3">{a.certification}</th>
+                  <th className="px-4 py-3">{a.statsSales}</th>
+                  <th className="px-4 py-3">{a.statsSessions}</th>
+                  <th className="px-4 py-3">{a.statsActiveUsers}</th>
+                  <th className="px-4 py-3">{a.statsAvgScore}</th>
                 </tr>
               </thead>
               <tbody>
@@ -200,23 +202,23 @@ export default function AdminStats() {
           </div>
 
           <h2 className="mt-10 font-display text-lg font-semibold text-ink">
-            Meilleurs scores ce mois-ci
+            {a.statsTopScores}
           </h2>
           <div className="mt-4 overflow-x-auto rounded-2xl border border-black/8 bg-white">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-black/8 text-xs uppercase tracking-wide text-muted">
                 <tr>
                   <th className="px-4 py-3">#</th>
-                  <th className="px-4 py-3">Utilisateur</th>
+                  <th className="px-4 py-3">{a.statsUser}</th>
                   <th className="px-4 py-3">Points</th>
-                  <th className="px-4 py-3">Sessions</th>
+                  <th className="px-4 py-3">{a.statsSessions}</th>
                 </tr>
               </thead>
               <tbody>
                 {topPerformers.length === 0 ? (
                   <tr>
                     <td className="px-4 py-4 text-muted" colSpan={4}>
-                      Aucune session ce mois-ci.
+                      {a.statsNoSessionThisMonth}
                     </td>
                   </tr>
                 ) : (
@@ -236,16 +238,16 @@ export default function AdminStats() {
           </div>
 
           <h2 className="mt-10 font-display text-lg font-semibold text-ink">
-            3 dernières inscriptions
+            {a.statsRecentSignups}
           </h2>
           <div className="mt-4 overflow-x-auto rounded-2xl border border-black/8 bg-white">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-black/8 text-xs uppercase tracking-wide text-muted">
                 <tr>
-                  <th className="px-4 py-3">Nom</th>
-                  <th className="px-4 py-3">Email</th>
-                  <th className="px-4 py-3">Plan</th>
-                  <th className="px-4 py-3">Inscrit le</th>
+                  <th className="px-4 py-3">{a.statsName}</th>
+                  <th className="px-4 py-3">{a.statsEmail}</th>
+                  <th className="px-4 py-3">{a.statsPlan}</th>
+                  <th className="px-4 py-3">{a.statsSignedUp}</th>
                 </tr>
               </thead>
               <tbody>
@@ -255,7 +257,7 @@ export default function AdminStats() {
                     <td className="px-4 py-3">{p.email ?? "-"}</td>
                     <td className="px-4 py-3 capitalize">{p.plan}</td>
                     <td className="px-4 py-3">
-                      {new Date(p.created_at).toLocaleDateString("fr-FR")}
+                      {new Date(p.created_at).toLocaleDateString(adminLocale(lang))}
                     </td>
                   </tr>
                 ))}

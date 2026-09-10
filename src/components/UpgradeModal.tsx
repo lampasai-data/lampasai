@@ -37,6 +37,14 @@ export default function UpgradeModal() {
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+  // Distinguishes "nothing left to unlock" from "we don't know yet". Without
+  // it, the not-yet-loaded empty list rendered as "all your certifications
+  // are already unlocked" - a confident, wrong answer shown before any data
+  // arrived, and shown forever if the request failed.
+  const [certsLoading, setCertsLoading] = useState(true);
+  // A flag, not the message itself: storing the translated string would
+  // freeze it in whatever language was active when the request failed.
+  const [loadFailed, setLoadFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Exam voucher redemption (admin-issued code, unlocks exam mode for 30
@@ -61,8 +69,10 @@ export default function UpgradeModal() {
     setVoucherStatus("idle");
     setVoucherError(null);
     setVoucherUnlockedName(null);
-    Promise.all([listCertifications(), getPurchasedCertificationIds(user.id)]).then(
-      ([allCerts, purchased]) => {
+    setCertsLoading(true);
+    setLoadFailed(false);
+    Promise.all([listCertifications(), getPurchasedCertificationIds(user.id)])
+      .then(([allCerts, purchased]) => {
         setCerts(allCerts);
         setPurchasedIds(purchased);
         const preselected = allCerts.find(
@@ -72,8 +82,9 @@ export default function UpgradeModal() {
         setVoucherCertId(
           preselected?.id ?? allCerts.find((c) => !purchased.has(c.id))?.id ?? ""
         );
-      }
-    );
+      })
+      .catch(() => setLoadFailed(true))
+      .finally(() => setCertsLoading(false));
   }, [upgradeModalOpen, user, upgradeModalPreselect, upgradeModalOpenVoucher]);
 
   useEffect(() => {
@@ -156,9 +167,19 @@ export default function UpgradeModal() {
   // "Passer en mode Pro" on a specific certification card should only ever
   // offer to pay for that certification - not also list the other one, the
   // way the generic "Passer en illimité" (no preselect) entry point does.
-  const gumroadCerts = upgradeModalPreselect
+  const preselectMatches = upgradeModalPreselect
     ? availableCerts.filter((c) => c.slug === upgradeModalPreselect)
-    : availableCerts;
+    : [];
+  // Logged out, every certification shows "click to unlock" - the site can't
+  // know which ones the visitor already owns. So the preselected slug that
+  // survives the login may well be one they already have, and filtering the
+  // list down to it leaves nothing. Fall back to the full available list, so
+  // the modal simply shows what is still locked; without this, an empty
+  // filtered list was read as "everything is unlocked", which was false.
+  const preselectAlreadyOwned =
+    upgradeModalPreselect !== null && certs.length > 0 && preselectMatches.length === 0;
+  const gumroadCerts =
+    upgradeModalPreselect && !preselectAlreadyOwned ? preselectMatches : availableCerts;
   const total = (selected.size * CERT_PRICE_EUR).toFixed(2).replace(".", ",");
 
   return (
@@ -209,7 +230,11 @@ export default function UpgradeModal() {
               )}
             </p>
 
-            {voucherOpen ? null : (ENABLE_GUMROAD ? gumroadCerts : availableCerts).length === 0 ? (
+            {voucherOpen ? null : certsLoading ? (
+              <p className="mt-6 rounded-xl border border-black/8 bg-surface p-4 text-sm text-muted">
+                {t.formations.upgradeModalChecking}
+              </p>
+            ) : (ENABLE_GUMROAD ? gumroadCerts : availableCerts).length === 0 ? (
               <p className="mt-6 rounded-xl border border-teal/25 bg-teal/5 p-4 text-sm text-teal-dark">
                 {t.formations.upgradeModalEmpty}
               </p>
@@ -260,6 +285,11 @@ export default function UpgradeModal() {
               </div>
             )}
 
+            {loadFailed && (
+              <p className="mt-3 text-sm text-red-500">
+                {t.formations.upgradeModalLoadError}
+              </p>
+            )}
             {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
 
             {!voucherOpen && !ENABLE_GUMROAD && availableCerts.length > 0 && (

@@ -145,12 +145,15 @@ interface Translations {
     dashboardProgress: (pct: number, correct: number, answered: number) => string;
     dashboardNotStarted: string;
     dashboardContinue: string;
+    dashboardMedal: (rank: number) => string;
     dashboardGoPro: string;
     upgradeModalTitle: string;
     upgradeModalDesc: string;
     upgradeModalDescSingle: string;
     upgradeModalDescForCert: (certName: string) => string;
     upgradeModalEmpty: string;
+    upgradeModalChecking: string;
+    upgradeModalLoadError: string;
     upgradeModalTotal: string;
     upgradeModalSubmit: string;
     upgradeModalLoading: string;
@@ -233,12 +236,15 @@ interface Translations {
     leaderboardPageOf: (current: number, total: number) => string;
     explanationLabel: string;
     modeSelectTitle: string;
+    resumeRun: string;
+    resumeRunHint: string;
     modeTrainingTitle: string;
     modeTrainingDesc: string;
     modeExamTitle: string;
     modeExamDesc: string;
     modeExamDescShort: string;
     modeExamLocked: string;
+    modeExamSignIn: string;
     startExamTimer: string;
     pauseExamTimer: string;
     resumeExamTimer: string;
@@ -274,6 +280,11 @@ interface Translations {
     reviewTitle: string;
     reviewErrorsOnly: string;
     reviewAll: string;
+    domainFilterLabel: string;
+    domainFilterAll: string;
+    showDomainLabel: string;
+    domainBreakdownTitle: string;
+    domainQuestionCount: (n: number) => string;
   };
 }
 
@@ -440,6 +451,8 @@ const translations: Record<Lang, Translations> = {
         `${correct}/${answered} (${pct}%) à ta dernière session`,
       dashboardNotStarted: "Pas encore commencé",
       dashboardContinue: "Démarrer l'examen",
+      dashboardMedal: (rank) =>
+        `${rank}${rank === 1 ? "re" : "e"} place au classement ce mois-ci`,
       dashboardGoPro: "Passer en mode Pro",
       upgradeModalTitle: "Débloquer des certifications",
       upgradeModalDesc: "Choisis une ou plusieurs certifications pour un accès illimité pendant 3 mois (4,99 € / certification).",
@@ -447,6 +460,8 @@ const translations: Record<Lang, Translations> = {
       upgradeModalDescForCert: (certName) =>
         `Débloque ${certName} pour un accès illimité pendant 3 mois (4,99 €).`,
       upgradeModalEmpty: "Toutes tes certifications sont déjà débloquées.",
+      upgradeModalChecking: "Vérification de tes accès…",
+      upgradeModalLoadError: "Impossible de vérifier tes accès. Réessaie dans un instant.",
       upgradeModalTotal: "Total",
       upgradeModalSubmit: "Continuer vers le paiement",
       upgradeModalLoading: "Redirection vers le paiement...",
@@ -484,6 +499,8 @@ const translations: Record<Lang, Translations> = {
       offerFeatures: [
         "Accès illimité à toutes les questions de la certification",
         "Mode examen chronométré, avec correction détaillée à la fin",
+        "Révision ciblée : entraîne-toi sur une rubrique en particulier",
+        "Bilan par rubrique en fin de session, pour savoir quoi retravailler",
         "Export PDF (questions, corrections, explications) pour réviser hors ligne",
         "Tentatives illimitées pendant 3 mois",
       ],
@@ -535,12 +552,15 @@ const translations: Record<Lang, Translations> = {
       leaderboardPageOf: (current: number, total: number) => `Page ${current} / ${total}`,
       explanationLabel: "Explication",
       modeSelectTitle: "Choisis ton mode d'entraînement",
+      resumeRun: "Reprendre ma session",
+      resumeRunHint: "Session en cours",
       modeTrainingTitle: "Mode gratuit",
       modeTrainingDesc: "Avance à ton rythme, avec explications après chaque question.",
       modeExamTitle: "Mode examen",
       modeExamDesc: "Toutes les questions, en conditions d'examen : résultat réussi/échoué à la fin. Avance à ton rythme, puis lance le chrono quand tu te sens prêt pour voir si tu tiens le temps imparti.",
       modeExamDescShort: "Toutes les questions, en conditions d'examen : résultat réussi/échoué à la fin. Le chrono est optionnel : lance-le quand tu es prêt.",
       modeExamLocked: "Clique pour débloquer",
+      modeExamSignIn: "Se connecter pour continuer",
       startExamTimer: "Démarrer le chrono",
       pauseExamTimer: "Mettre en pause le chrono",
       resumeExamTimer: "Reprendre le chrono",
@@ -579,6 +599,11 @@ const translations: Record<Lang, Translations> = {
       reviewTitle: "Revoir les questions",
       reviewErrorsOnly: "Voir mes erreurs",
       reviewAll: "Voir toutes les questions",
+      domainFilterLabel: "Réviser une rubrique",
+      domainFilterAll: "Toutes les rubriques",
+      showDomainLabel: "Afficher la rubrique de chaque question",
+      domainBreakdownTitle: "Par rubrique",
+      domainQuestionCount: (n) => `${n} question${n > 1 ? "s" : ""}`,
     },
   },
   en: {
@@ -742,6 +767,8 @@ const translations: Record<Lang, Translations> = {
         `${correct}/${answered} (${pct}%) in your last session`,
       dashboardNotStarted: "Not started yet",
       dashboardContinue: "Start the exam",
+      dashboardMedal: (rank) =>
+        `Ranked #${rank} on this month's leaderboard`,
       dashboardGoPro: "Go Pro",
       upgradeModalTitle: "Unlock certifications",
       upgradeModalDesc: "Pick one or more certifications for unlimited access for 3 months (€4.99 / certification).",
@@ -749,6 +776,8 @@ const translations: Record<Lang, Translations> = {
       upgradeModalDescForCert: (certName) =>
         `Unlock ${certName} for unlimited access for 3 months (€4.99).`,
       upgradeModalEmpty: "All your certifications are already unlocked.",
+      upgradeModalChecking: "Checking your access…",
+      upgradeModalLoadError: "Could not check your access. Please try again in a moment.",
       upgradeModalTotal: "Total",
       upgradeModalSubmit: "Continue to payment",
       upgradeModalLoading: "Redirecting to payment...",
@@ -786,6 +815,8 @@ const translations: Record<Lang, Translations> = {
       offerFeatures: [
         "Unlimited access to every question for that certification",
         "Timed exam mode, with a detailed review at the end",
+        "Focused revision: practise one skill block at a time",
+        "Per-block score at the end of a run, so you know what to work on",
         "PDF export (questions, corrections, explanations) to study offline",
         "Unlimited attempts for 3 months",
       ],
@@ -837,12 +868,15 @@ const translations: Record<Lang, Translations> = {
       leaderboardPageOf: (current: number, total: number) => `Page ${current} / ${total}`,
       explanationLabel: "Explanation",
       modeSelectTitle: "Choose your practice mode",
+      resumeRun: "Resume my session",
+      resumeRunHint: "Session in progress",
       modeTrainingTitle: "Free mode",
       modeTrainingDesc: "Go at your own pace, with explanations after each question.",
       modeExamTitle: "Exam mode",
       modeExamDesc: "All the questions, exam-condition style: pass/fail result at the end. Go at your own pace, then start the timer whenever you feel ready to see if you'd finish in time.",
       modeExamDescShort: "All the questions, exam-condition style: pass/fail result at the end. The timer is optional: start it whenever you're ready.",
       modeExamLocked: "Click to unlock",
+      modeExamSignIn: "Sign in to continue",
       startExamTimer: "Start the timer",
       pauseExamTimer: "Pause the timer",
       resumeExamTimer: "Resume the timer",
@@ -881,6 +915,11 @@ const translations: Record<Lang, Translations> = {
       reviewTitle: "Review the questions",
       reviewErrorsOnly: "Show my mistakes",
       reviewAll: "Show all questions",
+      domainFilterLabel: "Revise one rubric",
+      domainFilterAll: "All rubrics",
+      showDomainLabel: "Show each question's rubric",
+      domainBreakdownTitle: "By rubric",
+      domainQuestionCount: (n) => `${n} question${n > 1 ? "s" : ""}`,
     },
   },
 };

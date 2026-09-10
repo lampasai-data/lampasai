@@ -7,6 +7,7 @@ import { localize } from "../lib/i18nText";
 import {
   getAllCertificationPurchaseDates,
   getPurchasedCertificationIds,
+  getMyCertificationRank,
   getUserProgress,
   loadQuestions,
   type CertificationProgress,
@@ -40,7 +41,7 @@ function TrophyIcon({ className = "h-4 w-4" }: { className?: string }) {
 }
 
 export default function Dashboard({ certs }: { certs: CertificationSummary[] }) {
-  const { user, profile, openUpgradeModal, purchasesVersion } = useAuth();
+  const { user, profile, profileReady, openUpgradeModal, purchasesVersion } = useAuth();
   const { t, lang } = useLanguage();
   const [progress, setProgress] = useState<Record<string, CertificationProgress>>({});
   const [purchasedIds, setPurchasedIds] = useState<Map<string, PurchasedCertificationAccess>>(
@@ -48,6 +49,11 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
   );
   const [allPurchaseDates, setAllPurchaseDates] = useState<Map<string, string>>(new Map());
   const [downloadingSlug, setDownloadingSlug] = useState<string | null>(null);
+  // Leaderboard rank per certification id, kept only for the podium (1-3).
+  // Recomputed whenever the user or their purchases change, so a medal
+  // disappears on its own as soon as someone else overtakes them.
+  const [medals, setMedals] = useState<Map<string, number>>(new Map());
+  const [accessLoaded, setAccessLoaded] = useState(false);
   const [pdfModal, setPdfModal] = useState<{
     certName: LocalizedText;
     questions: Question[];
@@ -59,15 +65,48 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
   // purchase 3, so the banner must reflect whichever one actually happened.
   const [checkoutBannerMonths, setCheckoutBannerMonths] = useState<number | null>(null);
   const isPro = profile?.plan === "pro";
+  // Everything that decides locked vs unlocked - the upgrade banner and each
+  // card's action row - has to wait for both the plan and the purchases.
+  // Rendering on a half-known answer showed a Pro subscriber the "go
+  // unlimited" banner and locked cards for a beat before correcting itself.
+  const accessReady = profileReady && accessLoaded;
 
   useEffect(() => {
     if (user) getUserProgress(user.id).then(setProgress);
   }, [user]);
 
   useEffect(() => {
-    if (!user) return;
-    getPurchasedCertificationIds(user.id).then(setPurchasedIds);
-    getAllCertificationPurchaseDates(user.id).then(setAllPurchaseDates);
+    if (!user) {
+      setMedals(new Map());
+      return;
+    }
+    let cancelled = false;
+    // "month" matches the period the leaderboard page opens on, so the medal
+    // on the card and the ranking the user lands on always agree.
+    Promise.all(
+      certs.map(async (c) => [c.id, await getMyCertificationRank(c.id, "month")] as const)
+    ).then((entries) => {
+      if (cancelled) return;
+      setMedals(new Map(entries.filter(([, rank]) => rank !== null && rank <= 3) as [string, number][]));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, certs, purchasesVersion]);
+
+  useEffect(() => {
+    if (!user) {
+      setAccessLoaded(true);
+      return;
+    }
+    setAccessLoaded(false);
+    Promise.all([
+      getPurchasedCertificationIds(user.id).then(setPurchasedIds),
+      getAllCertificationPurchaseDates(user.id).then(setAllPurchaseDates),
+    ])
+      // Settled either way - a failed lookup means "no purchase known", and
+      // must not hold the cards behind a spinner forever.
+      .finally(() => setAccessLoaded(true));
   }, [user, purchasesVersion]);
 
   useCheckoutSuccessPoll(user, searchParams, setSearchParams, (ids) => {
@@ -142,7 +181,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
         </div>
       </motion.div>
 
-      {!isPro && (
+      {accessReady && !isPro && (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -167,6 +206,9 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
         </motion.div>
       )}
 
+      {!accessReady ? (
+        <p className="mt-8 text-sm text-muted">{t.quiz.leaderboardLoading}</p>
+      ) : (
       <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
         {certs.map((cert, i) => {
           const stats = progress[cert.slug];
@@ -175,6 +217,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
           const unlocked = isPro || expiresAt !== undefined;
           const canDownloadPdf = isPro || access?.pdfAllowed === true;
           const isExpired = !isPro && expiresAt === undefined && allPurchaseDates.has(cert.id);
+          const medal = medals.get(cert.id);
           return (
             <motion.div
               key={cert.slug}
@@ -184,7 +227,15 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
               className="flex h-full flex-col rounded-2xl border border-black/8 bg-white p-7 shadow-sm"
             >
               <div className="flex items-start gap-3">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-black/8 bg-surface">
+                <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-black/8 bg-surface">
+                  {medal !== undefined && (
+                    <span
+                      title={t.formations.dashboardMedal(medal)}
+                      className="absolute -right-1.5 -top-1.5 text-2xl leading-none drop-shadow-sm"
+                    >
+                      {medal === 1 ? "🥇" : medal === 2 ? "🥈" : "🥉"}
+                    </span>
+                  )}
                   {CERT_LOGOS[cert.slug] ? (
                     <img
                       src={CERT_LOGOS[cert.slug]}
@@ -233,7 +284,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                   <ul className="mt-2.5 flex flex-col gap-1.5">
                     {CERTIFICATION_DOMAINS[cert.slug].map((domain) => (
                       <li
-                        key={domain.label.fr}
+                        key={domain.key}
                         className="flex items-center justify-between gap-3 text-xs text-ink/70"
                       >
                         <span className="flex items-center gap-1.5">
@@ -356,6 +407,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
           );
         })}
       </div>
+      )}
 
       <AnimatePresence>
         {pdfModal && (
