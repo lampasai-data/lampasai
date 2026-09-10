@@ -522,7 +522,12 @@ export default function CertificationQuiz() {
         setExamEndsAt(saved.examEndsAt);
         setExamEnded(saved.examEnded);
         setExamPaused(saved.examPaused);
-        setPendingResume({ mode: saved.mode, quickExamSetup: saved.quickExamSetup });
+        // loadPersistedRun already rejects a run with no mode, but that
+        // narrowing doesn't cross the function boundary - guard so the
+        // pending-resume state can keep its non-null mode.
+        if (saved.mode) {
+          setPendingResume({ mode: saved.mode, quickExamSetup: saved.quickExamSetup });
+        }
         return;
       }
 
