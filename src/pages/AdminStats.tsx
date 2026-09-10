@@ -228,7 +228,7 @@ export default function AdminStats() {
                       <td className="px-4 py-3 font-medium text-ink">
                         {row.profile?.first_name ?? row.profile?.email ?? "-"}
                       </td>
-                      <td className="px-4 py-3">{row.points}</td>
+                      <td className="px-4 py-3">{row.points.toLocaleString(adminLocale(lang))}</td>
                       <td className="px-4 py-3">{row.sessions}</td>
                     </tr>
                   ))

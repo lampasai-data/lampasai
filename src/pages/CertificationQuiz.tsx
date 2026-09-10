@@ -11,7 +11,7 @@ import { useCheckoutSuccessPoll } from "../lib/useCheckoutSuccessPoll";
 import type { LocalizedText, Question } from "../data/types";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n";
-import { localize } from "../lib/i18nText";
+import { formatNumber, localize } from "../lib/i18nText";
 import { FREE_QUESTION_LIMIT } from "../lib/freeQuota";
 import { splitInlineCode } from "../lib/inlineCode";
 import { supabase } from "../lib/supabase";
@@ -1418,7 +1418,7 @@ export default function CertificationQuiz() {
             )}
             <div>
               <p className="brand-gradient-text font-display text-2xl font-semibold">
-                {points}
+                {formatNumber(points, lang)}
               </p>
               <p className="mt-1 text-xs uppercase tracking-wide text-muted">
                 {t.quiz.finishedPoints}

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n";
-import { localize } from "../lib/i18nText";
+import { formatNumber, localize } from "../lib/i18nText";
 import {
   listCertifications,
   getCertificationLeaderboard,
@@ -54,7 +54,7 @@ function startOfIsoWeek(date: Date): Date {
 }
 
 function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   // Hidden rather than shown as 0% when the value is missing, so a database
   // that predates migration 023 degrades to "no indicator" instead of
   // claiming every single player just bombed their last run.
@@ -111,7 +111,7 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
       <span className="flex shrink-0 items-center gap-4 text-right">
         <span className="text-xs text-muted">{t.quiz.leaderboardSessions(entry.sessionCount)}</span>
         <span className="font-display text-lg font-semibold text-teal-dark">
-          {entry.points}
+          {formatNumber(entry.points, lang)}
           <span className="ml-1 text-xs font-medium text-muted">
             {t.quiz.leaderboardPointsUnit}
           </span>

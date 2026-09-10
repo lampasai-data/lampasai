@@ -431,7 +431,7 @@ const translations: Record<Lang, Translations> = {
       tabPricing: "Pricing",
       trainFor: "S'entraîner",
       leaderboardTeaser: (points: number, ratioPercent: number) =>
-        `Top score : ${points} pts, ${ratioPercent}% de réussite. À toi de faire mieux !`,
+        `Top score : ${points.toLocaleString("fr-FR")} pts, ${ratioPercent}% de réussite. À toi de faire mieux !`,
       accessQuiz: "Accéder au quiz",
       valueProp: "Nos questions vont droit à l'essentiel : pas de superflu, seulement ce qu'il faut pour réussir ta certification.",
       certifValue: "Avoir une certification est une vraie plus-value sur ton CV : prends le temps de bien la préparer.",
@@ -747,7 +747,7 @@ const translations: Record<Lang, Translations> = {
       tabPricing: "Pricing",
       trainFor: "Practice",
       leaderboardTeaser: (points: number, ratioPercent: number) =>
-        `Top score: ${points} pts, ${ratioPercent}% correct. Can you beat it?`,
+        `Top score: ${points.toLocaleString("en-US")} pts, ${ratioPercent}% correct. Can you beat it?`,
       accessQuiz: "Go to quiz",
       valueProp: "Our questions go straight to the point: nothing superfluous, only what you need to pass your certification.",
       certifValue: "Having a certification is a real asset on your resume: take the time to prepare it properly.",
