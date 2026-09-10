@@ -1666,11 +1666,20 @@ export default function CertificationQuiz() {
     // Record the attempt for signed-in users (analytics only). Free questions are
     // repeatable per session and independent per certification, so nothing gates.
     if (user && supabase) {
-      await supabase.from("attempts").insert({
+      const { error } = await supabase.from("attempts").insert({
         user_id: user.id,
         question_id: question.id,
         is_correct: correct,
       });
+      // Silent until now, which is how the offline-fallback bank could reject
+      // every attempt (its ids are "sf-qN" strings, not uuids) while the
+      // dashboard kept reporting "not started yet" with no clue why.
+      if (error) {
+        console.error("Failed to record attempt", {
+          questionId: question.id,
+          error,
+        });
+      }
     }
   }
 

@@ -320,15 +320,29 @@ export async function recordExamResult(
   correctCount: number,
   totalCount: number,
   points: number
-): Promise<void> {
-  if (!supabase || totalCount <= 0) return;
-  await supabase.from("exam_results").insert({
+): Promise<boolean> {
+  if (!supabase || totalCount <= 0) return false;
+  const { error } = await supabase.from("exam_results").insert({
     user_id: userId,
     certification_id: certificationId,
     correct_count: correctCount,
     total_count: totalCount,
     points,
   });
+  if (error) {
+    // A rejected insert used to pass unnoticed: the run simply never reached
+    // the leaderboard, with nothing said to the user and nothing logged for
+    // us. Surfacing it is what makes a recurring failure diagnosable at all.
+    console.error("Failed to record exam result", {
+      certificationId,
+      correctCount,
+      totalCount,
+      points,
+      error,
+    });
+    return false;
+  }
+  return true;
 }
 
 export interface LeaderboardEntry {

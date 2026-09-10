@@ -123,7 +123,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!supabase) return;
 
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession()
+      .catch(() => ({ data: { session: null } }))
+      .then(({ data }) => {
+      // Settled even on failure: a session lookup that errors means "nobody
+      // is signed in", not "hold every gated screen forever". Screens now
+      // wait on `ready` before deciding locked vs unlocked, so leaving it
+      // false would freeze them on a loading state.
       setSession(data.session);
       setReady(true);
       if (data.session) loadProfile(data.session.user.id);
