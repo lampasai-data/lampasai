@@ -11,13 +11,12 @@ import {
   type LeaderboardPeriod,
 } from "../lib/quizData";
 import { CERT_LOGOS } from "../data/certLogos";
+import { GOAL_RATIO } from "../lib/goals";
 import BackLink from "../components/BackLink";
 import AuthPanel from "../components/AuthPanel";
 import lampasLogo from "../assets/Logo_Lampas_AI_flavicon.png";
 
-// Static, purely motivational reference point shown alongside the ranking -
-// not tied to the certification's real pass threshold (getPassThreshold).
-const GOAL_RATIO = 0.85;
+
 
 // Only the top 15 are ever listed, 10 at a time. Anyone ranked below that
 // gets their own row pinned under the list instead (see PinnedRow usage), so

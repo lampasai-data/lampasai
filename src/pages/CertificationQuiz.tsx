@@ -13,6 +13,7 @@ import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n";
 import { formatNumber, localize } from "../lib/i18nText";
 import { FREE_QUESTION_LIMIT } from "../lib/freeQuota";
+import { GOAL_RATIO, getOfficialPass } from "../lib/goals";
 import { splitInlineCode } from "../lib/inlineCode";
 import { supabase } from "../lib/supabase";
 import AuthPanel from "../components/AuthPanel";
@@ -55,16 +56,6 @@ function TrophyIcon({ className = "h-4 w-4" }: { className?: string }) {
 // (e.g. 1 correct out of 2 picks = 5).
 const POINTS_PER_CORRECT_ANSWER = 5;
 const EXAM_SECONDS_PER_QUESTION = 60;
-const PASS_THRESHOLD = 0.7;
-// SnowPro Core's real exam scores out of 1000 with a 750 pass mark (75%),
-// vs. PL-300's ~700/1000 (70%). Reflect the real threshold per certification.
-const PASS_THRESHOLD_BY_SLUG: Record<string, number> = {
-  snowflake: 0.75,
-};
-
-function getPassThreshold(slug: string) {
-  return PASS_THRESHOLD_BY_SLUG[slug] ?? PASS_THRESHOLD;
-}
 
 function sameAnswers(a: number[], b: number[]) {
   if (a.length !== b.length) return false;
@@ -366,6 +357,56 @@ function formatTime(totalSeconds: number) {
     .padStart(h > 0 ? 2 : 1, "0");
   const s = (totalSeconds % 60).toString().padStart(2, "0");
   return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
+}
+
+/**
+ * Score as a ring rather than a bare fraction: the percentage is what the
+ * verdict is actually based on, and "51/60" forced the reader to work it out.
+ * The tick on the ring is the goal, the same marker language as the per-rubric
+ * bars below, and the colour uses the same three bands.
+ */
+function ScoreRing({ pct, goal }: { pct: number; goal: number }) {
+  const R = 52;
+  const C = 2 * Math.PI * R;
+  const colour = pct >= goal ? "var(--color-green)" : pct >= 40 ? "var(--color-amber)" : "#ef4444";
+  const a = ((goal / 100) * 360 - 90) * (Math.PI / 180);
+  return (
+    <svg viewBox="0 0 120 120" className="h-32 w-32" role="img" aria-label={`${pct}%`}>
+      <circle cx="60" cy="60" r={R} fill="none" stroke="rgba(0,0,0,0.07)" strokeWidth="9" />
+      <motion.circle
+        cx="60"
+        cy="60"
+        r={R}
+        fill="none"
+        stroke={colour}
+        strokeWidth="9"
+        strokeLinecap="round"
+        transform="rotate(-90 60 60)"
+        strokeDasharray={C}
+        initial={{ strokeDashoffset: C }}
+        animate={{ strokeDashoffset: C - (pct / 100) * C }}
+        transition={{ duration: 0.9, ease: "easeOut" }}
+      />
+      <line
+        x1={60 + (R - 9) * Math.cos(a)}
+        y1={60 + (R - 9) * Math.sin(a)}
+        x2={60 + (R + 9) * Math.cos(a)}
+        y2={60 + (R + 9) * Math.sin(a)}
+        stroke="var(--color-ink)"
+        strokeWidth="1.5"
+      />
+      <text
+        x="60"
+        y="60"
+        textAnchor="middle"
+        dominantBaseline="central"
+        className="font-display"
+        style={{ fontSize: 26, fontWeight: 700, fill: "var(--color-ink)" }}
+      >
+        {pct}%
+      </text>
+    </svg>
+  );
 }
 
 function Tick({ on }: { on: boolean }) {
@@ -1318,12 +1359,21 @@ export default function CertificationQuiz() {
         // A key the TypeScript taxonomy no longer knows about is dropped
         // rather than rendered raw - same degradation as the badge.
         const domain = findDomain(slug, key);
-        return domain ? [{ key, label: localize(domain.shortLabel, lang), ...row }] : [];
+        return domain
+          ? [
+              {
+                key,
+                label: localize(domain.shortLabel, lang),
+                ...row,
+                pct: Math.round((row.correct / row.total) * 100),
+              },
+            ]
+          : [];
       })
       .sort((a, b) => a.correct / a.total - b.correct / b.total);
     const ratio = runSize > 0 ? currentScore / runSize : 0;
-    const passThreshold = getPassThreshold(slug);
-    const passed = mode === "exam" && ratio >= passThreshold;
+    const officialPass = getOfficialPass(slug);
+    const passed = mode === "exam" && ratio >= GOAL_RATIO;
     const doingWell = ratio >= 0.75;
 
     const REVIEW_PAGE_SIZE = 5;
@@ -1351,53 +1401,56 @@ export default function CertificationQuiz() {
     }
 
     return (
-      <section className="mx-auto max-w-2xl px-6 py-24 text-center">
-        <div className="rounded-2xl border border-black/8 bg-white p-10 shadow-sm">
-          <div className="text-left">
-            <BackLink to="/formations" label={backLabel} />
-          </div>
-          <h1 className="mt-6 font-display text-2xl font-semibold text-ink">
-            {t.quiz.finishedTitle}
-          </h1>
-          {mode === "exam" ? (
-            <div className="mt-4">
-              <span
-                className={`inline-flex rounded-full px-4 py-1.5 text-sm font-medium ${
-                  passed
-                    ? "border border-green/30 bg-green/10 text-green"
-                    : "border border-red-300 bg-red-50 text-red-600"
-                }`}
-              >
-                {passed ? t.quiz.trainingSuccess : t.quiz.trainingFail}
-              </span>
-              <p className="mt-2 text-xs text-muted">
-                {t.quiz.passThresholdNote(Math.round(passThreshold * 1000))}
-              </p>
-            </div>
-          ) : (
-            <div className="mt-4">
-              <span
-                className={`inline-flex rounded-full px-4 py-1.5 text-sm font-medium ${
-                  doingWell
-                    ? "border border-green/30 bg-green/10 text-green"
-                    : "border border-red-300 bg-red-50 text-red-600"
-                }`}
-              >
-                {doingWell ? t.quiz.trainingSuccess : t.quiz.trainingFail}
-              </span>
-            </div>
-          )}
+      <section className="mx-auto max-w-2xl px-6 py-10 text-center">
+        {/* Back link lifted out of the card and flush with its left edge: sitting
+            inside the p-10 padding it was inset twice over, and it cost the card
+            a full row of height for a control that isn't part of the result. */}
+        <div className="mb-4 text-left">
+          <BackLink to="/formations" label={backLabel} />
+        </div>
+        <div className="rounded-2xl border border-black/8 bg-white px-7 py-8 shadow-sm">
+          {/* Verdict first, then the ring, then the raw count - biggest
+              decision to smallest detail. The old order buried the percentage
+              entirely: the reader saw 51/60 and had to divide. */}
+          <div className="flex flex-col items-center">
+            <span
+              className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold ${
+                (mode === "exam" ? passed : doingWell)
+                  ? "border border-green/30 bg-green/10 text-green"
+                  : "border border-red-300 bg-red-50 text-red-600"
+              }`}
+            >
+              {(mode === "exam" ? passed : doingWell)
+                ? t.quiz.trainingSuccess
+                : t.quiz.trainingFail}
+            </span>
 
-          <motion.p
-            className="brand-gradient-text mt-6 font-display text-5xl font-bold"
-            animate={{ opacity: [1, 0.35, 1] }}
-            transition={{ duration: 1.1, repeat: 2, ease: "easeInOut" }}
-          >
-            {currentScore}/{runSize}
-          </motion.p>
-          <p className="mt-2 text-xs uppercase tracking-wide text-muted">
-            {t.quiz.finishedScore}
-          </p>
+            <div className="-my-1">
+              <ScoreRing pct={Math.round(ratio * 100)} goal={Math.round(GOAL_RATIO * 100)} />
+            </div>
+
+            <p className="font-display text-lg font-semibold text-ink">
+              {currentScore}/{runSize}
+              <span className="ml-2 text-sm font-normal lowercase text-muted">
+                {t.quiz.finishedScore}
+              </span>
+            </p>
+
+            {mode === "exam" && (
+              <>
+                <p className="mt-2 text-xs font-medium text-muted">
+                  {t.quiz.passThresholdNote(Math.round(GOAL_RATIO * 100))}
+                </p>
+                {/* Set apart and a notch smaller: this explains the rule rather
+                    than stating it, and reading as a footnote is the point. */}
+                {officialPass !== null && (
+                  <p className="mt-1.5 max-w-sm text-[11px] leading-relaxed text-muted/80">
+                    ⓘ {t.quiz.officialPassNote(Math.round(officialPass * 100))}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
 
           {!isPro && (
             <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-ink/80">
@@ -1405,22 +1458,22 @@ export default function CertificationQuiz() {
             </p>
           )}
 
-          <div className={`mt-8 grid gap-4 ${isPro ? "grid-cols-2" : "grid-cols-1"}`}>
+          <div className={`mt-6 grid gap-3 ${isPro ? "grid-cols-2" : "grid-cols-1"}`}>
             {isPro && (
-              <div>
+              <div className="rounded-xl border border-black/8 bg-surface/60 px-4 py-3">
                 <p className="font-display text-2xl font-semibold text-ink">
                   {formatTime(elapsed)}
                 </p>
-                <p className="mt-1 text-xs uppercase tracking-wide text-muted">
+                <p className="mt-0.5 text-[11px] uppercase tracking-wide text-muted">
                   {t.quiz.finishedTime}
                 </p>
               </div>
             )}
-            <div>
+            <div className="rounded-xl border border-black/8 bg-surface/60 px-4 py-3">
               <p className="brand-gradient-text font-display text-2xl font-semibold">
                 {formatNumber(points, lang)}
               </p>
-              <p className="mt-1 text-xs uppercase tracking-wide text-muted">
+              <p className="mt-0.5 text-[11px] uppercase tracking-wide text-muted">
                 {t.quiz.finishedPoints}
               </p>
             </div>
@@ -1433,20 +1486,40 @@ export default function CertificationQuiz() {
               </p>
               <ul className="mt-3 flex flex-col gap-2">
                 {domainBreakdown.map((row) => (
-                  <li
-                    key={row.key}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-black/8 px-4 py-2.5"
-                  >
-                    <span className="min-w-0 text-sm text-ink/80">{row.label}</span>
-                    <span className="shrink-0 text-sm font-semibold text-ink">
-                      {row.correct}/{row.total}
-                      <span className="ml-2 text-xs font-normal text-muted">
-                        {Math.round((row.correct / row.total) * 100)}%
+                  <li key={row.key} className="rounded-xl border border-black/8 px-4 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 text-sm text-ink/80">{row.label}</span>
+                      <span className="shrink-0 text-sm font-semibold text-ink">
+                        {row.correct}/{row.total}
+                        <span className="ml-2 text-xs font-normal text-muted">{row.pct}%</span>
                       </span>
-                    </span>
+                    </div>
+                    {/* Green only past the goal marker, so the colour and the
+                        tick always tell the same story; red below 40% flags a
+                        block that needs real work rather than polish. */}
+                    <div className="relative mt-2 h-1.5 rounded-full bg-black/[0.07]">
+                      <div
+                        className={`h-full rounded-full ${
+                          row.pct >= GOAL_RATIO * 100
+                            ? "bg-green"
+                            : row.pct >= 40
+                              ? "bg-amber"
+                              : "bg-red-500"
+                        }`}
+                        style={{ width: `${row.pct}%` }}
+                      />
+                      <span
+                        aria-hidden="true"
+                        className="absolute -top-1 -bottom-1 w-px bg-ink"
+                        style={{ left: `${GOAL_RATIO * 100}%` }}
+                      />
+                    </div>
                   </li>
                 ))}
               </ul>
+              <p className="mt-2 text-xs text-muted">
+                {t.quiz.domainThresholdLegend(Math.round(GOAL_RATIO * 100))}
+              </p>
             </div>
           )}
 
