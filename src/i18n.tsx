@@ -285,7 +285,6 @@ interface Translations {
     domainFilterAll: string;
     showDomainLabel: string;
     domainBreakdownTitle: string;
-    domainThresholdLegend: (percent: number) => string;
     officialPassNote: (percent: number) => string;
     domainQuestionCount: (n: number) => string;
   };
@@ -606,8 +605,6 @@ const translations: Record<Lang, Translations> = {
       domainFilterAll: "Toutes les rubriques",
       showDomainLabel: "Afficher la rubrique de chaque question",
       domainBreakdownTitle: "Par rubrique",
-      domainThresholdLegend: (percent) =>
-        `Le repère vertical marque l'objectif : ${percent} % de bonnes réponses.`,
       officialPassNote: (percent) =>
         `L'examen officiel se réussit à ${percent} %. Ici, on vise plus haut.`,
       domainQuestionCount: (n) => `${n} question${n > 1 ? "s" : ""}`,
@@ -926,8 +923,6 @@ const translations: Record<Lang, Translations> = {
       domainFilterAll: "All rubrics",
       showDomainLabel: "Show each question's rubric",
       domainBreakdownTitle: "By rubric",
-      domainThresholdLegend: (percent) =>
-        `The vertical mark shows the goal: ${percent}% correct answers.`,
       officialPassNote: (percent) => `The official exam passes at ${percent}%. Here, we aim higher.`,
       domainQuestionCount: (n) => `${n} question${n > 1 ? "s" : ""}`,
     },

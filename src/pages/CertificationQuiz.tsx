@@ -1373,6 +1373,10 @@ export default function CertificationQuiz() {
       .sort((a, b) => a.correct / a.total - b.correct / b.total);
     const ratio = runSize > 0 ? currentScore / runSize : 0;
     const officialPass = getOfficialPass(slug);
+    // Rubric row columns: [flexible label] gap-3 [w-32 bar] gap-3 [w-16 score].
+    // The goal line is measured from the right edge because only the label
+    // column stretches: score + gap + the slice of the bar past the goal.
+    const goalLineRight = `${4 + 0.75 + 8 * (1 - GOAL_RATIO)}rem`;
     const passed = mode === "exam" && ratio >= GOAL_RATIO;
     const doingWell = ratio >= 0.75;
 
@@ -1409,32 +1413,32 @@ export default function CertificationQuiz() {
           <BackLink to="/formations" label={backLabel} />
         </div>
         <div className="rounded-2xl border border-black/8 bg-white px-7 py-8 shadow-sm">
-          {/* Verdict first, then the ring, then the raw count - biggest
-              decision to smallest detail. The old order buried the percentage
-              entirely: the reader saw 51/60 and had to divide. */}
+          {/* Ring and verdict side by side: stacked, the badge sat right on the
+              circle's edge with nothing to separate them, and the block ran
+              tall for no reason. Reading left to right - how much, then what it
+              means - matches how the two are actually used. */}
           <div className="flex flex-col items-center">
-            <span
-              className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold ${
-                (mode === "exam" ? passed : doingWell)
-                  ? "border border-green/30 bg-green/10 text-green"
-                  : "border border-red-300 bg-red-50 text-red-600"
-              }`}
-            >
-              {(mode === "exam" ? passed : doingWell)
-                ? t.quiz.trainingSuccess
-                : t.quiz.trainingFail}
-            </span>
-
-            <div className="-my-1">
+            <div className="flex items-center justify-center gap-5">
               <ScoreRing pct={Math.round(ratio * 100)} goal={Math.round(GOAL_RATIO * 100)} />
-            </div>
 
-            <p className="font-display text-lg font-semibold text-ink">
-              {currentScore}/{runSize}
-              <span className="ml-2 text-sm font-normal lowercase text-muted">
-                {t.quiz.finishedScore}
-              </span>
-            </p>
+              <div className="text-left">
+                <span
+                  className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold ${
+                    (mode === "exam" ? passed : doingWell)
+                      ? "border border-green/30 bg-green/10 text-green"
+                      : "border border-red-300 bg-red-50 text-red-600"
+                  }`}
+                >
+                  {(mode === "exam" ? passed : doingWell)
+                    ? t.quiz.trainingSuccess
+                    : t.quiz.trainingFail}
+                </span>
+                <p className="mt-2.5 font-display text-lg font-semibold text-ink">
+                  {currentScore}/{runSize}
+                </p>
+                <p className="text-xs lowercase text-muted">{t.quiz.finishedScore}</p>
+              </div>
+            </div>
 
             {mode === "exam" && (
               <>
@@ -1480,46 +1484,58 @@ export default function CertificationQuiz() {
           </div>
 
           {domainBreakdown.length > 0 && (
-            <div className="mt-8 text-left">
+            <div className="mt-6 text-left">
               <p className="text-xs font-medium uppercase tracking-wide text-muted">
                 {t.quiz.domainBreakdownTitle}
               </p>
-              <ul className="mt-3 flex flex-col gap-2">
-                {domainBreakdown.map((row) => (
-                  <li key={row.key} className="rounded-xl border border-black/8 px-4 py-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="min-w-0 text-sm text-ink/80">{row.label}</span>
-                      <span className="shrink-0 text-sm font-semibold text-ink">
-                        {row.correct}/{row.total}
-                        <span className="ml-2 text-xs font-normal text-muted">{row.pct}%</span>
+              {/* One row per rubric on a single line, so every bar starts and
+                  ends at the same x. That alignment is what lets the goal be a
+                  single continuous line across the whole list instead of a tick
+                  repeated on each bar - and it halves the block's height.
+                  Offsets are expressed from the right because only the label
+                  column is elastic. */}
+              <div className="relative mt-3">
+                <ul className="flex flex-col gap-1.5">
+                  {domainBreakdown.map((row) => (
+                    <li key={row.key} className="flex items-center gap-3 text-sm">
+                      <span className="flex min-w-0 flex-1 items-baseline gap-2">
+                        <span className="truncate text-ink/80">{row.label}</span>
+                        <span className="shrink-0 text-xs text-muted">
+                          {row.correct}/{row.total}
+                        </span>
                       </span>
-                    </div>
-                    {/* Green only past the goal marker, so the colour and the
-                        tick always tell the same story; red below 40% flags a
-                        block that needs real work rather than polish. */}
-                    <div className="relative mt-2 h-1.5 rounded-full bg-black/[0.07]">
-                      <div
-                        className={`h-full rounded-full ${
-                          row.pct >= GOAL_RATIO * 100
-                            ? "bg-green"
-                            : row.pct >= 40
-                              ? "bg-amber"
-                              : "bg-red-500"
-                        }`}
-                        style={{ width: `${row.pct}%` }}
-                      />
-                      <span
-                        aria-hidden="true"
-                        className="absolute -top-1 -bottom-1 w-px bg-ink"
-                        style={{ left: `${GOAL_RATIO * 100}%` }}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-2 text-xs text-muted">
-                {t.quiz.domainThresholdLegend(Math.round(GOAL_RATIO * 100))}
-              </p>
+                      <span className="relative h-1.5 w-32 shrink-0 rounded-full bg-black/[0.07]">
+                        <span
+                          className={`absolute inset-y-0 left-0 rounded-full ${
+                            row.pct >= GOAL_RATIO * 100
+                              ? "bg-green"
+                              : row.pct >= 40
+                                ? "bg-amber"
+                                : "bg-red-500"
+                          }`}
+                          style={{ width: `${row.pct}%` }}
+                        />
+                      </span>
+                      <span className="w-16 shrink-0 text-right text-xs text-muted">
+                        <span className="font-semibold text-ink">{row.pct}%</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <span
+                  aria-hidden="true"
+                  className="absolute -top-3.5 bottom-0 w-px bg-teal-dark/70"
+                  style={{ right: goalLineRight }}
+                />
+                {/* Centred on the line, which doubles as the legend: naming the
+                    goal here let the explanatory sentence under the list go. */}
+                <span
+                  className="absolute -top-4 translate-x-1/2 text-[10px] font-semibold leading-none text-teal-dark"
+                  style={{ right: goalLineRight }}
+                >
+                  {Math.round(GOAL_RATIO * 100)}%
+                </span>
+              </div>
             </div>
           )}
 
