@@ -34,8 +34,15 @@ export function emailHeader(): string {
                   <td valign="middle" style="padding:0 14px 0 0;">
                     <table cellpadding="0" cellspacing="0" role="presentation">
                       <tr>
-                        <td width="56" height="56" align="center" valign="middle" style="background-color:#ffffff;border-radius:28px;">
-                          <img src="https://lampasai.com/email-logo.png" alt="Lampas .ai" width="36" height="32" style="display:block;" />
+                        <!-- The white disc is baked into the image rather than
+                             drawn with background-color + border-radius. Dark-mode
+                             clients recolour CSS backgrounds, which turned the disc
+                             dark and swallowed the logo's dark ink; image pixels are
+                             never inverted, so this stays legible in either mode.
+                             Its corners are transparent, letting the header gradient
+                             through. Served at 256px for crisp rendering at 2x. -->
+                        <td width="56" height="56" align="center" valign="middle">
+                          <img src="https://lampasai.com/email-logo-circle.png" alt="Lampas .ai" width="56" height="56" style="display:block;border:0;" />
                         </td>
                       </tr>
                     </table>
@@ -123,6 +130,12 @@ export function emailPage(cardHtml: string): string {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Declares the email light-only. Apple Mail and Outlook honour this and
+         skip their automatic dark-mode inversion, which is what was flipping
+         the light surfaces of this template to dark. -->
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <style>:root { color-scheme: light; supported-color-schemes: light; }</style>
     ${EMAIL_FONT_LINK}
   </head>
   <body style="margin:0;padding:32px 16px;background-color:#F8F7FF;">
