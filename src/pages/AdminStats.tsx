@@ -8,6 +8,9 @@ import { localize } from "../lib/i18nText";
 import { useLanguage } from "../i18n";
 
 const ADMIN_EMAIL = "mbairo.allatessem@gmail.com";
+// Podium only - the table is a glance at who is active this month, not a
+// full ranking; the per-certification leaderboard is where that lives.
+const TOP_PERFORMERS = 5;
 
 interface ProfileRow {
   id: string;
@@ -134,12 +137,21 @@ export default function AdminStats() {
   }
   const topPerformers = [...pointsByUser.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([userId, points]) => ({
-      profile: profiles.find((p) => p.id === userId),
-      points,
-      sessions: thisMonthResults.filter((r) => r.user_id === userId).length,
-    }));
+    .slice(0, TOP_PERFORMERS)
+    .map(([userId, points]) => {
+      const userResults = thisMonthResults.filter((r) => r.user_id === userId);
+      const correct = userResults.reduce((sum, r) => sum + r.correct_count, 0);
+      const answered = userResults.reduce((sum, r) => sum + r.total_count, 0);
+      return {
+        profile: profiles.find((p) => p.id === userId),
+        points,
+        sessions: userResults.length,
+        // Weighted by question count, like the per-certification table above
+        // and the SQL leaderboard: a 200-question run should count for more
+        // than a 20-question one, which averaging per-session ratios wouldn't do.
+        avgScore: answered > 0 ? Math.round((correct / answered) * 100) : null,
+      };
+    });
 
   return (
     <section className="mx-auto max-w-5xl px-6 pt-8 pb-16">
@@ -212,12 +224,13 @@ export default function AdminStats() {
                   <th className="px-4 py-3">{a.statsUser}</th>
                   <th className="px-4 py-3">Points</th>
                   <th className="px-4 py-3">{a.statsSessions}</th>
+                  <th className="px-4 py-3">{a.statsAvgScore}</th>
                 </tr>
               </thead>
               <tbody>
                 {topPerformers.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-4 text-muted" colSpan={4}>
+                    <td className="px-4 py-4 text-muted" colSpan={5}>
                       {a.statsNoSessionThisMonth}
                     </td>
                   </tr>
@@ -230,6 +243,7 @@ export default function AdminStats() {
                       </td>
                       <td className="px-4 py-3">{row.points.toLocaleString(adminLocale(lang))}</td>
                       <td className="px-4 py-3">{row.sessions}</td>
+                      <td className="px-4 py-3">{row.avgScore !== null ? `${row.avgScore}%` : "-"}</td>
                     </tr>
                   ))
                 )}
