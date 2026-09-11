@@ -139,6 +139,7 @@ interface Translations {
     dashboardWelcome: string;
     dashboardGreeting: (name: string) => string;
     dashboardPlanPro: string;
+    dashboardFullAccess: string;
     dashboardPaidBadge: string;
     dashboardAccessUntil: (date: string) => string;
     dashboardRenewAccess: string;
@@ -444,6 +445,7 @@ const translations: Record<Lang, Translations> = {
       dashboardWelcome: "Ton espace d'entraînement",
       dashboardGreeting: (name) => `Bienvenue ${name}`,
       dashboardPlanPro: "Compte Pro",
+      dashboardFullAccess: "Accès complet",
       dashboardPaidBadge: "Payé",
       dashboardAccessUntil: (date) => `Accès jusqu'au ${date}`,
       dashboardRenewAccess: "Renouvelle ton accès",
@@ -760,6 +762,7 @@ const translations: Record<Lang, Translations> = {
       dashboardWelcome: "Your training space",
       dashboardGreeting: (name) => `Welcome ${name}, your training space`,
       dashboardPlanPro: "Pro account",
+      dashboardFullAccess: "Full access",
       dashboardPaidBadge: "Paid",
       dashboardAccessUntil: (date) => `Access until ${date}`,
       dashboardRenewAccess: "Renew your access",

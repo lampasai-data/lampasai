@@ -70,6 +70,15 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
   // Rendering on a half-known answer showed a Pro subscriber the "go
   // unlimited" banner and locked cards for a beat before correcting itself.
   const accessReady = profileReady && accessLoaded;
+  // A voucher (or a one-off purchase) grants access per certification through
+  // certification_purchases; it never flips profiles.plan to "pro". So the
+  // upgrade banner can't key on the plan alone - someone who unlocked every
+  // certification with vouchers kept being told to "go unlimited", and the
+  // modal then answered that everything was already unlocked. The guard on
+  // certs.length matters: every() on an empty list is vacuously true, which
+  // would hide the banner while the catalogue is still loading.
+  const hasFullAccess =
+    isPro || (certs.length > 0 && certs.every((c) => purchasedIds.has(c.id)));
 
   useEffect(() => {
     if (user) getUserProgress(user.id).then(setProgress);
@@ -173,15 +182,25 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
               ? t.formations.dashboardGreeting(profile.first_name)
               : t.formations.dashboardWelcome}
           </p>
-          {isPro && (
+          {/* Two distinct statuses, deliberately styled apart. "Compte Pro" is
+              a subscription; "Accès complet" means every certification happens
+              to be unlocked right now through purchases or vouchers, which
+              expire. Showing the Pro badge for the latter would promise
+              something the account doesn't have. */}
+          {accessReady && isPro && (
             <span className="brand-gradient inline-flex items-center rounded-full px-4 py-1.5 text-xs font-semibold text-white">
               {t.formations.dashboardPlanPro}
+            </span>
+          )}
+          {accessReady && !isPro && hasFullAccess && (
+            <span className="inline-flex items-center rounded-full border border-teal/40 bg-teal/5 px-4 py-1.5 text-xs font-semibold text-teal-dark">
+              {t.formations.dashboardFullAccess}
             </span>
           )}
         </div>
       </motion.div>
 
-      {accessReady && !isPro && (
+      {accessReady && !hasFullAccess && (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
