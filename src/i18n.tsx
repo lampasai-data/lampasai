@@ -425,7 +425,7 @@ const translations: Record<Lang, Translations> = {
     },
     formations: {
       title: "Certifications & formations",
-      lead: "Prépare tes certifications ou découvre nos prochaines formations pour monter en compétence sur la donnée et l'IA.",
+      lead: "Prépare tes certifications ou découvre nos prochaines formations data et IA.",
       tabCertifications: "Certifications",
       tabFormations: "Formations",
       tabPricing: "Pricing",
@@ -433,7 +433,7 @@ const translations: Record<Lang, Translations> = {
       leaderboardTeaser: (points: number, ratioPercent: number) =>
         `Top score : ${points.toLocaleString("fr-FR")} pts, ${ratioPercent}% de réussite. À toi de faire mieux !`,
       accessQuiz: "Accéder au quiz",
-      valueProp: "Nos questions vont droit à l'essentiel : pas de superflu, seulement ce qu'il faut pour réussir ta certification.",
+      valueProp: "Nos questions vont droit à l'essentiel : ce qu'il faut pour réussir ta certification.",
       certifValue: "Avoir une certification est une vraie plus-value sur ton CV : prends le temps de bien la préparer.",
       skipFreeTitle: "Pas envie de passer par les questions gratuites ?",
       skipFreeDesc: "Tu peux créer ton compte dès maintenant et passer directement en accès illimité, sans faire les 20 questions gratuites.",
@@ -741,7 +741,7 @@ const translations: Record<Lang, Translations> = {
     },
     formations: {
       title: "Data certifications & training",
-      lead: "Prepare for your certifications or discover our upcoming training paths to grow your data and AI skills.",
+      lead: "Prepare your certifications or discover our upcoming data and AI training.",
       tabCertifications: "Certifications",
       tabFormations: "Training",
       tabPricing: "Pricing",
@@ -749,7 +749,7 @@ const translations: Record<Lang, Translations> = {
       leaderboardTeaser: (points: number, ratioPercent: number) =>
         `Top score: ${points.toLocaleString("en-US")} pts, ${ratioPercent}% correct. Can you beat it?`,
       accessQuiz: "Go to quiz",
-      valueProp: "Our questions go straight to the point: nothing superfluous, only what you need to pass your certification.",
+      valueProp: "Our questions go straight to the point: just what you need to pass your certification.",
       certifValue: "Having a certification is a real asset on your resume: take the time to prepare it properly.",
       skipFreeTitle: "Don't want to go through the free questions?",
       skipFreeDesc: "You can create your account right away and go straight to unlimited access, without doing the 20 free questions.",
