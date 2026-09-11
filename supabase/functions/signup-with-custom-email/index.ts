@@ -32,7 +32,7 @@ function renderConfirmEmailHtml(firstName: string | null, confirmUrl: string): s
   const content = `
 ${emailSalutation(firstName)}
 <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#5B5B70;">
-  Merci de t'être inscrit sur Lampas .ai. Confirme ton adresse email pour activer ton compte et commencer à t'entraîner.
+  Merci d'avoir rejoint Lampas .ai. Confirme ton adresse email pour activer ton compte et commencer à t'entraîner.
 </p>
 <table cellpadding="0" cellspacing="0" role="presentation"><tr><td style="border-radius:999px;background-color:#4A8896;">
   <a href="${confirmUrl}" style="display:inline-block;padding:12px 28px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;">Confirmer mon compte</a>

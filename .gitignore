@@ -30,3 +30,7 @@ dist-ssr
 # chaque machine, sans rapport avec le code du projet.
 .agents/
 .claude/
+
+# Supabase CLI local state (linked project ref, cached versions).
+# Machine-specific and rewritten by every CLI command.
+supabase/.temp/
