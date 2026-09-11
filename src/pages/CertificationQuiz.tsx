@@ -1373,10 +1373,10 @@ export default function CertificationQuiz() {
       .sort((a, b) => a.correct / a.total - b.correct / b.total);
     const ratio = runSize > 0 ? currentScore / runSize : 0;
     const officialPass = getOfficialPass(slug);
-    // Rubric row columns: [flexible label] gap-3 [w-32 bar] gap-3 [w-16 score].
+    // Rubric row columns: [flexible label] gap-3 [w-44 bar] gap-3 [w-16 score].
     // The goal line is measured from the right edge because only the label
     // column stretches: score + gap + the slice of the bar past the goal.
-    const goalLineRight = `${4 + 0.75 + 8 * (1 - GOAL_RATIO)}rem`;
+    const goalLineRight = `${4 + 0.75 + 11 * (1 - GOAL_RATIO)}rem`;
     const passed = mode === "exam" && ratio >= GOAL_RATIO;
     const doingWell = ratio >= 0.75;
 
@@ -1418,10 +1418,10 @@ export default function CertificationQuiz() {
               tall for no reason. Reading left to right - how much, then what it
               means - matches how the two are actually used. */}
           <div className="flex flex-col items-center">
-            <div className="flex items-center justify-center gap-5">
+            <div className="flex items-center justify-center gap-8">
               <ScoreRing pct={Math.round(ratio * 100)} goal={Math.round(GOAL_RATIO * 100)} />
 
-              <div className="text-left">
+              <div className="text-center">
                 <span
                   className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold ${
                     (mode === "exam" ? passed : doingWell)
@@ -1462,22 +1462,24 @@ export default function CertificationQuiz() {
             </p>
           )}
 
-          <div className={`mt-6 grid gap-3 ${isPro ? "grid-cols-2" : "grid-cols-1"}`}>
+          <div
+            className={`mx-auto mt-6 grid max-w-xs gap-2 ${isPro ? "grid-cols-2" : "grid-cols-1"}`}
+          >
             {isPro && (
-              <div className="rounded-xl border border-black/8 bg-surface/60 px-4 py-3">
-                <p className="font-display text-2xl font-semibold text-ink">
+              <div className="rounded-lg border border-black/8 bg-surface/60 px-3 py-2">
+                <p className="font-display text-lg font-semibold text-ink">
                   {formatTime(elapsed)}
                 </p>
-                <p className="mt-0.5 text-[11px] uppercase tracking-wide text-muted">
+                <p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted">
                   {t.quiz.finishedTime}
                 </p>
               </div>
             )}
-            <div className="rounded-xl border border-black/8 bg-surface/60 px-4 py-3">
-              <p className="brand-gradient-text font-display text-2xl font-semibold">
+            <div className="rounded-lg border border-black/8 bg-surface/60 px-3 py-2">
+              <p className="brand-gradient-text font-display text-lg font-semibold">
                 {formatNumber(points, lang)}
               </p>
-              <p className="mt-0.5 text-[11px] uppercase tracking-wide text-muted">
+              <p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted">
                 {t.quiz.finishedPoints}
               </p>
             </div>
@@ -1497,14 +1499,14 @@ export default function CertificationQuiz() {
               <div className="relative mt-3">
                 <ul className="flex flex-col gap-1.5">
                   {domainBreakdown.map((row) => (
-                    <li key={row.key} className="flex items-center gap-3 text-sm">
+                    <li key={row.key} className="flex items-center gap-3 text-xs">
                       <span className="flex min-w-0 flex-1 items-baseline gap-2">
                         <span className="truncate text-ink/80">{row.label}</span>
                         <span className="shrink-0 text-xs text-muted">
                           {row.correct}/{row.total}
                         </span>
                       </span>
-                      <span className="relative h-1.5 w-32 shrink-0 rounded-full bg-black/[0.07]">
+                      <span className="relative h-1.5 w-44 shrink-0 rounded-full bg-black/[0.07]">
                         <span
                           className={`absolute inset-y-0 left-0 rounded-full ${
                             row.pct >= GOAL_RATIO * 100
@@ -1524,13 +1526,13 @@ export default function CertificationQuiz() {
                 </ul>
                 <span
                   aria-hidden="true"
-                  className="absolute -top-3.5 bottom-0 w-px bg-teal-dark/70"
+                  className="absolute -top-1 bottom-0 w-px bg-teal-dark"
                   style={{ right: goalLineRight }}
                 />
                 {/* Centred on the line, which doubles as the legend: naming the
                     goal here let the explanatory sentence under the list go. */}
                 <span
-                  className="absolute -top-4 translate-x-1/2 text-[10px] font-semibold leading-none text-teal-dark"
+                  className="absolute -top-5 translate-x-1/2 text-[11px] font-semibold leading-none text-teal-dark"
                   style={{ right: goalLineRight }}
                 >
                   {Math.round(GOAL_RATIO * 100)}%
