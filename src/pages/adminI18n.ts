@@ -331,6 +331,8 @@ export interface AdminStrings {
   vouchersLead: string;
   vouchersExpiry: string;
   vouchersMaxRedemptions: string;
+  vouchersAccessDays: string;
+  vouchersDays: (n: number) => string;
   vouchersGenerate: string;
   vouchersGenerating: string;
   vouchersGenerated: string;
@@ -742,6 +744,8 @@ export const ADMIN_T: Record<Lang, AdminStrings> = {
       "Génère un code qui débloque le mode examen (30 jours, sans export PDF) d'une certification, en usage unique ou partagé.",
     vouchersExpiry: "Expiration du code (optionnel)",
     vouchersMaxRedemptions: "Nombre d'utilisations",
+    vouchersAccessDays: "Durée d'accès",
+    vouchersDays: (n) => `${n} jours`,
     vouchersGenerate: "Générer un code",
     vouchersGenerating: "Génération…",
     vouchersGenerated: "Code généré :",
@@ -1152,6 +1156,8 @@ export const ADMIN_T: Record<Lang, AdminStrings> = {
       "Generate a code that unlocks exam mode (30 days, no PDF export) for a certification, single-use or shared.",
     vouchersExpiry: "Code expiry (optional)",
     vouchersMaxRedemptions: "Number of uses",
+    vouchersAccessDays: "Access length",
+    vouchersDays: (n) => `${n} days`,
     vouchersGenerate: "Generate a code",
     vouchersGenerating: "Generating…",
     vouchersGenerated: "Code generated:",

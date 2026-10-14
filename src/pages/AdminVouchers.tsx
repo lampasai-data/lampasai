@@ -18,7 +18,10 @@ interface VoucherRow {
   expires_at: string | null;
   created_at: string;
   max_redemptions: number;
+  access_days: number;
 }
+
+const ACCESS_DAY_OPTIONS = [7, 14, 30, 90];
 
 interface RedemptionRow {
   voucher_id: string;
@@ -43,6 +46,7 @@ export default function AdminVouchers() {
   const [certificationId, setCertificationId] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [maxRedemptions, setMaxRedemptions] = useState("1");
+  const [accessDays, setAccessDays] = useState(30);
   const [generating, setGenerating] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +61,7 @@ export default function AdminVouchers() {
       listCertifications(),
       supabase
         .from("exam_vouchers")
-        .select("id, code, certification_id, expires_at, created_at, max_redemptions")
+        .select("id, code, certification_id, expires_at, created_at, max_redemptions, access_days")
         .order("created_at", { ascending: false }),
       supabase.from("exam_voucher_redemptions").select("voucher_id, user_id, redeemed_at"),
     ]);
@@ -106,6 +110,7 @@ export default function AdminVouchers() {
           certificationId,
           expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
           maxRedemptions: Math.max(1, parseInt(maxRedemptions, 10) || 1),
+          accessDays,
         },
         headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
       }
@@ -187,6 +192,7 @@ export default function AdminVouchers() {
     },
     { key: "cert", label: a.certification, value: (v) => certName(v.certification_id), filter: "options" },
     { key: "type", label: a.vouchersType, value: (v) => usageTypeLabel(v), filter: "options" },
+    { key: "access", label: a.vouchersAccessDays, value: (v) => a.vouchersDays(v.access_days ?? 30), filter: "options" },
     {
       key: "created",
       label: a.vouchersCreatedAt,
@@ -273,6 +279,20 @@ export default function AdminVouchers() {
             onChange={(e) => setMaxRedemptions(e.target.value)}
             className="w-28 rounded-xl border border-black/12 bg-white px-3 py-2 text-sm outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/20"
           />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-muted">{a.vouchersAccessDays}</label>
+          <select
+            value={accessDays}
+            onChange={(e) => setAccessDays(Number(e.target.value))}
+            className="rounded-xl border border-black/12 bg-white px-3 py-2 text-sm outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/20"
+          >
+            {ACCESS_DAY_OPTIONS.map((d) => (
+              <option key={d} value={d}>
+                {a.vouchersDays(d)}
+              </option>
+            ))}
+          </select>
         </div>
         <button
           type="button"

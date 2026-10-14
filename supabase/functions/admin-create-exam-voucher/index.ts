@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
   const auth = await requireAdmin(supabase, req);
   if ("response" in auth) return auth.response;
 
-  const { certificationId, expiresAt, maxRedemptions } = await req.json();
+  const { certificationId, expiresAt, maxRedemptions, accessDays } = await req.json();
   if (!certificationId) {
     return jsonResponse({ error: "certificationId is required" }, 400);
   }
@@ -25,6 +25,12 @@ Deno.serve(async (req) => {
     typeof maxRedemptions === "number" && Number.isInteger(maxRedemptions) && maxRedemptions > 0
       ? maxRedemptions
       : 1;
+  // How long the access lasts once redeemed (30 days unless the admin picks
+  // another length, e.g. a 7-day trial).
+  const normalizedAccessDays =
+    typeof accessDays === "number" && Number.isInteger(accessDays) && accessDays >= 1 && accessDays <= 365
+      ? accessDays
+      : 30;
 
   const { data: cert } = await supabase
     .from("certifications")
@@ -47,8 +53,9 @@ Deno.serve(async (req) => {
         created_by: ADMIN_EMAIL,
         expires_at: expiresAt ?? null,
         max_redemptions: normalizedMaxRedemptions,
+        access_days: normalizedAccessDays,
       })
-      .select("id, code, certification_id, expires_at, created_at, max_redemptions")
+      .select("id, code, certification_id, expires_at, created_at, max_redemptions, access_days")
       .single();
 
     if (!error) {
@@ -60,6 +67,7 @@ Deno.serve(async (req) => {
         detail: {
           certification_id: certificationId,
           max_redemptions: normalizedMaxRedemptions,
+          access_days: normalizedAccessDays,
           expires_at: expiresAt ?? null,
         },
       });

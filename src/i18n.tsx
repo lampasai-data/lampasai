@@ -576,9 +576,9 @@ const translations: Record<Lang, Translations> = {
       voucherSuccessFor: (certName: string) => `Code validé : ${certName} débloqué !`,
       voucherModalTitle: "Débloquer avec un code d'accès",
       voucherModalDescFor: (certName: string) =>
-        `Saisis ton code pour débloquer ${certName} en mode examen pendant 30 jours.`,
+        `Saisis ton code pour débloquer ${certName} en mode examen.`,
       voucherModalDescGeneric:
-        "Choisis la certification concernée, puis saisis ton code pour débloquer le mode examen pendant 30 jours.",
+        "Choisis la certification concernée, puis saisis ton code pour débloquer le mode examen.",
       voucherModalPayInstead: "Payer plutôt",
       questionCountLabel: "Nombre de questions",
       startTraining: "Commencer l'entraînement",
@@ -894,9 +894,9 @@ const translations: Record<Lang, Translations> = {
       voucherSuccessFor: (certName: string) => `Code redeemed: ${certName} unlocked!`,
       voucherModalTitle: "Unlock with an access code",
       voucherModalDescFor: (certName: string) =>
-        `Enter your code to unlock ${certName} exam mode for 30 days.`,
+        `Enter your code to unlock ${certName} exam mode.`,
       voucherModalDescGeneric:
-        "Pick the certification, then enter your code to unlock exam mode for 30 days.",
+        "Pick the certification, then enter your code to unlock exam mode.",
       voucherModalPayInstead: "Pay instead",
       questionCountLabel: "Number of questions",
       startTraining: "Start practice",
