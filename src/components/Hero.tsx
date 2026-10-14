@@ -125,8 +125,7 @@ function Pipeline() {
               width={NODE_W}
               height={NODE_H}
               rx="18"
-              fill="rgba(255,255,255,0.92)"
-              stroke="rgba(20,20,43,0.08)"
+              className="pipeline-node"
             />
             <g transform={`translate(${cx}, ${NODE_Y + NODE_H / 2})`}>
               <Icon />

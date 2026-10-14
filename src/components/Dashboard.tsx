@@ -16,8 +16,16 @@ import {
 } from "../lib/quizData";
 import type { LocalizedText, Question } from "../data/types";
 import { CERT_LOGOS } from "../data/certLogos";
-import { CERTIFICATION_DOMAINS } from "../data/certificationDomains";
 import { useCheckoutSuccessPoll } from "../lib/useCheckoutSuccessPoll";
+import { EMPTY_INSIGHTS, loadMyInsights, type MyInsights } from "../lib/insights";
+import { USER_T } from "../userAreaI18n";
+import Avatar from "./Avatar";
+import PodiumBanner from "./PodiumBanner";
+import Tooltip from "./Tooltip";
+import { claimPodium } from "../lib/podium";
+import HelpFeedbackButtons from "./HelpFeedbackButtons";
+import { accentOf } from "../lib/certAccent";
+import { CertAnalysis, LockedPreview } from "./ProgressInsights";
 
 function TrophyIcon({ className = "h-4 w-4" }: { className?: string }) {
   return (
@@ -40,6 +48,13 @@ function TrophyIcon({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
+// Short name for a switch button: the certification's product name.
+function shortCertName(c: CertificationSummary, lang: "fr" | "en") {
+  if (c.slug === "snowflake") return "Snowflake";
+  if (c.slug === "power-bi") return "Power BI";
+  return localize(c.name, lang);
+}
+
 export default function Dashboard({ certs }: { certs: CertificationSummary[] }) {
   const { user, profile, profileReady, openUpgradeModal, purchasesVersion } = useAuth();
   const { t, lang } = useLanguage();
@@ -54,6 +69,12 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
   // disappears on its own as soon as someone else overtakes them.
   const [medals, setMedals] = useState<Map<string, number>>(new Map());
   const [accessLoaded, setAccessLoaded] = useState(false);
+  const [insights, setInsights] = useState<MyInsights>(EMPTY_INSIGHTS);
+  // Which certification the figures above the cards describe ("all" = both).
+  const [scope, setScope] = useState<string>("all");
+  // Congratulation shown once when the person reaches the podium of a
+  // certification this month (see the effect below).
+  const [podium, setPodium] = useState<{ certId: string; rank: number }[]>([]);
   const [pdfModal, setPdfModal] = useState<{
     certName: LocalizedText;
     questions: Question[];
@@ -83,6 +104,30 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
   useEffect(() => {
     if (user) getUserProgress(user.id).then(setProgress);
   }, [user]);
+
+  useEffect(() => {
+    if (user) loadMyInsights(user.id).then(setInsights);
+    else setInsights(EMPTY_INSIGHTS);
+  }, [user, purchasesVersion]);
+
+  // One congratulation per (certification, rank, month): remembered in this
+  // browser so it does not come back on every visit. Reaching a better rank
+  // later shows a new one. Every podium not yet announced is shown together.
+  useEffect(() => {
+    if (!user || medals.size === 0) return;
+    const fresh: { certId: string; rank: number }[] = [];
+    for (const [certId, rank] of medals) {
+      if (claimPodium(user.id, certId, rank)) fresh.push({ certId, rank });
+    }
+    if (fresh.length > 0) setPodium(fresh);
+  }, [user, medals]);
+
+  // The message fades away by itself after a few seconds.
+  useEffect(() => {
+    if (podium.length === 0) return;
+    const timer = setTimeout(() => setPodium([]), 14000);
+    return () => clearTimeout(timer);
+  }, [podium]);
 
   useEffect(() => {
     if (!user) {
@@ -162,6 +207,19 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
 
   return (
     <>
+      <AnimatePresence>
+        {podium.map((p) => (
+          <div key={`${p.certId}-${p.rank}`} className="mb-4">
+            <PodiumBanner
+              name={profile?.first_name ?? null}
+              rank={p.rank}
+              certName={localize(certs.find((c) => c.id === p.certId)?.name ?? { fr: "", en: "" }, lang)}
+              onClose={() => setPodium((list) => list.filter((x) => x !== p))}
+            />
+          </div>
+        ))}
+      </AnimatePresence>
+
       {checkoutBannerMonths !== null && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}
@@ -177,58 +235,173 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
         animate={{ opacity: 1, y: 0 }}
       >
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <p className="font-display text-2xl font-semibold text-ink">
-            {profile?.first_name
-              ? t.formations.dashboardGreeting(profile.first_name)
-              : t.formations.dashboardWelcome}
-          </p>
-          {/* Two distinct statuses, deliberately styled apart. "Compte Pro" is
-              a subscription; "Accès complet" means every certification happens
-              to be unlocked right now through purchases or vouchers, which
-              expire. Showing the Pro badge for the latter would promise
-              something the account doesn't have. */}
-          {accessReady && isPro && (
-            <span className="brand-gradient inline-flex items-center rounded-full px-4 py-1.5 text-xs font-semibold text-white">
-              {t.formations.dashboardPlanPro}
-            </span>
-          )}
-          {accessReady && !isPro && hasFullAccess && (
-            <span className="inline-flex items-center rounded-full border border-teal/40 bg-teal/5 px-4 py-1.5 text-xs font-semibold text-teal-dark">
-              {t.formations.dashboardFullAccess}
-            </span>
-          )}
+          <div className="flex items-center gap-4">
+            <Link to="/profil" className="group relative shrink-0" aria-label={USER_T[lang].profile.menu}>
+              {isPro ? (
+                <span className="brand-gradient block rounded-full p-[2.5px]">
+                  <span className="block rounded-full bg-white p-[2px]">
+                    <Avatar src={profile?.avatar_url} firstName={profile?.first_name} email={user?.email} size={52} />
+                  </span>
+                </span>
+              ) : (
+                <Avatar src={profile?.avatar_url} firstName={profile?.first_name} email={user?.email} size={52} />
+              )}
+              <span className="absolute -right-1 -bottom-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-teal text-white shadow-sm transition group-hover:bg-teal-dark">
+                <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3" aria-hidden="true">
+                  <path d="M4 20h4L19 9l-4-4L4 16v4z" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </Link>
+            <div>
+              <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1 font-display text-2xl font-semibold text-ink">
+                {profile?.first_name
+                  ? t.formations.dashboardGreeting(profile.first_name)
+                  : t.formations.dashboardWelcome}
+                {/* Two distinct statuses, deliberately styled apart: "Pro" is
+                    a subscription; "Accès complet" means every certification
+                    happens to be unlocked right now through purchases or
+                    vouchers, which expire. Showing Pro for the latter would
+                    promise something the account does not have. */}
+                {accessReady && isPro && (
+                  <Tooltip label={t.formations.dashboardPlanPro}>
+                    <span className="brand-gradient rounded-md px-1.5 py-0.5 font-sans text-[10px] font-bold tracking-widest text-white">
+                      PRO
+                    </span>
+                  </Tooltip>
+                )}
+                {accessReady && !isPro && hasFullAccess && (
+                  <span className="rounded-md border border-teal/40 bg-teal/5 px-1.5 py-0.5 font-sans text-[10px] font-bold tracking-wide text-teal-dark uppercase">
+                    {t.formations.dashboardFullAccess}
+                  </span>
+                )}
+              </p>
+              <Link to="/profil" className="text-sm font-medium text-teal-dark hover:underline">
+                {profile?.avatar_url ? USER_T[lang].profile.editLink : USER_T[lang].profile.addPhotoLink}
+              </Link>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {accessReady && certs.length > 1 && (
+              <div className="mr-5 flex h-[38px] max-w-full items-center gap-0.5 rounded-full border border-black/10 bg-white p-0.5 shadow-sm">
+                {[{ id: "all", label: USER_T[lang].insights.scopeAll }, ...certs.map((c) => ({ id: c.slug, label: shortCertName(c, lang) }))].map(
+                  (o) => (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => setScope(o.id)}
+                      className={`flex h-full items-center justify-center rounded-full px-3.5 text-sm font-semibold whitespace-nowrap transition ${
+                        scope === o.id ? "bg-teal/13 text-teal-dark" : "text-muted hover:text-ink"
+                      }`}
+                    >
+                      {o.label}
+                    </button>
+                  )
+                )}
+              </div>
+            )}
+            <HelpFeedbackButtons />
+          </div>
         </div>
       </motion.div>
 
-      {accessReady && !hasFullAccess && (
+      {accessReady && (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08 }}
-          className="mt-6 flex flex-col items-start justify-between gap-4 rounded-2xl border border-teal/25 bg-teal/5 p-6 sm:flex-row sm:items-center"
+          transition={{ delay: 0.05 }}
+          className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
         >
-          <div>
-            <p className="font-display text-base font-medium text-ink">
-              {t.formations.upgradeTitle}
-            </p>
-            <p className="mt-1 text-sm leading-relaxed text-muted">
-              {t.formations.upgradeDesc}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => openUpgradeModal()}
-            className="brand-gradient inline-flex shrink-0 items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white shadow-md shadow-teal/20 transition hover:opacity-90 active:scale-95"
-          >
-            {t.formations.upgradeCta}
-          </button>
+          {(() => {
+            const it = USER_T[lang].insights;
+            // Figures for the chosen certification, or for both together.
+            const one = scope === "all" ? null : scope;
+            const totals = one ? insights.totalsBySlug[one] : null;
+            const oneExams = one ? (insights.bySlug[one]?.exams ?? []) : [];
+            const streak = one ? (totals?.streakDays ?? 0) : insights.streakDays;
+            const answered = one ? (totals?.answered ?? 0) : insights.answeredTotal;
+            const correct = one ? (totals?.correct ?? 0) : insights.correctTotal;
+            const examCount = one ? oneExams.length : insights.examCount;
+            const best = one ? (oneExams.length ? Math.max(...oneExams.map((e) => e.ratio)) : null) : insights.bestExamRatio;
+            const rate = answered > 0 ? Math.round((correct / answered) * 100) : null;
+            // Outline icons on a 24px grid (2px round strokes), one tint per tile.
+            const icon = (...paths: string[]) => (
+              <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
+                {paths.map((d) => (
+                  <path key={d} d={d} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                ))}
+              </svg>
+            );
+            const tiles = [
+              {
+                label: it.tileStreak,
+                value: it.tileStreakValue(streak),
+                tint: "bg-amber/20 text-amber-ink",
+                icon: icon("M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"),
+              },
+              {
+                label: it.tileAnswered,
+                value: String(answered),
+                tint: "bg-green/15 text-green-ink",
+                icon: icon("M21.8 10A10 10 0 1 1 17 3.34", "m9 11 3 3L22 4"),
+              },
+              {
+                label: it.tileSuccess,
+                value: rate === null ? "-" : `${rate} %`,
+                tint: "bg-teal/15 text-teal-dark",
+                icon: icon("M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z", "M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z", "M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"),
+              },
+              {
+                label: it.tileExams,
+                value: String(examCount),
+                tint: "bg-brown/12 text-brown",
+                icon: icon("M8 2h8a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z", "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2", "m9 14 2 2 4-4"),
+              },
+              {
+                label: it.tileBest,
+                value: best === null ? "-" : `${Math.round(best * 100)} %`,
+                tint: "bg-amber/20 text-amber-ink",
+                icon: icon("M6 9H4.5a2.5 2.5 0 0 1 0-5H6", "M18 9h1.5a2.5 2.5 0 0 0 0-5H18", "M4 22h16", "M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22", "M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22", "M18 2H6v7a6 6 0 0 0 12 0V2z"),
+              },
+            ];
+            return tiles.map((tile) => (
+              <div key={tile.label} className="flex items-center gap-3 rounded-2xl border border-black/8 bg-white px-3.5 py-3 shadow-sm">
+                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tile.tint}`}>
+                  {tile.icon}
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-display text-lg leading-tight font-semibold text-ink tabular-nums">{tile.value}</span>
+                  <span className="block truncate text-[11px] text-muted">{tile.label}</span>
+                </span>
+              </div>
+            ));
+          })()}
         </motion.div>
       )}
 
+      {accessReady && (
+        <h2 className="mt-10 font-display text-xl font-semibold text-ink">{USER_T[lang].insights.coursesTitle}</h2>
+      )}
       {!accessReady ? (
-        <p className="mt-8 text-sm text-muted">{t.quiz.leaderboardLoading}</p>
+        <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2" aria-busy="true" aria-label={t.quiz.leaderboardLoading}>
+          {[0, 1].map((i) => (
+            <div key={i} className="h-72 animate-pulse rounded-3xl border border-black/8 bg-white p-7 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="h-16 w-16 rounded-2xl bg-black/[0.06]" />
+                <div className="flex-1 space-y-2.5">
+                  <div className="h-4 w-2/3 rounded bg-black/[0.07]" />
+                  <div className="h-3 w-1/2 rounded bg-black/[0.05]" />
+                </div>
+              </div>
+              <div className="mt-8 space-y-3">
+                <div className="h-3 rounded bg-black/[0.05]" />
+                <div className="h-3 w-5/6 rounded bg-black/[0.05]" />
+                <div className="h-3 w-2/3 rounded bg-black/[0.05]" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
-      <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
         {certs.map((cert, i) => {
           const stats = progress[cert.slug];
           const access = purchasedIds.get(cert.id);
@@ -243,16 +416,21 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.16 + i * 0.06 }}
-              className="flex h-full flex-col rounded-2xl border border-black/8 bg-white p-7 shadow-sm"
+              className="flex h-full flex-col overflow-hidden rounded-3xl border border-black/8 bg-white shadow-sm transition hover:shadow-md"
             >
-              <div className="flex items-start gap-3">
-                <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-black/8 bg-surface">
+              <div
+                className="px-7 pt-5 pb-4"
+                style={{
+                  background: `linear-gradient(120deg, ${accentOf(cert.slug)}2e 0%, ${accentOf(cert.slug)}0a 55%, transparent 100%)`,
+                }}
+              >
+              <div className="flex flex-wrap items-start gap-x-3 gap-y-3">
+                <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
                   {medal !== undefined && (
-                    <span
-                      title={t.formations.dashboardMedal(medal)}
-                      className="absolute -right-1.5 -top-1.5 text-2xl leading-none drop-shadow-sm"
-                    >
-                      {medal === 1 ? "🥇" : medal === 2 ? "🥈" : "🥉"}
+                    <span className="absolute -right-1.5 -top-1.5 text-2xl leading-none drop-shadow-sm">
+                      <Tooltip label={t.formations.dashboardMedal(medal)} align="start">
+                        <span>{medal === 1 ? "🥇" : medal === 2 ? "🥈" : "🥉"}</span>
+                      </Tooltip>
                     </span>
                   )}
                   {CERT_LOGOS[cert.slug] ? (
@@ -269,18 +447,18 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                     <span className="brand-gradient h-2.5 w-2.5 rounded-full" />
                   )}
                 </div>
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-display text-lg font-medium text-ink">
+                <div className="min-w-0 flex-1 basis-44">
+                  <div className="flex items-center gap-2">
+                    <h3 className="min-w-0 truncate font-display text-lg font-medium text-ink">
                       {localize(cert.name, lang)}
                     </h3>
                     {!isPro && expiresAt && (
-                      <span className="inline-flex items-center rounded-full border border-green/30 bg-green/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-green">
+                      <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-green/30 bg-green/10 px-2 py-px text-[9.5px] font-semibold uppercase tracking-wide text-green">
                         {t.formations.dashboardPaidBadge}
                       </span>
                     )}
                     {isExpired && (
-                      <span className="inline-flex items-center rounded-full border border-red-300 bg-red-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-red-600">
+                      <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-red-300 bg-red-50 px-2 py-px text-[9.5px] font-semibold uppercase tracking-wide text-red-600">
                         {t.formations.dashboardRenewAccess}
                       </span>
                     )}
@@ -294,80 +472,65 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                         )
                       : t.formations.dashboardNotStarted}
                   </p>
+                  {stats && stats.answered > 0 && (
+                    <div className="mt-2.5 h-[3px] w-full max-w-[14rem] rounded-full bg-black/[0.07]">
+                      <div
+                        className="brand-gradient h-full rounded-full"
+                        style={{ width: `${Math.max(3, Math.round((stats.correct / stats.answered) * 100))}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
-              </div>
-
-              {CERTIFICATION_DOMAINS[cert.slug] && (
-                <div className="mt-5 border-t border-black/5 pt-4">
-                  <p className="text-xs font-medium text-teal-dark">{t.formations.domainsLabel}</p>
-                  <ul className="mt-2.5 flex flex-col gap-1.5">
-                    {CERTIFICATION_DOMAINS[cert.slug].map((domain) => (
-                      <li
-                        key={domain.key}
-                        className="flex items-center justify-between gap-3 text-xs text-ink/70"
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-teal/60" />
-                          {localize(domain.label, lang)}
-                        </span>
-                        <span className="shrink-0 font-medium text-muted">{domain.weight}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Centred on phones so a button that wraps onto its own line
-                  doesn't read as orphaned against the left edge; from sm up
-                  the row fits on one line, so it stays left-aligned. */}
-              <div className="mt-auto flex flex-wrap items-center justify-center gap-x-2 gap-y-2 border-t border-black/5 pt-5 sm:justify-start">
-                {unlocked ? (
-                  <Link
-                    to={`/formations/${cert.slug}?mode=exam`}
-                    className="shrink-0 rounded-full border border-teal/40 px-3 py-1.5 text-xs font-medium text-teal-dark transition hover:bg-teal/5"
-                  >
-                    {t.formations.dashboardContinue}
-                  </Link>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => openUpgradeModal(cert.slug)}
-                      className="shrink-0 brand-gradient rounded-full px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
-                    >
-                      {t.formations.dashboardGoPro}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openUpgradeModal(cert.slug, true)}
-                      className="shrink-0 rounded-full border border-teal/40 px-3 py-1.5 text-xs font-medium text-teal-dark transition hover:bg-teal/5"
-                    >
-                      {t.quiz.voucherTitle}
-                    </button>
-                  </>
-                )}
-                {unlocked && canDownloadPdf && (
-                  <button
-                    type="button"
-                    onClick={() => handleDownloadPdf(cert)}
-                    disabled={downloadingSlug === cert.slug}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium text-ink transition hover:bg-teal/5 disabled:opacity-50"
-                  >
-                    {downloadingSlug === cert.slug
-                      ? t.formations.downloadingPdf
-                      : t.formations.downloadPdf}
-                  </button>
-                )}
                 {unlocked && (
-                  <Link
-                    to={`/formations/${cert.slug}/classement`}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-green/40 bg-green/5 px-3 py-1.5 text-xs font-medium text-green transition hover:bg-green/10"
-                  >
-                    <TrophyIcon className="h-3.5 w-3.5" />
-                    {t.quiz.viewLeaderboard}
-                  </Link>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <Link
+                      to={`/formations/${cert.slug}?mode=exam`}
+                      className="brand-gradient rounded-full px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-teal/20 transition hover:opacity-90"
+                    >
+                      {t.formations.dashboardContinue}
+                    </Link>
+                    <Tooltip label={t.quiz.viewLeaderboard} align="end">
+                      <Link
+                        to={`/formations/${cert.slug}/classement`}
+                        aria-label={t.quiz.viewLeaderboard}
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white text-green shadow-sm transition hover:border-green/50 hover:bg-green/5"
+                      >
+                        <TrophyIcon className="h-[18px] w-[18px]" />
+                      </Link>
+                    </Tooltip>
+                    {canDownloadPdf && (
+                      <Tooltip
+                        label={downloadingSlug === cert.slug ? t.formations.downloadingPdf : t.formations.downloadPdf}
+                        align="end"
+                      >
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadPdf(cert)}
+                        disabled={downloadingSlug === cert.slug}
+                        aria-label={t.formations.downloadPdf}
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white text-ink shadow-sm transition hover:border-teal/50 hover:bg-teal/5 disabled:animate-pulse disabled:opacity-60"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" className="h-[18px] w-[18px]" aria-hidden="true">
+                          <path d="M12 4v11M7.5 11l4.5 4.5 4.5-4.5M5 20h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                      </Tooltip>
+                    )}
+                  </div>
                 )}
               </div>
+              </div>
+
+              <div className="flex flex-1 flex-col px-7 pt-4 pb-5">
+              {unlocked ? (
+                <CertAnalysis cert={cert} data={insights.bySlug[cert.slug] ?? { domains: [], exams: [] }} />
+              ) : (
+                <LockedPreview
+                  onUnlock={() => openUpgradeModal(cert.slug)}
+                  onVoucher={() => openUpgradeModal(cert.slug, true)}
+                  voucherLabel={t.quiz.voucherTitle}
+                />
+              )}
 
               {/* Always rendered, fixed-height slot - even when neither
                   condition below applies - so every card reserves the same
@@ -376,7 +539,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                   message ended up taller below its buttons than one without,
                   which pushed its button row up and broke the alignment
                   between cards that all sit in the same grid row. */}
-              <div className="flex min-h-8 items-center justify-center pt-4">
+              <div className="mt-auto flex min-h-6 items-center justify-center pt-3">
                 {!isPro && expiresAt && (
                   <div className="flex items-center gap-2 text-xs text-muted">
                     <span>
@@ -421,6 +584,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                     </span>
                   </button>
                 )}
+              </div>
               </div>
             </motion.div>
           );

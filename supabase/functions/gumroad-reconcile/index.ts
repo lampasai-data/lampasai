@@ -28,11 +28,17 @@ Deno.serve(async (req) => {
     });
   }
 
-  await logGumroadEvent(supabase, {
-    payload: { reconcile_run: true, total_sales_seen: result.total },
-    verification_result: "reconcile",
-    match_result: `processed:${result.processed},skipped:${result.skipped}`,
-  });
+  // Only a sweep that actually recorded something is worth a log line:
+  // sales that were already processed are not a catch-up, and a row every 6h
+  // saying so just buried the real events. Per-sale outcomes (and errors)
+  // are logged by recordVerifiedSale itself.
+  if (result.processed > 0) {
+    await logGumroadEvent(supabase, {
+      payload: { reconcile_run: true, total_sales_seen: result.total },
+      verification_result: "reconcile",
+      match_result: `processed:${result.processed},skipped:${result.skipped}`,
+    });
+  }
 
   return new Response(JSON.stringify(result), {
     headers: { "Content-Type": "application/json" },

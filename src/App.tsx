@@ -1,5 +1,5 @@
 import { Suspense, lazy } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Nav from "./components/Nav";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
@@ -7,6 +7,7 @@ import ScrollToHash from "./components/ScrollToHash";
 import AuthModal from "./components/AuthModal";
 import UpgradeModal from "./components/UpgradeModal";
 import GumroadReturnHandler from "./components/GumroadReturnHandler";
+import LanguageSync from "./components/LanguageSync";
 import Home from "./pages/Home";
 
 // Home stays eager - it's the landing page, and making a first-time visitor
@@ -19,9 +20,16 @@ const CertificationQuiz = lazy(() => import("./pages/CertificationQuiz"));
 const CertificationLeaderboard = lazy(() => import("./pages/CertificationLeaderboard"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const EmailConfirmed = lazy(() => import("./pages/EmailConfirmed"));
+const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminGumroad = lazy(() => import("./pages/AdminGumroad"));
+const AdminEmails = lazy(() => import("./pages/admin/AdminEmails"));
+const Profile = lazy(() => import("./pages/Profile"));
+const AdminFeedback = lazy(() => import("./pages/admin/AdminFeedback"));
+const AdminAudit = lazy(() => import("./pages/admin/AdminAudit"));
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const AdminVouchers = lazy(() => import("./pages/AdminVouchers"));
-const AdminStats = lazy(() => import("./pages/AdminStats"));
+const AdminStats = lazy(() => import("./pages/admin/AdminStats"));
 
 // Deliberately plain: every split route already renders its own loading state
 // once mounted, so this only covers the few hundred milliseconds of fetching
@@ -31,9 +39,13 @@ function RouteFallback() {
 }
 
 function App() {
+  // The admin area is a back office with its own sidebar: the marketing nav
+  // and footer would only get in the way there.
+  const inAdmin = useLocation().pathname.startsWith("/admin");
+
   return (
     <>
-      <Nav />
+      {!inAdmin && <Nav />}
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -42,17 +54,27 @@ function App() {
           <Route path="/formations/:slug/classement" element={<CertificationLeaderboard />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/email-confirmed" element={<EmailConfirmed />} />
-          <Route path="/admin/gumroad" element={<AdminGumroad />} />
-          <Route path="/admin/vouchers" element={<AdminVouchers />} />
-          <Route path="/admin/stats" element={<AdminStats />} />
+          <Route path="/unsubscribe" element={<Unsubscribe />} />
+          <Route path="/profil" element={<Profile />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminStats />} />
+            <Route path="utilisateurs" element={<AdminUsers />} />
+            <Route path="gumroad" element={<AdminGumroad />} />
+            <Route path="vouchers" element={<AdminVouchers />} />
+            <Route path="emails" element={<AdminEmails />} />
+            <Route path="audit" element={<AdminAudit />} />
+            <Route path="feedback" element={<AdminFeedback />} />
+            <Route path="stats" element={<Navigate to="/admin" replace />} />
+          </Route>
         </Routes>
       </Suspense>
-      <Footer />
+      {!inAdmin && <Footer />}
       <ScrollToTop />
       <ScrollToHash />
       <AuthModal />
       <UpgradeModal />
       <GumroadReturnHandler />
+      <LanguageSync />
     </>
   );
 }

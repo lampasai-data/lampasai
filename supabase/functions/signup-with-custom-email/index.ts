@@ -10,6 +10,7 @@ import {
   emailBody,
   emailSalutation,
   emailFooter,
+  cleanFirstName,
 } from "../_shared/email-layout.ts";
 
 // Creates the account and generates its confirmation link via the admin
@@ -28,17 +29,37 @@ function passwordError(password: string): string | null {
   return null;
 }
 
-function renderConfirmEmailHtml(firstName: string | null, confirmUrl: string): string {
+type Lang = "fr" | "en";
+
+// French is the default (and what every existing caller gets): English only
+// when the site explicitly says the visitor is using it in English.
+const CONFIRM_COPY: Record<Lang, { subject: string; intro: string; button: string; ignore: string }> = {
+  fr: {
+    subject: "Confirme ton adresse email - Lampas .ai",
+    intro: "Merci d'avoir rejoint Lampas .ai. Confirme ton adresse email pour activer ton compte et commencer à t'entraîner.",
+    button: "Confirmer mon compte",
+    ignore: "Si tu n'es pas à l'origine de cette inscription, ignore simplement cet email.",
+  },
+  en: {
+    subject: "Confirm your email address - Lampas .ai",
+    intro: "Thanks for joining Lampas .ai. Confirm your email address to activate your account and start practising.",
+    button: "Confirm my account",
+    ignore: "If you did not sign up, simply ignore this email.",
+  },
+};
+
+function renderConfirmEmailHtml(firstName: string | null, confirmUrl: string, lang: Lang = "fr"): string {
+  const copy = CONFIRM_COPY[lang];
   const content = `
-${emailSalutation(firstName)}
+${emailSalutation(firstName, lang)}
 <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#5B5B70;">
-  Merci d'avoir rejoint Lampas .ai. Confirme ton adresse email pour activer ton compte et commencer à t'entraîner.
+  ${copy.intro}
 </p>
 <table cellpadding="0" cellspacing="0" role="presentation"><tr><td style="border-radius:999px;background-color:#4A8896;">
-  <a href="${confirmUrl}" style="display:inline-block;padding:12px 28px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;">Confirmer mon compte</a>
+  <a href="${confirmUrl}" style="display:inline-block;padding:12px 28px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;">${copy.button}</a>
 </td></tr></table>
 <p style="margin:24px 0 0;font-size:12px;color:#9CA3AF;">
-  Si tu n'es pas à l'origine de cette inscription, ignore simplement cet email.
+  ${copy.ignore}
 </p>`;
 
   return emailPage(`
@@ -48,7 +69,7 @@ ${emailHeader()}
         </tr>
 ${emailFrameOpen()}
 ${emailBody(content)}
-${emailFooter()}
+${emailFooter(lang)}
 ${emailFrameClose()}
 ${emailCardClose()}
   `);
@@ -77,7 +98,11 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  const { email, password, firstName, redirectTo } = await req.json();
+  const { email, password, firstName: rawFirstName, redirectTo, language } = await req.json();
+  const lang: Lang = language === "en" ? "en" : "fr";
+  // A name with a link or markup is dropped (the account is still created,
+  // without a first name) rather than stored and mailed as typed.
+  const firstName = cleanFirstName(typeof rawFirstName === "string" ? rawFirstName : null);
   if (!email || !password || !redirectTo) {
     return jsonResponse({ errorCode: "unknown" }, 400);
   }
@@ -105,7 +130,7 @@ Deno.serve(async (req) => {
     email,
     password,
     options: {
-      data: { first_name: firstName || null },
+      data: { first_name: firstName || null, language: lang },
       redirectTo,
     },
   });
@@ -117,7 +142,7 @@ Deno.serve(async (req) => {
   }
 
   const confirmUrl = data.properties.action_link;
-  const sent = await sendEmail(email, "Confirme ton adresse email - Lampas .ai", renderConfirmEmailHtml(firstName || null, confirmUrl));
+  const sent = await sendEmail(email, CONFIRM_COPY[lang].subject, renderConfirmEmailHtml(firstName || null, confirmUrl, lang));
 
   if (!sent) {
     // The account exists but the email failed to send - report a generic

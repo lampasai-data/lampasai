@@ -37,8 +37,11 @@ Deno.serve(async (req) => {
 
   const { data: pendingRows, error: pendingError } = await supabase
     .from("pending_gumroad_purchases")
-    .select("id, certification_id, gumroad_sale_id, amount_cents, expires_at")
-    .ilike("email", email)
+    .select("id, certification_id, gumroad_sale_id, amount_cents, currency, expires_at")
+    // Exact match, not ilike: "_" and "%" are wildcards there, so an address
+    // like john_doe@… could have claimed john.doe@…'s pending purchase. Both
+    // sides are stored lower-cased (auth e-mails and recordVerifiedSale).
+    .eq("email", email)
     .is("resolved_at", null);
 
   if (pendingError) {
@@ -57,6 +60,7 @@ Deno.serve(async (req) => {
       source: "gumroad",
       gumroad_sale_id: row.gumroad_sale_id,
       amount_cents: row.amount_cents,
+      currency: row.currency,
       status: "paid",
       expires_at: row.expires_at,
     });

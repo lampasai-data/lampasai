@@ -4,10 +4,12 @@ import { ADMIN_T, adminLocale } from "./adminI18n";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
+import { formatMoney } from "../lib/money";
+import Badge, { type BadgeTone } from "./admin/Badge";
+import DataTable, { type Column } from "./admin/DataTable";
 
 const ADMIN_EMAIL = "mbairo.allatessem@gmail.com";
 const STALE_HOURS = 24;
-const LOGS_PAGE_SIZE = 10;
 const LOGS_FETCH_LIMIT = 500;
 
 interface PendingPurchase {
@@ -16,6 +18,7 @@ interface PendingPurchase {
   certification_id: string;
   gumroad_sale_id: string;
   amount_cents: number;
+  currency: string | null;
   expires_at: string;
   created_at: string;
 }
@@ -38,7 +41,29 @@ interface WebhookLog {
 function isNoiseHeartbeat(log: WebhookLog): boolean {
   const isReconcileRun =
     log.verification_result === "reconcile" || log.verification_result === "reconcile-admin";
-  return isReconcileRun && log.match_result === "processed:0,skipped:0" && !log.error_message;
+  // Also hides the older rows written before sweeps stopped logging "found nothing new".
+  return isReconcileRun && /^processed:0,skipped:\d+$/.test(log.match_result) && !log.error_message;
+}
+
+// Postgres reports a second insert of an already-recorded sale as a raw
+// unique-constraint error. That's harmless (the access already exists), so
+// show it as a neutral note instead of a red error. Also covers older log
+// rows written before the backend started tagging these as "duplicate".
+function isDuplicateLog(log: WebhookLog): boolean {
+  return (
+    log.match_result === "duplicate" ||
+    Boolean(log.error_message?.includes("certification_purchases_gumroad_sale_id_key"))
+  );
+}
+
+// Badge colour for a webhook outcome: green = access granted, amber =
+// waiting on the buyer, grey = nothing to do, red = needs a look.
+function resultTone(result: string): BadgeTone {
+  if (result.startsWith("matched")) return "green";
+  if (result === "pending") return "amber";
+  if (result.startsWith("error") || result === "not_processed") return "danger";
+  if (result.startsWith("processed")) return "teal";
+  return "muted";
 }
 
 export default function AdminGumroad() {
@@ -53,7 +78,6 @@ export default function AdminGumroad() {
   const [feedback, setFeedback] = useState<Record<string, string>>({});
   const [reconciling, setReconciling] = useState(false);
   const [reconcileFeedback, setReconcileFeedback] = useState<string | null>(null);
-  const [logsPage, setLogsPage] = useState(0);
 
   const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
 
@@ -65,7 +89,7 @@ export default function AdminGumroad() {
     const [{ data: pendingRows }, { data: logRows }] = await Promise.all([
       supabase
         .from("pending_gumroad_purchases")
-        .select("id, email, certification_id, gumroad_sale_id, amount_cents, expires_at, created_at")
+        .select("id, email, certification_id, gumroad_sale_id, amount_cents, currency, expires_at, created_at")
         .is("resolved_at", null)
         .lt("created_at", staleThreshold)
         .order("created_at", { ascending: false }),
@@ -78,7 +102,6 @@ export default function AdminGumroad() {
 
     setPending((pendingRows as PendingPurchase[]) ?? []);
     setLogs(((logRows as WebhookLog[]) ?? []).filter((log) => !isNoiseHeartbeat(log)));
-    setLogsPage(0);
     setLoading(false);
   }
 
@@ -137,6 +160,44 @@ export default function AdminGumroad() {
     loadData();
   }
 
+  const logColumns: Column<WebhookLog>[] = [
+    {
+      key: "received",
+      label: a.gumroadReceivedAt,
+      value: (log) => log.received_at,
+      filter: "date",
+      render: (log) => new Date(log.received_at).toLocaleString(adminLocale(lang)),
+    },
+    { key: "verification", label: a.gumroadVerification, value: (log) => log.verification_result, filter: "options" },
+    {
+      key: "result",
+      label: a.gumroadResult,
+      value: (log) => (isDuplicateLog(log) ? "duplicate" : log.match_result),
+      filter: "options",
+      render: (log) => {
+        const result = isDuplicateLog(log) ? "duplicate" : log.match_result;
+        return <Badge tone={resultTone(result)}>{result}</Badge>;
+      },
+    },
+    {
+      key: "sale",
+      label: "sale_id",
+      value: (log) => log.gumroad_sale_id ?? "",
+      render: (log) => <span className="font-mono text-xs">{log.gumroad_sale_id ?? "-"}</span>,
+    },
+    {
+      key: "error",
+      label: a.gumroadError,
+      value: (log) => (isDuplicateLog(log) ? a.gumroadDuplicateNote : (log.error_message ?? "")),
+      render: (log) =>
+        isDuplicateLog(log) ? (
+          <span className="text-muted">{a.gumroadDuplicateNote}</span>
+        ) : (
+          <span className="text-danger-ink">{log.error_message ?? ""}</span>
+        ),
+    },
+  ];
+
   if (!ready) return null;
 
   if (!user || !isAdmin) {
@@ -144,7 +205,7 @@ export default function AdminGumroad() {
   }
 
   return (
-    <section className="mx-auto max-w-4xl px-6 pt-8 pb-24">
+    <section className="w-full max-w-[1600px] px-6 lg:px-8 pt-8 pb-24">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink">{a.gumroadTitle}</h1>
@@ -157,7 +218,7 @@ export default function AdminGumroad() {
             type="button"
             onClick={handleReconcileNow}
             disabled={reconciling}
-            className="rounded-full border border-teal/40 px-4 py-2 text-xs font-medium text-teal-dark transition hover:bg-teal/5 disabled:opacity-50"
+            className="rounded-full border border-teal/40 bg-white px-4 py-2 text-xs font-semibold text-teal-dark shadow-sm transition hover:bg-teal/5 disabled:opacity-50"
           >
             {reconciling ? a.gumroadReconciling : a.gumroadReconcileNow}
           </button>
@@ -176,12 +237,12 @@ export default function AdminGumroad() {
       ) : (
         <div className="mt-6 space-y-3">
           {pending.map((row) => (
-            <div key={row.id} className="rounded-xl border border-black/8 bg-white p-4">
+            <div key={row.id} className="rounded-2xl border border-black/8 bg-white p-4 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                 <div>
                   <p className="font-medium text-ink">{row.email}</p>
                   <p className="text-xs text-muted">
-                    sale_id: {row.gumroad_sale_id} · {(row.amount_cents / 100).toFixed(2)} € · {a.gumroadReceivedInline}{" "}
+                    sale_id: {row.gumroad_sale_id} · {formatMoney(row.amount_cents, row.currency, adminLocale(lang))} · {a.gumroadReceivedInline}{" "}
                     {new Date(row.created_at).toLocaleString(adminLocale(lang))}
                   </p>
                 </div>
@@ -194,13 +255,13 @@ export default function AdminGumroad() {
                   onChange={(e) =>
                     setLinkEmails((prev) => ({ ...prev, [row.id]: e.target.value }))
                   }
-                  className="flex-1 min-w-[220px] rounded-lg border border-black/15 bg-white px-3 py-2 text-sm"
+                  className="min-w-[220px] flex-1 rounded-xl border border-black/12 bg-white px-3 py-2 text-sm outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/20"
                 />
                 <button
                   type="button"
                   onClick={() => handleLink(row.id)}
                   disabled={linking === row.id || !(linkEmails[row.id] ?? "").trim()}
-                  className="brand-gradient rounded-full px-4 py-2 text-xs font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+                  className="brand-gradient rounded-full px-4 py-2 text-xs font-medium text-[#ffffff] transition hover:opacity-90 disabled:opacity-50"
                 >
                   {linking === row.id ? a.gumroadLinking : a.gumroadLink}
                 </button>
@@ -224,59 +285,12 @@ export default function AdminGumroad() {
           {a.gumroadNoEvents}
         </p>
       ) : (
-      <div className="mt-4 overflow-x-auto rounded-xl border border-black/8 bg-white">
-        <table className="w-full text-left text-xs">
-          <thead className="border-b border-black/8 text-muted">
-            <tr>
-              <th className="px-3 py-2">{a.gumroadReceivedAt}</th>
-              <th className="px-3 py-2">{a.gumroadVerification}</th>
-              <th className="px-3 py-2">{a.gumroadResult}</th>
-              <th className="px-3 py-2">sale_id</th>
-              <th className="px-3 py-2">{a.gumroadError}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {logs.slice(logsPage * LOGS_PAGE_SIZE, logsPage * LOGS_PAGE_SIZE + LOGS_PAGE_SIZE).map((log) => (
-              <tr key={log.id} className="border-b border-black/5 last:border-0">
-                <td className="px-3 py-2 text-muted">
-                  {new Date(log.received_at).toLocaleString(adminLocale(lang))}
-                </td>
-                <td className="px-3 py-2">{log.verification_result}</td>
-                <td className="px-3 py-2">{log.match_result}</td>
-                <td className="px-3 py-2 font-mono">{log.gumroad_sale_id ?? "-"}</td>
-                <td className="px-3 py-2 text-red-600">{log.error_message ?? ""}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      )}
-      {logs.length > LOGS_PAGE_SIZE && (
-        <div className="mt-3 flex items-center justify-between text-xs text-muted">
-          <button
-            type="button"
-            onClick={() => setLogsPage((p) => Math.max(0, p - 1))}
-            disabled={logsPage === 0}
-            className="rounded-full border border-black/10 px-3 py-1.5 font-medium text-ink transition hover:border-black/20 disabled:opacity-40"
-          >
-            {a.previous}
-          </button>
-          <span>
-            {a.pageOf(logsPage + 1, Math.ceil(logs.length / LOGS_PAGE_SIZE))}
-          </span>
-          <button
-            type="button"
-            onClick={() =>
-              setLogsPage((p) =>
-                (p + 1) * LOGS_PAGE_SIZE < logs.length ? p + 1 : p
-              )
-            }
-            disabled={(logsPage + 1) * LOGS_PAGE_SIZE >= logs.length}
-            className="rounded-full border border-black/10 px-3 py-1.5 font-medium text-ink transition hover:border-black/20 disabled:opacity-40"
-          >
-            {a.next}
-          </button>
-        </div>
+        <DataTable
+          rows={logs}
+          columns={logColumns}
+          rowKey={(log) => log.id}
+          initialSort={{ key: "received", dir: "desc" }}
+        />
       )}
     </section>
   );

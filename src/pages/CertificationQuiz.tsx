@@ -1,10 +1,16 @@
 import { Fragment, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import ShareResultModal from "../components/ShareResultModal";
+import PodiumBanner from "../components/PodiumBanner";
+import { claimPodium } from "../lib/podium";
+import { accentOf } from "../lib/certAccent";
+import { USER_T } from "../userAreaI18n";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, Reorder } from "motion/react";
 import {
   loadQuestions,
   getPurchasedCertificationIds,
   recordExamResult,
+  getMyCertificationRank,
   type PurchasedCertificationAccess,
 } from "../lib/quizData";
 import { useCheckoutSuccessPoll } from "../lib/useCheckoutSuccessPoll";
@@ -409,29 +415,6 @@ function ScoreRing({ pct, goal }: { pct: number; goal: number }) {
   );
 }
 
-function Tick({ on }: { on: boolean }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[5px] border transition ${
-        on ? "border-teal bg-teal text-white" : "border-black/20"
-      }`}
-    >
-      {on && (
-        <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3">
-          <path
-            d="M5 13l4 4L19 7"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      )}
-    </span>
-  );
-}
-
 export default function CertificationQuiz() {
   const { slug = "" } = useParams();
   const navigate = useNavigate();
@@ -463,7 +446,10 @@ export default function CertificationQuiz() {
       return true;
     }
   });
+  const [shareOpen, setShareOpen] = useState(false);
   const [domainPickerOpen, setDomainPickerOpen] = useState(false);
+  // Podium place just reached by the exam that ended (1-3), to congratulate.
+  const [podiumRank, setPodiumRank] = useState<number | null>(null);
   // An in-progress run recovered from sessionStorage, held back rather than
   // re-entered automatically. Dropping straight into it hid the mode-choice
   // screen, so someone who had wandered off mid free run came back, landed in
@@ -541,6 +527,12 @@ export default function CertificationQuiz() {
       // the exam quick-start screen the user just clicked into.
       const wantsFreshExam = searchParams.get("mode") === "exam";
       const saved = wantsFreshExam ? null : loadPersistedRun(slug, data.questions.length);
+      // ?domain=<key> (the dashboard's "Revise" link) opens the start screen
+      // already restricted to that rubric.
+      const wantedDomain = searchParams.get("domain");
+      if (!saved && wantedDomain && data.questions.some((q) => q.domain === wantedDomain)) {
+        setSelectedDomains([wantedDomain]);
+      }
       if (saved) {
         setQueue(saved.queue);
         setPos(saved.pos);
@@ -729,8 +721,20 @@ export default function CertificationQuiz() {
     examResultRecorded.current = true;
     const correctCount = Object.values(results).filter(Boolean).length;
     const points = Object.values(resultPoints).reduce((sum, p) => sum + p, 0);
-    recordExamResult(user.id, cert.id, correctCount, runSize, points);
+    recordExamResult(user.id, cert.id, correctCount, runSize, points).then(async (ok) => {
+      if (!ok) return;
+      // Once the run counts, is the person on this month's podium?
+      const rank = await getMyCertificationRank(cert.id, "month");
+      if (rank !== null && rank <= 3 && claimPodium(user.id, cert.id, rank)) setPodiumRank(rank);
+    });
   }, [cert, user, mode, finished, results, resultPoints, runSize]);
+
+  // The congratulation fades away by itself.
+  useEffect(() => {
+    if (podiumRank === null) return;
+    const timer = setTimeout(() => setPodiumRank(null), 14000);
+    return () => clearTimeout(timer);
+  }, [podiumRank]);
 
   useEffect(() => {
     if (!cert || finished || mode === null || (mode === "exam" && examPaused)) return;
@@ -1024,10 +1028,10 @@ export default function CertificationQuiz() {
             ? stepValues.length - 1
             : Math.max(0, stepValues.findIndex((v) => v === customCount));
         return (
-          <div className="mt-5 max-w-sm">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-medium text-muted">{t.quiz.questionCountLabel}</span>
-              <span className="text-sm font-semibold text-ink">
+          <div className="mt-5">
+            <div className="flex items-end justify-between gap-3">
+              <span className="text-sm font-medium text-muted">{t.quiz.questionCountLabel}</span>
+              <span className="font-display text-2xl leading-none font-semibold text-ink tabular-nums">
                 {customCount === null ? domainPoolCount : customCount}
               </span>
             </div>
@@ -1041,101 +1045,138 @@ export default function CertificationQuiz() {
                 const v = stepValues[Number(e.target.value)];
                 setCustomCount(v >= domainPoolCount ? null : v);
               }}
-              className="w-full accent-teal"
+              className="mt-3 h-2 w-full cursor-pointer accent-teal"
             />
+            <div className="mt-1 flex justify-between text-[11px] text-muted tabular-nums">
+              <span>{stepValues[0]}</span>
+              <span>{domainPoolCount}</span>
+            </div>
           </div>
         );
       })()
     : null;
 
-  // Rendered on both run-setup surfaces (the quick-exam modal and the full
-  // mode-choice screen) from this one definition, the same way
-  // questionCountSlider is - so the two entry points can't drift apart.
-  // Hidden entirely while no question carries a rubric, which is the state of
-  // the offline fallback bank and of any certification not yet tagged.
+  // Rubric choice: a selector that opens a floating list with a check box per
+  // rubric. Rendered from this one definition. Hidden entirely while no
+  // question carries a rubric, which is the state of the offline fallback
+  // bank and of any certification not yet tagged.
+  const pickBox = (on: boolean) => (
+    <span
+      className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border transition ${
+        on ? "border-teal bg-teal text-white" : "border-black/25 bg-white"
+      }`}
+      aria-hidden="true"
+    >
+      {on && (
+        <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3">
+          <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </span>
+  );
   const domainOptions =
     availableDomains.length > 0 ? (
-      <div className="mt-5 max-w-sm text-left">
-        <button
-          type="button"
-          onClick={() => setDomainPickerOpen((v) => !v)}
-          aria-expanded={domainPickerOpen}
-          className="flex w-full items-center justify-between gap-3 rounded-xl border border-teal/30 bg-teal/[0.05] px-3.5 py-2.5 text-left transition hover:border-teal/50 hover:bg-teal/[0.08]"
-        >
-          <span className="min-w-0">
-            <span className="block text-[11px] font-semibold uppercase tracking-wide text-teal-dark">
-              {t.quiz.domainFilterLabel}
+      <div className="mt-6 text-left">
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setDomainPickerOpen((v) => !v)}
+            aria-expanded={domainPickerOpen}
+            aria-haspopup="listbox"
+            className={`flex w-full items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-3 text-left shadow-sm transition ${
+              domainPickerOpen ? "border-teal ring-2 ring-teal/20" : "border-black/12 hover:border-teal/50"
+            }`}
+          >
+            <span className="min-w-0">
+              <span className="block text-[11px] font-semibold tracking-wide text-teal-dark uppercase">
+                {t.quiz.domainFilterLabel}
+              </span>
+              <span className="mt-0.5 block truncate text-sm font-semibold text-ink">
+                {selectedDomains.length === 0
+                  ? t.quiz.domainFilterAll
+                  : availableDomains
+                      .filter((d) => selectedDomains.includes(d.key))
+                      .map((d) => localize(d.shortLabel, lang))
+                      .join(", ")}
+              </span>
             </span>
-            <span className="mt-0.5 block truncate text-[13px] font-medium text-ink">
-              {selectedDomains.length === 0
-                ? t.quiz.domainFilterAll
-                : availableDomains
-                    .filter((d) => selectedDomains.includes(d.key))
-                    .map((d) => localize(d.shortLabel, lang))
-                    .join(", ")}
+            <span className="flex shrink-0 items-center gap-2">
+              {selectedDomains.length > 0 && (
+                <span className="rounded-full bg-teal/15 px-2 py-0.5 text-[11px] font-bold text-teal-dark">
+                  {selectedDomains.length}
+                </span>
+              )}
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+                className={`h-4 w-4 text-muted transition-transform ${domainPickerOpen ? "rotate-180" : ""}`}
+              >
+                <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </span>
-          </span>
-          {/* No pool-size badge here on purpose: sitting next to the question
-              -count slider, "172" read as a contradiction of the slider's
-              "60". The slider is the single answer to "how many questions do
-              I get"; per-rubric availability lives on the rows below, where
-              it can't be mistaken for the run length. */}
-          <span className="flex shrink-0 items-center gap-2">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-              className={`h-4 w-4 text-muted transition-transform ${
-                domainPickerOpen ? "rotate-180" : ""
-              }`}
-            >
-              <path
-                d="M6 9l6 6 6-6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-        </button>
+          </button>
 
-        {domainPickerOpen && (
-          <ul className="mt-2 overflow-hidden rounded-xl border border-black/10 bg-white">
-            <li>
+          {domainPickerOpen && (
+            <>
+              {/* Click anywhere else to close the list. */}
               <button
                 type="button"
-                onClick={clearDomains}
-                className="flex w-full items-center justify-between gap-3 border-b border-black/5 px-3.5 py-2 text-left transition hover:bg-teal/[0.04]"
+                aria-hidden="true"
+                tabIndex={-1}
+                onClick={() => setDomainPickerOpen(false)}
+                className="fixed inset-0 z-20 cursor-default"
+              />
+              <ul
+                role="listbox"
+                aria-multiselectable="true"
+                className="absolute inset-x-0 top-full z-30 mt-2 max-h-64 overflow-y-auto rounded-2xl border border-black/10 bg-white p-1.5 shadow-xl"
               >
-                <span className="flex min-w-0 items-center gap-2.5">
-                  <Tick on={selectedDomains.length === 0} />
-                  <span className="truncate text-xs text-ink/80">{t.quiz.domainFilterAll}</span>
-                </span>
-                <span className="shrink-0 text-[11px] text-muted">
-                  {t.quiz.domainQuestionCount(total)}
-                </span>
-              </button>
-            </li>
-            {availableDomains.map((d) => (
-              <li key={d.key}>
-                <button
-                  type="button"
-                  onClick={() => toggleDomain(d.key)}
-                  className="flex w-full items-center justify-between gap-3 border-b border-black/5 px-3.5 py-2 text-left transition last:border-0 hover:bg-teal/[0.04]"
-                >
-                  <span className="flex min-w-0 items-center gap-2.5">
-                    <Tick on={selectedDomains.includes(d.key)} />
-                    <span className="truncate text-xs text-ink/80">{localize(d.shortLabel, lang)}</span>
-                  </span>
-                  <span className="shrink-0 text-[11px] text-muted">
-                    {t.quiz.domainQuestionCount(domainCounts.get(d.key) ?? 0)}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+                <li>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={selectedDomains.length === 0}
+                    onClick={clearDomains}
+                    className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-teal/[0.07] ${
+                      selectedDomains.length === 0 ? "bg-teal/[0.08]" : ""
+                    }`}
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      {pickBox(selectedDomains.length === 0)}
+                      <span className="truncate text-sm font-medium text-ink">{t.quiz.domainFilterAll}</span>
+                    </span>
+                    <span className="shrink-0 text-xs text-muted">{t.quiz.domainQuestionCount(total)}</span>
+                  </button>
+                </li>
+                {availableDomains.map((d) => {
+                  const on = selectedDomains.includes(d.key);
+                  return (
+                    <li key={d.key}>
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={on}
+                        onClick={() => toggleDomain(d.key)}
+                        className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-teal/[0.07] ${
+                          on ? "bg-teal/[0.08]" : ""
+                        }`}
+                      >
+                        <span className="flex min-w-0 items-center gap-3">
+                          {pickBox(on)}
+                          <span className="truncate text-sm font-medium text-ink">{localize(d.shortLabel, lang)}</span>
+                        </span>
+                        <span className="shrink-0 text-xs text-muted">
+                          {t.quiz.domainQuestionCount(domainCounts.get(d.key) ?? 0)}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+        </div>
 
         <label className="mt-3 flex cursor-pointer items-center gap-2 text-xs text-muted">
           <input
@@ -1184,39 +1225,63 @@ export default function CertificationQuiz() {
         </section>
 
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-6 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4 backdrop-blur-sm"
           onClick={() => navigate("/formations")}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-sm rounded-2xl border border-black/8 bg-white p-6 shadow-xl"
+            className="relative max-h-[92vh] w-full max-w-md overflow-y-auto rounded-3xl border border-black/8 bg-white shadow-2xl"
           >
-            <button
-              type="button"
-              onClick={() => navigate("/formations")}
-              aria-label={backLabel}
-              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-ink shadow-sm transition hover:bg-black/[0.03]"
+            <div
+              className="px-6 pt-6 pb-5"
+              style={{ background: `linear-gradient(120deg, ${accentOf(slug)}30 0%, ${accentOf(slug)}0d 60%, transparent 100%)` }}
             >
-              ✕
-            </button>
-            <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
-              {t.quiz.modeExamTitle}
-              <ClockIcon className="h-4 w-4 text-teal-dark" />
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed text-muted">{t.quiz.modeExamDescShort}</p>
+              <button
+                type="button"
+                onClick={() => navigate("/formations")}
+                aria-label={backLabel}
+                className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-ink shadow-sm transition hover:bg-black/[0.03]"
+              >
+                ✕
+              </button>
+              <div className="flex items-center gap-3 pr-10">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
+                  <img src={CERT_LOGOS[slug] ?? lampasLogo} alt="" className="h-9 w-9 object-contain" />
+                </span>
+                <div className="min-w-0">
+                  <h3 className="flex items-center gap-2 font-display text-xl font-semibold text-ink">
+                    {t.quiz.modeExamTitle}
+                    <ClockIcon className="h-4 w-4 text-teal-dark" />
+                  </h3>
+                  <p className="truncate text-sm font-medium text-ink/65">{localize(cert.name, lang)}</p>
+                </div>
+              </div>
+              <p className="mt-3 text-sm leading-relaxed text-muted">{t.quiz.modeExamDescShort}</p>
+            </div>
 
-            {questionCountSlider}
-            {domainOptions}
+            <div className="px-6 pb-2">
+              {questionCountSlider}
+              {domainOptions}
+            </div>
 
-            <button
-              type="button"
-              onClick={startExam}
-              aria-label={t.quiz.startExam}
-              title={t.quiz.startExam}
-              className="brand-gradient mx-auto mt-6 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-sm transition hover:opacity-90"
-            >
-              <span className="ml-0.5 text-2xl leading-none">▶</span>
-            </button>
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-black/8 bg-black/[0.02] px-6 py-4">
+              <p className="text-sm font-semibold text-ink">
+                {USER_T[lang].examSetup.summary(
+                  isPro ? (customCount ?? domainPoolCount) : queue.length,
+                  selectedDomains.length
+                )}
+              </p>
+              <button
+                type="button"
+                onClick={startExam}
+                className="brand-gradient group inline-flex items-center gap-2 rounded-full py-2.5 pr-4 pl-6 text-sm font-semibold text-white shadow-md shadow-teal/20 transition hover:opacity-90"
+              >
+                {t.quiz.startExam}
+                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden="true">
+                  <path d="m6 17 5-5-5-5M13 17l5-5-5-5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </>
@@ -1373,10 +1438,6 @@ export default function CertificationQuiz() {
       .sort((a, b) => a.correct / a.total - b.correct / b.total);
     const ratio = runSize > 0 ? currentScore / runSize : 0;
     const officialPass = getOfficialPass(slug);
-    // Rubric row columns: [flexible label] gap-3 [w-44 bar] gap-3 [w-16 score].
-    // The goal line is measured from the right edge because only the label
-    // column stretches: score + gap + the slice of the bar past the goal.
-    const goalLineRight = `${4 + 0.75 + 11 * (1 - GOAL_RATIO)}rem`;
     const passed = mode === "exam" && ratio >= GOAL_RATIO;
     const doingWell = ratio >= 0.75;
 
@@ -1412,154 +1473,186 @@ export default function CertificationQuiz() {
         <div className="mb-4 text-left">
           <BackLink to="/formations" label={backLabel} />
         </div>
-        <div className="rounded-2xl border border-black/8 bg-white px-7 py-8 shadow-sm">
-          {/* Ring and verdict side by side: stacked, the badge sat right on the
-              circle's edge with nothing to separate them, and the block ran
-              tall for no reason. Reading left to right - how much, then what it
-              means - matches how the two are actually used. */}
-          <div className="flex flex-col items-center">
-            <div className="flex items-center justify-center gap-8">
-              <ScoreRing pct={Math.round(ratio * 100)} goal={Math.round(GOAL_RATIO * 100)} />
-
-              <div className="text-center">
-                <span
-                  className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold ${
-                    (mode === "exam" ? passed : doingWell)
-                      ? "border border-green/30 bg-green/10 text-green"
-                      : "border border-red-300 bg-red-50 text-red-600"
-                  }`}
-                >
-                  {(mode === "exam" ? passed : doingWell)
-                    ? t.quiz.trainingSuccess
-                    : t.quiz.trainingFail}
-                </span>
-                <p className="mt-2.5 font-display text-lg font-semibold text-ink">
-                  {currentScore}/{runSize}
-                </p>
-                <p className="text-xs lowercase text-muted">{t.quiz.finishedScore}</p>
-              </div>
-            </div>
-
-            {mode === "exam" && (
-              <>
+        {podiumRank !== null && (
+          <div className="mb-4">
+            <PodiumBanner
+              name={profile?.first_name ?? null}
+              rank={podiumRank}
+              certName={localize(cert.name, lang)}
+              onClose={() => setPodiumRank(null)}
+            />
+          </div>
+        )}
+        <div className="overflow-hidden rounded-3xl border border-black/8 bg-white text-left shadow-sm">
+          {/* Verdict: the ring on the left (how much), the verdict and the
+              score on the right (what it means). */}
+          <div
+            className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 px-7 py-7 sm:justify-start"
+            style={{
+              background: `linear-gradient(120deg, ${
+                (mode === "exam" ? passed : doingWell) ? "#1d9e7530" : accentOf(slug) + "30"
+              } 0%, transparent 75%)`,
+            }}
+          >
+            <ScoreRing pct={Math.round(ratio * 100)} goal={Math.round(GOAL_RATIO * 100)} />
+            <div className="min-w-0 text-center sm:text-left">
+              <span
+                className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold ${
+                  (mode === "exam" ? passed : doingWell)
+                    ? "border border-green/30 bg-green/10 text-green"
+                    : "border border-red-300 bg-red-50 text-red-600"
+                }`}
+              >
+                {(mode === "exam" ? passed : doingWell) ? t.quiz.trainingSuccess : t.quiz.trainingFail}
+              </span>
+              <p className="mt-3 font-display text-4xl leading-none font-semibold text-ink tabular-nums">
+                {currentScore}
+                <span className="text-2xl text-muted"> / {runSize}</span>
+              </p>
+              <p className="mt-1 text-sm text-muted">{t.quiz.finishedScore}</p>
+              {mode === "exam" && (
                 <p className="mt-2 text-xs font-medium text-muted">
                   {t.quiz.passThresholdNote(Math.round(GOAL_RATIO * 100))}
                 </p>
-                {/* Set apart and a notch smaller: this explains the rule rather
-                    than stating it, and reading as a footnote is the point. */}
-                {officialPass !== null && (
-                  <p className="mt-1.5 max-w-sm text-[11px] leading-relaxed text-muted/80">
-                    ⓘ {t.quiz.officialPassNote(Math.round(officialPass * 100))}
-                  </p>
-                )}
-              </>
-            )}
-          </div>
-
-          {!isPro && (
-            <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-ink/80">
-              {doingWell ? t.quiz.quotaCongrats : t.quiz.quotaEncourage}
-            </p>
-          )}
-
-          <div
-            className={`mx-auto mt-6 grid max-w-xs gap-2 ${isPro ? "grid-cols-2" : "grid-cols-1"}`}
-          >
-            {isPro && (
-              <div className="rounded-lg border border-black/8 bg-surface/60 px-3 py-2">
-                <p className="font-display text-lg font-semibold text-ink">
-                  {formatTime(elapsed)}
-                </p>
-                <p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted">
-                  {t.quiz.finishedTime}
-                </p>
-              </div>
-            )}
-            <div className="rounded-lg border border-black/8 bg-surface/60 px-3 py-2">
-              <p className="brand-gradient-text font-display text-lg font-semibold">
-                {formatNumber(points, lang)}
-              </p>
-              <p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted">
-                {t.quiz.finishedPoints}
-              </p>
+              )}
             </div>
           </div>
 
-          {domainBreakdown.length > 0 && (
-            <div className="mt-6 text-left">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted">
-                {t.quiz.domainBreakdownTitle}
-              </p>
-              {/* One row per rubric on a single line, so every bar starts and
-                  ends at the same x. That alignment is what lets the goal be a
-                  single continuous line across the whole list instead of a tick
-                  repeated on each bar - and it halves the block's height.
-                  Offsets are expressed from the right because only the label
-                  column is elastic. */}
-              <div className="relative mt-3">
-                <ul className="flex flex-col gap-1.5">
-                  {domainBreakdown.map((row) => (
-                    <li key={row.key} className="flex items-center gap-3 text-xs">
-                      <span className="flex min-w-0 flex-1 items-baseline gap-2">
-                        <span className="truncate text-ink/80">{row.label}</span>
-                        <span className="shrink-0 text-xs text-muted">
-                          {row.correct}/{row.total}
-                        </span>
-                      </span>
-                      <span className="relative h-1.5 w-44 shrink-0 rounded-full bg-black/[0.07]">
-                        <span
-                          className={`absolute inset-y-0 left-0 rounded-full ${
-                            row.pct >= GOAL_RATIO * 100
-                              ? "bg-green"
-                              : row.pct >= 40
-                                ? "bg-amber"
-                                : "bg-red-500"
-                          }`}
-                          style={{ width: `${row.pct}%` }}
-                        />
-                      </span>
-                      <span className="w-16 shrink-0 text-right text-xs text-muted">
-                        <span className="font-semibold text-ink">{row.pct}%</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <span
-                  aria-hidden="true"
-                  className="absolute -top-1 bottom-0 w-px bg-teal-dark"
-                  style={{ right: goalLineRight }}
-                />
-                {/* Centred on the line, which doubles as the legend: naming the
-                    goal here let the explanatory sentence under the list go. */}
-                <span
-                  className="absolute -top-5 translate-x-1/2 text-[11px] font-semibold leading-none text-teal-dark"
-                  style={{ right: goalLineRight }}
-                >
-                  {Math.round(GOAL_RATIO * 100)}%
+          <div className="px-7 pt-5 pb-7">
+            <div className={`grid gap-3 ${isPro ? "grid-cols-2" : "grid-cols-1 sm:max-w-[16rem]"}`}>
+              {isPro && (
+                <div className="flex items-center gap-3 rounded-2xl border border-black/8 bg-white px-3.5 py-3 shadow-sm">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal/15 text-teal-dark">
+                    <ClockIcon className="h-5 w-5" />
+                  </span>
+                  <span>
+                    <span className="block font-display text-lg leading-tight font-semibold text-ink tabular-nums">
+                      {formatTime(elapsed)}
+                    </span>
+                    <span className="block text-[11px] text-muted">{t.quiz.finishedTime}</span>
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center gap-3 rounded-2xl border border-black/8 bg-white px-3.5 py-3 shadow-sm">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber/20 text-amber-ink">
+                  <TrophyIcon className="h-5 w-5" />
+                </span>
+                <span>
+                  <span className="block font-display text-lg leading-tight font-semibold text-ink tabular-nums">
+                    {formatNumber(points, lang)}
+                  </span>
+                  <span className="block text-[11px] text-muted">{t.quiz.finishedPoints}</span>
                 </span>
               </div>
             </div>
-          )}
 
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <button
-              type="button"
-              onClick={restartRun}
-              className="brand-gradient rounded-full px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
-            >
-              {t.quiz.restart}
-            </button>
-            {mode === "exam" && (
+            {!isPro && (
+              <p className="mt-4 rounded-2xl border border-teal/25 bg-teal/5 px-4 py-3 text-sm leading-relaxed text-ink/80">
+                {doingWell ? t.quiz.quotaCongrats : t.quiz.quotaEncourage}
+              </p>
+            )}
+
+            {mode === "exam" && officialPass !== null && (
+              <p className="mt-4 text-[11px] leading-relaxed text-muted/80">
+                ⓘ {t.quiz.officialPassNote(Math.round(officialPass * 100))}
+              </p>
+            )}
+
+            {domainBreakdown.length > 0 && (
+              <div className="mt-7">
+                <p className="text-sm font-semibold text-muted">{t.quiz.domainBreakdownTitle}</p>
+                {/* Weakest first (the order is the revision order); the two
+                    lowest under the goal are flagged and, after an exam, link
+                    to a run limited to that domain. The tick on each bar is
+                    the goal. */}
+                <ul className="mt-3 space-y-3">
+                  {domainBreakdown.map((row, i) => {
+                    const weak = i < 2 && row.pct < GOAL_RATIO * 100;
+                    const tone =
+                      row.pct >= GOAL_RATIO * 100 ? "bg-green" : row.pct >= 40 ? "bg-amber" : "bg-red-500";
+                    return (
+                      <li key={row.key}>
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className={`h-2 w-2 shrink-0 rounded-full ${tone}`} />
+                            <span className="truncate font-medium text-ink">{row.label}</span>
+                            {weak && (
+                              <span className="shrink-0 rounded-full bg-amber/20 px-2 py-0.5 text-[10px] font-semibold text-amber-ink">
+                                {USER_T[lang].insights.domainsWeakest}
+                              </span>
+                            )}
+                          </span>
+                          <span className="flex shrink-0 items-center gap-2.5">
+                            {weak && mode === "exam" && (
+                              <Link
+                                to={`/formations/${slug}?mode=exam&domain=${encodeURIComponent(row.key)}`}
+                                className="font-semibold text-teal-dark hover:underline"
+                              >
+                                {USER_T[lang].insights.revise}
+                              </Link>
+                            )}
+                            <span className="text-muted">
+                              {row.correct}/{row.total}
+                            </span>
+                            <span className="w-10 text-right font-semibold text-ink tabular-nums">{row.pct}%</span>
+                          </span>
+                        </div>
+                        <div className="relative mt-1.5 h-1 rounded-full bg-black/[0.07]">
+                          <div className={`h-full rounded-full ${tone}`} style={{ width: `${row.pct}%` }} />
+                          <span
+                            aria-hidden="true"
+                            className="absolute -top-0.5 h-2 w-px bg-ink/50"
+                            style={{ left: `${Math.round(GOAL_RATIO * 100)}%` }}
+                          />
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 border-t border-black/6 pt-6">
               <button
                 type="button"
-                onClick={() => navigate(`/formations/${slug}/classement`)}
-                className="rounded-full border border-teal/40 px-6 py-2.5 text-sm font-medium text-teal-dark transition hover:bg-teal/5"
+                onClick={restartRun}
+                className="brand-gradient rounded-full px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-teal/20 transition hover:opacity-90"
               >
-                {t.quiz.viewLeaderboard}
+                {t.quiz.restart}
               </button>
-            )}
+              {mode === "exam" && user && (
+                <button
+                  type="button"
+                  onClick={() => setShareOpen(true)}
+                  className="rounded-full border border-black/12 bg-white px-6 py-2.5 text-sm font-medium text-ink shadow-sm transition hover:bg-black/[0.04]"
+                >
+                  {USER_T[lang].share.button}
+                </button>
+              )}
+              {mode === "exam" && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/formations/${slug}/classement`)}
+                  className="rounded-full border border-teal/40 bg-white px-6 py-2.5 text-sm font-medium text-teal-dark shadow-sm transition hover:bg-teal/5"
+                >
+                  {t.quiz.viewLeaderboard}
+                </button>
+              )}
+            </div>
           </div>
         </div>
+
+        {shareOpen && (
+          <ShareResultModal
+            certName={localize(cert.name, lang)}
+            score={currentScore}
+            total={runSize}
+            goal={Math.round(GOAL_RATIO * 100)}
+            firstName={profile?.first_name ?? null}
+            avatarUrl={profile?.avatar_url ?? null}
+            onClose={() => setShareOpen(false)}
+          />
+        )}
 
         {mode === "exam" && (
           <div className="mt-8 text-left">
@@ -1606,7 +1699,12 @@ export default function CertificationQuiz() {
                   const correct = results[qi];
                   const isExpanded = expandedReview.has(qi);
                   return (
-                    <div key={qi} className="rounded-xl border border-black/8 bg-white">
+                    <div
+                      key={qi}
+                      className={`overflow-hidden rounded-2xl border border-l-4 border-black/8 bg-white shadow-sm transition hover:shadow-md ${
+                        correct ? "border-l-green" : "border-l-red-400"
+                      }`}
+                    >
                       <button
                         type="button"
                         onClick={() =>
@@ -1617,22 +1715,37 @@ export default function CertificationQuiz() {
                             return next;
                           })
                         }
-                        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm"
+                        className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left text-sm"
                       >
-                        <span className="flex min-w-0 items-center gap-2">
+                        <span className="flex min-w-0 items-center gap-3">
                           <span
-                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
                               correct ? "bg-green/15 text-green" : "bg-red-100 text-red-600"
                             }`}
                           >
-                            {correct ? "✓" : "✕"}
+                            <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+                              <path
+                                d={correct ? "M5 12.5l4.5 4.5L19 7.5" : "M6 6l12 12M18 6L6 18"}
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
                           </span>
                           {flagged.has(qi) && <span className="shrink-0">🚩</span>}
                           <span className="truncate font-medium text-ink">
                             {localize(q.question, lang)}
                           </span>
                         </span>
-                        <span className="shrink-0 text-muted">{isExpanded ? "-" : "+"}</span>
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          className={`h-4 w-4 shrink-0 text-muted transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                          aria-hidden="true"
+                        >
+                          <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                       </button>
                       {isExpanded && (
                         <div className="border-t border-black/8 px-4 py-4">

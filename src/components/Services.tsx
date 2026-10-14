@@ -93,7 +93,7 @@ function DataPulse() {
           pathLength={1}
         />
 
-        <circle className="chart-dot" cx={lastX} cy={lastY} r="5.5" fill="#7d4e2e" stroke="#fff" strokeWidth="2" />
+        <circle className="chart-dot" cx={lastX} cy={lastY} r="5.5" fill="#7d4e2e" stroke="var(--color-white)" strokeWidth="2" />
       </svg>
 
       <div className="mt-2 flex justify-between px-1 text-[0.625rem] text-muted/70" aria-hidden="true">

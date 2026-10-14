@@ -33,6 +33,7 @@ interface Profile {
   id: string;
   email: string | null;
   first_name: string | null;
+  avatar_url: string | null;
   plan: "free" | "pro";
   free_questions_used: number;
 }
@@ -48,6 +49,8 @@ interface AuthState {
   profileReady: boolean;
   user: User | null;
   profile: Profile | null;
+  /** Re-reads the profile (after the person changed their name or picture). */
+  reloadProfile: () => Promise<void>;
   passwordRecovery: boolean;
   authModalOpen: boolean;
   openAuthModal: () => void;
@@ -103,13 +106,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // is still in flight, racing it and silently letting the user in.
   const handledSessionUserIdRef = useRef<string | null>(null);
 
-  async function loadProfile(userId: string) {
+  // `silent` is for a refresh while the screens are already showing: it must
+  // not flip profileReady back to false, which would put every plan-dependent
+  // screen into its loading state again.
+  async function loadProfile(userId: string, silent = false) {
     if (!supabase) return;
-    setProfileReady(false);
+    if (!silent) setProfileReady(false);
     try {
       const { data } = await supabase
         .from("profiles")
-        .select("id, email, first_name, plan, free_questions_used")
+        .select("id, email, first_name, avatar_url, plan, free_questions_used")
         .eq("id", userId)
         .single();
       if (data) setProfile(data as Profile);
@@ -334,6 +340,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
         firstName: firstName || null,
+        // So the confirmation e-mail comes in the language of the site the
+        // visitor is using.
+        language: lang,
         redirectTo: `${window.location.origin}/email-confirmed`,
       },
     });
@@ -392,6 +401,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profileReady,
         user: session?.user ?? null,
         profile,
+        reloadProfile: async () => {
+          if (session?.user) await loadProfile(session.user.id, true);
+        },
         passwordRecovery,
         authModalOpen,
         openAuthModal,

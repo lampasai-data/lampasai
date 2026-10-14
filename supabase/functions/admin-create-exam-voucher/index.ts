@@ -1,6 +1,7 @@
 import { createServiceClient } from "../_shared/gumroadMatch.ts";
 import { generateVoucherCode } from "../_shared/examVouchers.ts";
 import { ADMIN_EMAIL, corsHeaders, jsonResponse, requireAdmin } from "../_shared/admin.ts";
+import { logAdminAction } from "../_shared/audit.ts";
 
 // Admin-only: generates a voucher code (single-use by default, or
 // redeemable by several users via maxRedemptions) that later unlocks exam
@@ -51,6 +52,17 @@ Deno.serve(async (req) => {
       .single();
 
     if (!error) {
+      // The code itself stays out of the journal.
+      await logAdminAction(supabase, auth.user.email, {
+        action: "voucher_created",
+        targetType: "voucher",
+        targetId: data.id,
+        detail: {
+          certification_id: certificationId,
+          max_redemptions: normalizedMaxRedemptions,
+          expires_at: expiresAt ?? null,
+        },
+      });
       return jsonResponse({ voucher: data });
     }
     if (!error.message.includes("duplicate")) {

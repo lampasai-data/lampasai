@@ -14,6 +14,77 @@
   --color-ink: #14142b;
   --color-muted: #5b5b70;
   --color-surface: #f4f1ea;
+  /* Texte des pastilles/alertes sur fond teinté : foncé en clair, clair en sombre. */
+  --color-amber-ink: #9a6408;
+  --color-danger-ink: #b3262b;
+  --color-green-ink: #136b50;
+}
+
+/* Thème clair/sombre de tout le site (bouton à côté de la langue, choix dans
+   src/lib/theme.ts). Tailwind v4 lit ses couleurs dans ces variables, donc les
+   redéfinir ici retourne tout le site d'un coup (white = surface des cartes,
+   black = la couleur des bordures/survols). */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-white: #1c1c28;
+  --color-black: #ffffff;
+  --color-ink: #f0eff7;
+  --color-muted: #a7a5bd;
+  --color-surface: #191925;
+  --color-teal-dark: #8fd0dd;
+  --color-amber-ink: #f6c567;
+  --color-danger-ink: #ff8a8d;
+  --color-green-ink: #6fd9b0;
+  /* Teintes rouges pâles (zone de suppression, erreurs) : version sombre. */
+  --color-red-50: #2a171b;
+  --color-red-100: #3a1c21;
+  --color-red-200: #5a242b;
+  --color-red-300: #7a2f37;
+  --color-red-700: #ff8a8d;
+}
+
+/* Surfaces de couleur (boutons dégradés, pastilles pleines, pied de page) :
+   elles restent telles qu'en clair, donc leur texte blanc reste blanc. */
+:root[data-theme="dark"]
+  :is(.brand-gradient, .bg-teal, .bg-teal-dark, .bg-green, .bg-red-500, .bg-red-600, .keep-light-colors) {
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-ink: #14142b;
+  --color-muted: #5b5b70;
+  --color-teal-dark: #3a6b77;
+}
+
+/* Logo de la nav (traits noirs sur fond transparent) : en sombre, un rond
+   blanc posé derrière, le logo garde exactement sa taille du thème clair. */
+:root[data-theme="dark"] .logo-badge {
+  position: relative;
+  isolation: isolate;
+}
+:root[data-theme="dark"] .logo-badge::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: 46%;
+  height: 3.25rem;
+  width: 3.25rem;
+  border-radius: 9999px;
+  background-color: #ffffff;
+  transform: translate(-50%, -50%);
+}
+
+/* Voiles derrière les fenêtres : toujours sombres. */
+:root[data-theme="dark"] :is(.bg-ink\/40, .bg-ink\/50, .bg-ink\/60, .bg-black\/50, .bg-black\/55) {
+  background-color: rgb(5 5 12 / 0.65);
+}
+
+.admin-root {
+  color-scheme: light;
+}
+.admin-root[data-theme="dark"] {
+  color-scheme: dark;
+  background-color: #12121b;
+  color: var(--color-ink);
 }
 
 html {
@@ -41,6 +112,24 @@ body {
     radial-gradient(circle at 96% 12%, rgba(125, 78, 46, 0.07), transparent 40%),
     radial-gradient(circle at 50% 100%, rgba(74, 136, 150, 0.05), transparent 45%);
   background-attachment: fixed;
+}
+
+:root[data-theme="dark"] body {
+  background-color: #12121b;
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(74, 136, 150, 0.14), transparent 40%),
+    radial-gradient(circle at 96% 12%, rgba(125, 78, 46, 0.12), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(74, 136, 150, 0.08), transparent 45%);
+}
+
+:root[data-theme="dark"] .section-band {
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.025) 16%,
+    rgba(255, 255, 255, 0.025) 84%,
+    rgba(255, 255, 255, 0) 100%
+  );
 }
 
 .font-display {
@@ -204,6 +293,26 @@ li {
 
 .card:hover::before {
   transform: scaleX(1);
+}
+
+:root[data-theme="dark"] .card {
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(28, 28, 40, 0.72);
+}
+
+:root[data-theme="dark"] .card:hover {
+  box-shadow: 0 20px 44px -26px rgba(0, 0, 0, 0.8);
+}
+
+/* Étapes du pipeline de l'accueil (Hero). */
+.pipeline-node {
+  fill: rgba(255, 255, 255, 0.92);
+  stroke: rgba(20, 20, 43, 0.08);
+}
+
+:root[data-theme="dark"] .pipeline-node {
+  fill: rgba(40, 40, 56, 0.95);
+  stroke: rgba(255, 255, 255, 0.1);
 }
 
 /* Variante sans le filet d'accent au survol. */

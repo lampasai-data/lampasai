@@ -31,8 +31,24 @@ Deno.serve(async (req) => {
     return new Response("Invalid signature", { status: 400 });
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
+  // Access is granted once the money is actually there: on completion when
+  // the payment is already captured (card, Klarna, PayPal), or later through
+  // async_payment_succeeded for a method that settles afterwards. A session
+  // completed with payment_status "unpaid" grants nothing yet.
+  const session =
+    event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded"
+      ? (event.data.object as Stripe.Checkout.Session)
+      : null;
+  const paid =
+    session !== null &&
+    (event.type === "checkout.session.async_payment_succeeded" ||
+      session.payment_status === "paid" ||
+      session.payment_status === "no_payment_required");
+  if (session && !paid) {
+    console.log("Checkout completed but not paid yet", session.id, session.payment_status);
+  }
+
+  if (session && paid) {
     const userId = session.metadata?.user_id;
     const certificationIds = session.metadata?.certification_ids
       ? (JSON.parse(session.metadata.certification_ids) as string[])

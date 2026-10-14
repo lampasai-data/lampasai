@@ -6,9 +6,10 @@ import { supabase } from "../lib/supabase";
 import { listCertifications, type CertificationSummary } from "../lib/quizData";
 import { localize } from "../lib/i18nText";
 import { useLanguage } from "../i18n";
+import Badge from "./admin/Badge";
+import DataTable, { type Column } from "./admin/DataTable";
 
 const ADMIN_EMAIL = "mbairo.allatessem@gmail.com";
-const PAGE_SIZE = 10;
 
 interface VoucherRow {
   id: string;
@@ -46,12 +47,6 @@ export default function AdminVouchers() {
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [filterCode, setFilterCode] = useState("");
-  const [filterCertId, setFilterCertId] = useState("");
-  const [filterType, setFilterType] = useState<"" | "unique" | "partage">("");
-  const [filterStatus, setFilterStatus] = useState<"" | "disponible" | "epuise" | "expire">("");
-  const [filterRedeemer, setFilterRedeemer] = useState("");
-  const [page, setPage] = useState(0);
   const [redeemersModalVoucher, setRedeemersModalVoucher] = useState<VoucherRow | null>(null);
   const [redeemerSearch, setRedeemerSearch] = useState("");
 
@@ -176,27 +171,59 @@ export default function AdminVouchers() {
     return rows.map(redeemerName).join(", ");
   }
 
-  const filteredVouchers = vouchers.filter((v) => {
-    if (filterCode && !v.code.toLowerCase().includes(filterCode.toLowerCase())) return false;
-    if (filterCertId && v.certification_id !== filterCertId) return false;
-    if (filterType && usageType(v) !== filterType) return false;
-    if (filterStatus && statusCategory(v) !== filterStatus) return false;
-    if (
-      filterRedeemer &&
-      !redeemerLabel(v).toLowerCase().includes(filterRedeemer.toLowerCase())
-    )
-      return false;
-    return true;
-  });
-  const pageCount = Math.max(1, Math.ceil(filteredVouchers.length / PAGE_SIZE));
-  const pagedVouchers = filteredVouchers.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+  const categoryLabel = {
+    disponible: a.vouchersAvailable,
+    epuise: a.vouchersExhausted,
+    expire: a.vouchersExpired,
+  };
+  const categoryTone = { disponible: "green", epuise: "muted", expire: "amber" } as const;
 
-  function resetPage<T>(setter: (v: T) => void) {
-    return (v: T) => {
-      setter(v);
-      setPage(0);
-    };
-  }
+  const columns: Column<VoucherRow>[] = [
+    {
+      key: "code",
+      label: a.vouchersCode,
+      value: (v) => v.code,
+      render: (v) => <span className="font-mono">{v.code}</span>,
+    },
+    { key: "cert", label: a.certification, value: (v) => certName(v.certification_id), filter: "options" },
+    { key: "type", label: a.vouchersType, value: (v) => usageTypeLabel(v), filter: "options" },
+    {
+      key: "created",
+      label: a.vouchersCreatedAt,
+      value: (v) => v.created_at,
+      filter: "date",
+      render: (v) => new Date(v.created_at).toLocaleDateString(adminLocale(lang)),
+    },
+    {
+      key: "status",
+      label: a.vouchersStatus,
+      value: (v) => categoryLabel[statusCategory(v)],
+      filter: "options",
+      render: (v) => <Badge tone={categoryTone[statusCategory(v)]}>{statusLabel(v)}</Badge>,
+    },
+    {
+      key: "redeemers",
+      label: a.vouchersRedeemedBy,
+      value: (v) => redeemerLabel(v),
+      render: (v) => {
+        const rows = redemptionsFor(v.id);
+        if (rows.length === 0) return "-";
+        if (rows.length <= 3) return <span className="line-clamp-2 max-w-[16rem]">{rows.map(redeemerName).join(", ")}</span>;
+        return (
+          <button
+            type="button"
+            onClick={() => {
+              setRedeemerSearch("");
+              setRedeemersModalVoucher(v);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-full border border-teal/30 bg-teal/[0.06] px-3 py-1 text-xs font-medium text-teal-dark transition hover:bg-teal/10"
+          >
+            👥 {a.vouchersPeople(rows.length)}
+          </button>
+        );
+      },
+    },
+  ];
 
   if (!ready) return null;
   if (!user || !isAdmin) {
@@ -204,19 +231,19 @@ export default function AdminVouchers() {
   }
 
   return (
-    <section className="mx-auto max-w-5xl px-6 pt-8 pb-16">
+    <section className="w-full max-w-[1600px] px-6 lg:px-8 pt-8 pb-16">
       <h1 className="font-display text-2xl font-semibold text-ink">{a.vouchersTitle}</h1>
       <p className="mt-2 text-sm text-muted">
         {a.vouchersLead}
       </p>
 
-      <div className="mt-6 flex flex-wrap items-end gap-3 rounded-2xl border border-black/8 bg-white px-6 py-4">
+      <div className="mt-6 flex flex-wrap items-end gap-3 rounded-2xl border border-black/8 bg-white px-6 py-5 shadow-sm">
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-muted">{a.certification}</label>
           <select
             value={certificationId}
             onChange={(e) => setCertificationId(e.target.value)}
-            className="rounded-lg border border-black/10 px-3 py-1.5 text-sm"
+            className="rounded-xl border border-black/12 bg-white px-3 py-2 text-sm outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/20"
           >
             {certs.map((c) => (
               <option key={c.id} value={c.id}>
@@ -233,7 +260,7 @@ export default function AdminVouchers() {
             type="date"
             value={expiresAt}
             onChange={(e) => setExpiresAt(e.target.value)}
-            className="rounded-lg border border-black/10 px-3 py-1.5 text-sm"
+            className="rounded-xl border border-black/12 bg-white px-3 py-2 text-sm outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/20"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -244,14 +271,14 @@ export default function AdminVouchers() {
             step={1}
             value={maxRedemptions}
             onChange={(e) => setMaxRedemptions(e.target.value)}
-            className="w-28 rounded-lg border border-black/10 px-3 py-1.5 text-sm"
+            className="w-28 rounded-xl border border-black/12 bg-white px-3 py-2 text-sm outline-none transition focus:border-teal focus:ring-2 focus:ring-teal/20"
           />
         </div>
         <button
           type="button"
           onClick={handleGenerate}
           disabled={generating || !certificationId}
-          className="brand-gradient rounded-full px-4 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+          className="brand-gradient rounded-full px-5 py-2 text-sm font-semibold text-[#ffffff] shadow-sm shadow-teal/20 transition hover:opacity-90 disabled:opacity-50"
         >
           {generating ? a.vouchersGenerating : a.vouchersGenerate}
         </button>
@@ -263,158 +290,22 @@ export default function AdminVouchers() {
         </p>
       )}
       {error && (
-        <p className="mt-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-600">
+        <p className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-danger-ink">
           {error}
         </p>
       )}
 
-      <div className="mt-6 overflow-x-auto rounded-2xl border border-black/8 bg-white">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-black/8 text-xs uppercase tracking-wide text-muted">
-            <tr>
-              <th className="px-4 py-3">{a.vouchersCode}</th>
-              <th className="whitespace-nowrap px-4 py-3">{a.certification}</th>
-              <th className="px-4 py-3">{a.vouchersType}</th>
-              <th className="px-4 py-3">{a.vouchersCreatedAt}</th>
-              <th className="whitespace-nowrap px-4 py-3">{a.vouchersStatus}</th>
-              <th className="px-4 py-3">{a.vouchersRedeemedBy}</th>
-            </tr>
-            <tr className="border-b border-black/8 bg-surface">
-              <th className="px-4 py-2 font-normal">
-                <input
-                  type="text"
-                  value={filterCode}
-                  onChange={(e) => resetPage(setFilterCode)(e.target.value)}
-                  placeholder={a.vouchersFilter}
-                  className="w-full rounded-md border border-black/10 bg-white px-2 py-1 text-xs normal-case"
-                />
-              </th>
-              <th className="px-4 py-2 font-normal">
-                <select
-                  value={filterCertId}
-                  onChange={(e) => resetPage(setFilterCertId)(e.target.value)}
-                  className="w-full rounded-md border border-black/10 bg-white px-2 py-1 text-xs normal-case"
-                >
-                  <option value="">{a.vouchersAllFem}</option>
-                  {certs.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {localize(c.name, lang)}
-                    </option>
-                  ))}
-                </select>
-              </th>
-              <th className="px-4 py-2 font-normal">
-                <select
-                  value={filterType}
-                  onChange={(e) =>
-                    resetPage(setFilterType)(e.target.value as "" | "unique" | "partage")
-                  }
-                  className="w-full rounded-md border border-black/10 bg-white px-2 py-1 text-xs normal-case"
-                >
-                  <option value="">{a.vouchersAll}</option>
-                  <option value="unique">{a.vouchersUnique}</option>
-                  <option value="partage">{a.vouchersShared}</option>
-                </select>
-              </th>
-              <th className="px-4 py-2" />
-              <th className="px-4 py-2 font-normal">
-                <select
-                  value={filterStatus}
-                  onChange={(e) =>
-                    resetPage(setFilterStatus)(
-                      e.target.value as "" | "disponible" | "epuise" | "expire"
-                    )
-                  }
-                  className="w-full rounded-md border border-black/10 bg-white px-2 py-1 text-xs normal-case"
-                >
-                  <option value="">{a.vouchersAll}</option>
-                  <option value="disponible">{a.vouchersAvailable}</option>
-                  <option value="epuise">{a.vouchersExhausted}</option>
-                  <option value="expire">{a.vouchersExpired}</option>
-                </select>
-              </th>
-              <th className="px-4 py-2 font-normal">
-                <input
-                  type="text"
-                  value={filterRedeemer}
-                  onChange={(e) => resetPage(setFilterRedeemer)(e.target.value)}
-                  placeholder={a.vouchersFilter}
-                  className="w-full rounded-md border border-black/10 bg-white px-2 py-1 text-xs normal-case"
-                />
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td className="px-4 py-4 text-muted" colSpan={6}>
-                  {a.loading}
-                </td>
-              </tr>
-            ) : filteredVouchers.length === 0 ? (
-              <tr>
-                <td className="px-4 py-4 text-muted" colSpan={6}>
-                  {vouchers.length === 0 ? a.vouchersNone : a.vouchersNoMatch}
-                </td>
-              </tr>
-            ) : (
-              pagedVouchers.map((v) => {
-                const rows = redemptionsFor(v.id);
-                return (
-                  <tr key={v.id} className="border-b border-black/5 last:border-0">
-                    <td className="px-4 py-3 font-mono">{v.code}</td>
-                    <td className="whitespace-nowrap px-4 py-3">{certName(v.certification_id)}</td>
-                    <td className="px-4 py-3">{usageTypeLabel(v)}</td>
-                    <td className="px-4 py-3">{new Date(v.created_at).toLocaleDateString(adminLocale(lang))}</td>
-                    <td className="whitespace-nowrap px-4 py-3">{statusLabel(v)}</td>
-                    <td className="px-4 py-3 max-w-[16rem]">
-                      {rows.length === 0 ? (
-                        "-"
-                      ) : rows.length <= 3 ? (
-                        <span className="line-clamp-2">{rows.map(redeemerName).join(", ")}</span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setRedeemerSearch("");
-                            setRedeemersModalVoucher(v);
-                          }}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-teal/30 bg-teal/[0.06] px-3 py-1 text-xs font-medium text-teal-dark transition hover:bg-teal/10"
-                        >
-                          👥 {a.vouchersPeople(rows.length)}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {filteredVouchers.length > PAGE_SIZE && (
-        <div className="mt-3 flex items-center justify-between text-xs text-muted">
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            disabled={page === 0}
-            className="rounded-full border border-black/10 px-3 py-1.5 font-medium text-ink transition hover:border-black/20 disabled:opacity-40"
-          >
-            {a.previous}
-          </button>
-          <span>
-            {a.pageOf(page + 1, pageCount)}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
-            disabled={page >= pageCount - 1}
-            className="rounded-full border border-black/10 px-3 py-1.5 font-medium text-ink transition hover:border-black/20 disabled:opacity-40"
-          >
-            {a.next}
-          </button>
-        </div>
+      {loading ? (
+        <p className="mt-6 text-sm text-muted">{a.loading}</p>
+      ) : (
+        <DataTable
+          rows={vouchers}
+          columns={columns}
+          rowKey={(v) => v.id}
+          searchPlaceholder={a.vouchersFilter}
+          emptyText={vouchers.length === 0 ? a.vouchersNone : a.vouchersNoMatch}
+          initialSort={{ key: "created", dir: "desc" }}
+        />
       )}
 
       {redeemersModalVoucher && (

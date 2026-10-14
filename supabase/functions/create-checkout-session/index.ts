@@ -15,6 +15,19 @@ function randomSuffix() {
   );
 }
 
+const OWN_SITE_HOSTS = new Set(["lampasai.com", "www.lampasai.com", "localhost", "127.0.0.1"]);
+
+function isOwnSiteUrl(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  try {
+    const url = new URL(value);
+    if (!OWN_SITE_HOSTS.has(url.hostname)) return false;
+    return url.protocol === "https:" || url.hostname === "localhost" || url.hostname === "127.0.0.1";
+  } catch {
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -48,6 +61,14 @@ Deno.serve(async (req) => {
     }
 
     const { certificationIds, successUrl, cancelUrl } = await req.json();
+    // Stripe sends the buyer to these addresses: only our own site, so a
+    // checkout link cannot be crafted to land on someone else's page.
+    if (!isOwnSiteUrl(successUrl) || !isOwnSiteUrl(cancelUrl)) {
+      return new Response(JSON.stringify({ error: "Invalid return url" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     if (!Array.isArray(certificationIds) || certificationIds.length === 0) {
       return new Response(JSON.stringify({ error: "certificationIds is required" }), {
         status: 400,

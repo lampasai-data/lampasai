@@ -18,6 +18,45 @@ export interface GumroadSale {
   refunded: boolean;
   disputed: boolean;
   chargebacked: boolean;
+  // `price` (and `gumroad_fee`) are in USD cents whatever the buyer paid:
+  // a 4.99 EUR sale came back as 559, and Gumroad's own analytics show it as
+  // $5.59. The fields below are what the sales API is expected to expose for
+  // the amount in the buyer's currency; their exact shape is not verified
+  // against a live response yet (see resolveSaleAmount and the api_sale field
+  // logged on every verified sale).
+  currency?: string;
+  currency_symbol?: string;
+  formatted_total_price?: string;
+  amount_refundable_in_currency?: string | number;
+}
+
+const SYMBOL_TO_CURRENCY: Record<string, string> = { "€": "eur", $: "usd", "£": "gbp" };
+
+// Real amount (in cents of the buyer's currency) and its currency for a
+// verified sale. When the expected fields are missing it falls back to
+// Gumroad's raw `price`, which is known to be USD cents, so the amount is at
+// least labelled correctly instead of being passed off as euros. A sale is
+// never lost over this - the amount_source flag lands in gumroad_webhook_logs
+// to make the fallback visible.
+export function resolveSaleAmount(sale: GumroadSale): {
+  amountCents: number;
+  currency: string;
+  source: "api_currency_amount" | "price_fallback";
+} {
+  const refundable =
+    sale.amount_refundable_in_currency != null
+      ? Math.round(parseFloat(String(sale.amount_refundable_in_currency)) * 100)
+      : NaN;
+
+  const symbol = sale.currency_symbol ?? sale.formatted_total_price?.trim().charAt(0);
+  const fromSymbol = symbol ? SYMBOL_TO_CURRENCY[symbol] : undefined;
+  const fromCode = /^[a-z]{3}$/i.test(sale.currency ?? "") ? sale.currency!.toLowerCase() : undefined;
+  const currency = fromSymbol ?? fromCode;
+
+  if (Number.isFinite(refundable) && refundable >= 0 && currency) {
+    return { amountCents: refundable, currency, source: "api_currency_amount" };
+  }
+  return { amountCents: sale.price, currency: "usd", source: "price_fallback" };
 }
 
 export function createServiceClient(): SupabaseClient {
@@ -50,6 +89,15 @@ export async function recordVerifiedSale(
   payload: unknown,
   logPrefix = ""
 ): Promise<void> {
+  const { amountCents, currency, source: amountSource } = resolveSaleAmount(sale);
+  // Diagnostic: keep what the API really returned next to the ping, so the
+  // amount/currency mapping can be checked against reality after any sale.
+  payload = {
+    ...(typeof payload === "object" && payload !== null ? payload : {}),
+    api_sale: sale,
+    amount_source: amountSource,
+  };
+
   if (sale.refunded || sale.disputed || sale.chargebacked) {
     await logGumroadEvent(supabase, {
       payload,
@@ -96,7 +144,9 @@ export async function recordVerifiedSale(
   const { data: matchedProfile } = await supabase
     .from("profiles")
     .select("id")
-    .ilike("email", email)
+    // Exact match: with ilike, "_" in the buyer's address is a wildcard and
+    // could pick someone else's account. Profile e-mails are lower-cased.
+    .eq("email", email)
     .maybeSingle();
 
   if (matchedProfile) {
@@ -105,24 +155,35 @@ export async function recordVerifiedSale(
       certification_id: cert.id,
       source: "gumroad",
       gumroad_sale_id: sale.id,
-      amount_cents: sale.price,
+      amount_cents: amountCents,
+      currency,
       status: "paid",
       expires_at: expiresAt,
     });
 
+    // 23505 = unique_violation on gumroad_sale_id: the sale was already
+    // recorded (e.g. a race or a transient read failure upstream). The
+    // access already exists, so this is a harmless duplicate, not a failure.
+    const isDuplicate = error?.code === "23505";
+
     await logGumroadEvent(supabase, {
       payload,
       verification_result: "verified",
-      match_result: error ? "error:insert_failed" : `matched:${matchedProfile.id}`,
+      match_result: isDuplicate
+        ? "duplicate"
+        : error
+          ? "error:insert_failed"
+          : `matched:${matchedProfile.id}`,
       gumroad_sale_id: sale.id,
-      error_message: error?.message,
+      error_message: isDuplicate ? undefined : error?.message,
     });
   } else {
     const { error } = await supabase.from("pending_gumroad_purchases").insert({
       email,
       certification_id: cert.id,
       gumroad_sale_id: sale.id,
-      amount_cents: sale.price,
+      amount_cents: amountCents,
+      currency,
       expires_at: expiresAt,
     });
 
@@ -143,11 +204,16 @@ export async function saleAlreadyProcessed(
   supabase: SupabaseClient,
   saleId: string
 ): Promise<boolean> {
-  const [{ data: existingPurchase }, { data: existingPending }] = await Promise.all([
+  const [purchase, pending] = await Promise.all([
     supabase.from("certification_purchases").select("id").eq("gumroad_sale_id", saleId).maybeSingle(),
     supabase.from("pending_gumroad_purchases").select("id").eq("gumroad_sale_id", saleId).maybeSingle(),
   ]);
-  return Boolean(existingPurchase || existingPending);
+  // A failed read must not look like "not processed yet" - that would make
+  // the caller try to insert a sale that already exists.
+  if (purchase.error || pending.error) {
+    throw new Error(`Idempotency check failed: ${(purchase.error ?? pending.error)!.message}`);
+  }
+  return Boolean(purchase.data || pending.data);
 }
 
 const RECONCILE_LOOKBACK_DAYS = 14;

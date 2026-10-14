@@ -1,5 +1,6 @@
 import { createServiceClient, logGumroadEvent } from "../_shared/gumroadMatch.ts";
 import { ADMIN_EMAIL, corsHeaders, jsonResponse, requireAdmin } from "../_shared/admin.ts";
+import { logAdminAction } from "../_shared/audit.ts";
 
 // Manual catch-up: links a pending_gumroad_purchases row to an existing
 // account by email, for the cases the automatic email match never resolves
@@ -22,7 +23,7 @@ Deno.serve(async (req) => {
 
   const { data: pending, error: pendingError } = await supabase
     .from("pending_gumroad_purchases")
-    .select("id, certification_id, gumroad_sale_id, amount_cents, expires_at, resolved_at")
+    .select("id, certification_id, gumroad_sale_id, amount_cents, currency, expires_at, resolved_at")
     .eq("id", pendingPurchaseId)
     .single();
 
@@ -36,7 +37,7 @@ Deno.serve(async (req) => {
   const { data: matchedProfile, error: profileError } = await supabase
     .from("profiles")
     .select("id")
-    .ilike("email", targetEmail.toLowerCase().trim())
+    .eq("email", targetEmail.toLowerCase().trim())
     .maybeSingle();
 
   if (profileError || !matchedProfile) {
@@ -49,6 +50,7 @@ Deno.serve(async (req) => {
     source: "gumroad",
     gumroad_sale_id: pending.gumroad_sale_id,
     amount_cents: pending.amount_cents,
+    currency: pending.currency,
     status: "paid",
     expires_at: pending.expires_at,
   });
@@ -74,6 +76,14 @@ Deno.serve(async (req) => {
     verification_result: "admin-manual-link",
     match_result: `matched:${matchedProfile.id}`,
     gumroad_sale_id: pending.gumroad_sale_id,
+  });
+
+  await logAdminAction(supabase, auth.user.email, {
+    action: "gumroad_sale_linked",
+    targetType: "gumroad_sale",
+    targetId: pending.gumroad_sale_id ?? undefined,
+    targetLabel: pending.gumroad_sale_id ?? undefined,
+    detail: { user_id: matchedProfile.id, certification_id: pending.certification_id },
   });
 
   return jsonResponse({ success: true });

@@ -18,11 +18,25 @@ const BRAND_FONT =
 export const EMAIL_FONT_LINK =
   '<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">';
 
-/** Uniform greeting heading. */
-export function emailSalutation(firstName?: string | null): string {
+// Same rule as update_my_first_name (migration 047): 1-40 characters, no
+// link, no address, no markup. The name comes from a public sign-up form, so
+// without this anyone could put a link or HTML into a mail we send.
+export function cleanFirstName(firstName?: string | null): string | null {
   const name = (firstName ?? "").trim();
+  if (name.length < 1 || name.length > 40 || /(https?:|www\.|@|<|>)/i.test(name)) return null;
+  return name;
+}
+
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** Uniform greeting heading. */
+export function emailSalutation(firstName?: string | null, lang: "fr" | "en" = "fr"): string {
+  const clean = cleanFirstName(firstName);
+  const name = clean ? escapeHtml(clean) : "";
+  const hello = lang === "en" ? "Hello" : "Bonjour";
   return `<h1 style="margin:0 0 14px;font-size:20px;font-weight:700;color:#14142B;">${
-    name ? `Bonjour ${name}` : "Bonjour"
+    name ? `${hello} ${name}` : hello
   }</h1>`;
 }
 
@@ -110,14 +124,16 @@ export function emailFrameClose(): string {
 }
 
 /** Shared footer. White background (not the page's off-white) so the top rule reads as the card's own edge, not a line floating below it. */
-export function emailFooter(): string {
+export function emailFooter(lang: "fr" | "en" = "fr"): string {
+  const contact = lang === "en" ? "Contact us" : "Nous contacter";
+  const automatic = lang === "en" ? "Automatic e-mail, please do not reply." : "Email automatique, merci de ne pas y répondre.";
   return `
                   <tr>
                     <td style="background-color:#ffffff;padding:20px 30px 24px;text-align:center;border-top:1px solid #F0F0F0;">
                       <p style="margin:0;font-size:12px;color:#9CA3AF;">
                         © 2026 <a href="https://lampasai.com" style="color:#4A8896;text-decoration:none;font-weight:700;">Lampas .ai</a>
-                        · <a href="mailto:contact@lampasai.com" style="color:#4A8896;text-decoration:none;">Nous contacter</a><br>
-                        Email automatique, merci de ne pas y répondre.
+                        · <a href="mailto:contact@lampasai.com" style="color:#4A8896;text-decoration:none;">${contact}</a><br>
+                        ${automatic}
                       </p>
                     </td>
                   </tr>`;
