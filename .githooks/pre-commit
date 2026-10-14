@@ -1,0 +1,27 @@
+#!/bin/sh
+# Suite de securite avant commit (scripts/test-securite.mjs), uniquement si le commit touche
+# la base, les Edge Functions ou les tests : supabase/, scripts/test-*.
+# Les commits du site seul ne sont pas ralentis.
+#
+# Active par : git config core.hooksPath .githooks
+# Contourner exceptionnellement : git commit --no-verify
+
+if ! git diff --cached --name-only | grep -qE '^(supabase/|scripts/(test-|lib/securite))'; then
+  exit 0
+fi
+
+echo "Commit touchant la base ou les fonctions : suite de securite (~20 s)..."
+if ! sortie=$(node scripts/test-edge-auth.mjs); then
+  echo "$sortie" | grep -v '^✓'
+  echo ""
+  echo "Commit bloque : une Edge Function n'a plus de garde d'acces reconnue."
+  exit 1
+fi
+if node scripts/test-securite.mjs; then
+  exit 0
+fi
+
+echo ""
+echo "Commit bloque : une regle de securite ne tient plus (voir ci-dessus)."
+echo "Corriger, ou contourner exceptionnellement avec : git commit --no-verify"
+exit 1
