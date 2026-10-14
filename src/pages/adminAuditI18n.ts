@@ -1,5 +1,7 @@
 import type { Lang } from "../i18n";
 
+const frSignal = (n: number) => (n > 1 ? "signaux" : "signal");
+
 // Copy for the admin "Audit" area: the action journal and the security
 // check. Kept apart from adminI18n.ts, like the e-mails one.
 
@@ -56,6 +58,28 @@ export interface AuditStrings {
     intro: string;
     viewOpen: string;
     viewHistory: string;
+    viewArchived: string;
+    selectedN: (n: number) => string;
+    handleN: (n: number) => string;
+    archiveN: (n: number) => string;
+    restoreN: (n: number) => string;
+    deleteN: (n: number) => string;
+    clearSelection: string;
+    emptyArchived: string;
+    bulkHandleTitle: string;
+    bulkHandleBody: (n: number) => string;
+    bulkNotePlaceholder: string;
+    bulkConfirm: string;
+    bulkCancel: string;
+    bulkWorking: string;
+    deleteTitle: string;
+    deleteBody: (n: number) => string;
+    deleteWarning: string;
+    bulkFailed: string;
+    archivedNotice: (n: number) => string;
+    restoredNotice: (n: number) => string;
+    deletedNotice: (n: number) => string;
+    handledNotice: (n: number) => string;
     kpiAlert: string;
     kpiCheck: string;
     kpiWatch: string;
@@ -136,6 +160,10 @@ export const AUDIT_T: Record<Lang, AuditStrings> = {
         campaign_deleted: "a supprimé un e-mail envoyé pour de bon",
         security_scan_run: "a relancé le relevé de sécurité",
         security_signal_handled: "a traité un signal de sécurité",
+        security_signals_handled: "a traité plusieurs signaux de sécurité",
+        security_signals_archived: "a retiré des signaux de sécurité de l'historique",
+        security_signals_restored: "a remis des signaux de sécurité dans l'historique",
+        security_signals_deleted: "a supprimé des signaux de sécurité",
       },
       targets: {
         email: "E-mail",
@@ -173,6 +201,11 @@ export const AUDIT_T: Record<Lang, AuditStrings> = {
             return `${num(d.opened)} nouveau(x) signal(aux), ${num(d.closed)} refermé(s)`;
           case "security_signal_handled":
             return typeof d.severity === "string" ? `Niveau : ${d.severity}` : "";
+          case "security_signals_handled":
+          case "security_signals_archived":
+          case "security_signals_restored":
+          case "security_signals_deleted":
+            return `${num(d.count)} signal(aux)`;
           default:
             return "";
         }
@@ -182,6 +215,28 @@ export const AUDIT_T: Record<Lang, AuditStrings> = {
       intro: "Relevé automatique toutes les heures : une alerte veut dire qu'une règle de protection semble contournée.",
       viewOpen: "Ouverts",
       viewHistory: "Historique",
+      viewArchived: "Retirés",
+      selectedN: (n) => `${n} sélectionné${n > 1 ? "s" : ""}`,
+      handleN: (n) => `Traiter ${n}`,
+      archiveN: (n) => `Retirer ${n}`,
+      restoreN: (n) => `Remettre ${n} dans l'historique`,
+      deleteN: (n) => `Supprimer ${n}`,
+      clearSelection: "Tout désélectionner",
+      emptyArchived: "Aucun signal retiré.",
+      bulkHandleTitle: "Traiter les signaux sélectionnés",
+      bulkHandleBody: (n) => `Une même note sera enregistrée sur ${n} ${frSignal(n)}.`,
+      bulkNotePlaceholder: "Note (3 caractères minimum), par exemple : vérifié, rien d'anormal.",
+      bulkConfirm: "Confirmer",
+      bulkCancel: "Annuler",
+      bulkWorking: "En cours...",
+      deleteTitle: "Supprimer définitivement",
+      deleteBody: (n) => `${n} ${frSignal(n)} ${n > 1 ? "seront supprimés" : "sera supprimé"} définitivement.`,
+      deleteWarning: "Cette action est irréversible. Elle est inscrite dans le journal d'audit (nombre et types de signaux), mais le détail des signaux supprimés ne pourra plus être consulté.",
+      bulkFailed: "L'action a échoué. Réessaie dans un instant.",
+      archivedNotice: (n) => `${n} ${frSignal(n)} ${n > 1 ? "retirés" : "retiré"} de l'historique.`,
+      restoredNotice: (n) => `${n} ${frSignal(n)} ${n > 1 ? "remis" : "remis"} dans l'historique.`,
+      deletedNotice: (n) => `${n} ${frSignal(n)} ${n > 1 ? "supprimés" : "supprimé"}.`,
+      handledNotice: (n) => `${n} ${frSignal(n)} ${n > 1 ? "traités" : "traité"}.`,
       kpiAlert: "Alertes à traiter",
       kpiCheck: "À vérifier",
       kpiWatch: "À surveiller",
@@ -351,6 +406,10 @@ export const AUDIT_T: Record<Lang, AuditStrings> = {
         campaign_deleted: "deleted a sent e-mail for good",
         security_scan_run: "re-ran the security check",
         security_signal_handled: "handled a security signal",
+        security_signals_handled: "handled several security signals",
+        security_signals_archived: "removed security signals from the history",
+        security_signals_restored: "put security signals back in the history",
+        security_signals_deleted: "deleted security signals",
       },
       targets: {
         email: "E-mail",
@@ -388,6 +447,11 @@ export const AUDIT_T: Record<Lang, AuditStrings> = {
             return `${num(d.opened)} new signal(s), ${num(d.closed)} closed`;
           case "security_signal_handled":
             return typeof d.severity === "string" ? `Level: ${d.severity}` : "";
+          case "security_signals_handled":
+          case "security_signals_archived":
+          case "security_signals_restored":
+          case "security_signals_deleted":
+            return `${num(d.count)} signal(s)`;
           default:
             return "";
         }
@@ -397,6 +461,28 @@ export const AUDIT_T: Record<Lang, AuditStrings> = {
       intro: "Automatic check every hour: an alert means a protection rule seems to have been bypassed.",
       viewOpen: "Open",
       viewHistory: "History",
+      viewArchived: "Removed",
+      selectedN: (n) => `${n} selected`,
+      handleN: (n) => `Handle ${n}`,
+      archiveN: (n) => `Remove ${n}`,
+      restoreN: (n) => `Put ${n} back in history`,
+      deleteN: (n) => `Delete ${n}`,
+      clearSelection: "Clear selection",
+      emptyArchived: "No removed signal.",
+      bulkHandleTitle: "Handle the selected signals",
+      bulkHandleBody: (n) => `The same note will be saved on ${n} signal${n > 1 ? "s" : ""}.`,
+      bulkNotePlaceholder: "Note (3 characters minimum), for example: checked, nothing unusual.",
+      bulkConfirm: "Confirm",
+      bulkCancel: "Cancel",
+      bulkWorking: "Working...",
+      deleteTitle: "Delete for good",
+      deleteBody: (n) => `${n} signal${n > 1 ? "s" : ""} will be permanently deleted.`,
+      deleteWarning: "This cannot be undone. It is recorded in the audit log (count and signal types), but the deleted signals can no longer be consulted.",
+      bulkFailed: "The action failed. Try again in a moment.",
+      archivedNotice: (n) => `${n} signal${n > 1 ? "s" : ""} removed from history.`,
+      restoredNotice: (n) => `${n} signal${n > 1 ? "s" : ""} put back in history.`,
+      deletedNotice: (n) => `${n} signal${n > 1 ? "s" : ""} deleted.`,
+      handledNotice: (n) => `${n} signal${n > 1 ? "s" : ""} handled.`,
       kpiAlert: "Alerts to handle",
       kpiCheck: "To check",
       kpiWatch: "To watch",

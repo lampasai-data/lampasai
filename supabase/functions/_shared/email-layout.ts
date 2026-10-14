@@ -124,9 +124,17 @@ export function emailFrameClose(): string {
 }
 
 /** Shared footer. White background (not the page's off-white) so the top rule reads as the card's own edge, not a line floating below it. */
-export function emailFooter(lang: "fr" | "en" = "fr"): string {
+// `replyable`: the mail carries a reply-to address (campaigns), so the
+// "please do not reply" line would be wrong.
+export function emailFooter(lang: "fr" | "en" = "fr", replyable = false): string {
   const contact = lang === "en" ? "Contact us" : "Nous contacter";
-  const automatic = lang === "en" ? "Automatic e-mail, please do not reply." : "Email automatique, merci de ne pas y répondre.";
+  const automatic = replyable
+    ? lang === "en"
+      ? "You can reply to this e-mail directly."
+      : "Tu peux répondre directement à cet e-mail."
+    : lang === "en"
+      ? "Automatic e-mail, please do not reply."
+      : "Email automatique, merci de ne pas y répondre.";
   return `
                   <tr>
                     <td style="background-color:#ffffff;padding:20px 30px 24px;text-align:center;border-top:1px solid #F0F0F0;">

@@ -8,7 +8,6 @@ import { formatMoney } from "../lib/money";
 import Badge, { type BadgeTone } from "./admin/Badge";
 import DataTable, { type Column } from "./admin/DataTable";
 
-const ADMIN_EMAIL = "mbairo.allatessem@gmail.com";
 const STALE_HOURS = 24;
 const LOGS_FETCH_LIMIT = 500;
 
@@ -67,7 +66,7 @@ function resultTone(result: string): BadgeTone {
 }
 
 export default function AdminGumroad() {
-  const { user, ready } = useAuth();
+  const { user, ready, profileReady, isAdmin } = useAuth();
   const { lang } = useLanguage();
   const a = ADMIN_T[lang];
   const [pending, setPending] = useState<PendingPurchase[]>([]);
@@ -79,7 +78,6 @@ export default function AdminGumroad() {
   const [reconciling, setReconciling] = useState(false);
   const [reconcileFeedback, setReconcileFeedback] = useState<string | null>(null);
 
-  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
 
   async function loadData() {
     if (!supabase) return;
@@ -198,7 +196,7 @@ export default function AdminGumroad() {
     },
   ];
 
-  if (!ready) return null;
+  if (!ready || !profileReady) return null;
 
   if (!user || !isAdmin) {
     return <Navigate to="/formations" replace />;

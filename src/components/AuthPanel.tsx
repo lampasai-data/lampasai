@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useAuth, HAS_LOGGED_IN_KEY, markGoogleAuthIntent } from "../context/AuthContext";
 import { useLanguage } from "../i18n";
+import { startGoogleSignIn } from "../lib/googleAuth";
 import { isSupabaseConfigured } from "../lib/supabase";
 import {
   getAlreadyRegisteredMessage,
@@ -49,7 +50,6 @@ export default function AuthPanel({
   subtitle?: string;
 }) {
   const {
-    signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
     sendPasswordReset,
@@ -103,7 +103,7 @@ export default function AuthPanel({
     setError(null);
     setLoadingGoogle(true);
     markGoogleAuthIntent(mode === "signup" ? "signup" : "signin");
-    await signInWithGoogle();
+    await startGoogleSignIn();
     setLoadingGoogle(false);
   }
 

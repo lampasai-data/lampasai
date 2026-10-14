@@ -108,7 +108,7 @@ export default function SalesTab({ range }: { range: DateRange }) {
         <Kpi label={st.kpiActiveAccess} value={activeAccess} />
       </KpiGrid>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card title={st.bySource}>
           <Donut rows={bySource} format={eur} totalLabel={st.donutTotal} otherLabel={st.other} />
         </Card>

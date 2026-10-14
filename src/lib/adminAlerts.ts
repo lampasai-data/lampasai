@@ -1,4 +1,4 @@
-import { ADMIN_EMAIL, DAY_MS, EXPIRING_SOON_DAYS, isActivePurchase, type AdminData, type AdminPurchase } from "./adminData";
+import { DAY_MS, EXPIRING_SOON_DAYS, isActivePurchase, type AdminData, type AdminPurchase } from "./adminData";
 
 export type UserSegment =
   | "expiring_soon"
@@ -48,9 +48,7 @@ function groupByUser<T extends { user_id: string }>(rows: T[]) {
 // the Users page filter, so the number on an alert always matches the list
 // it opens. The admin's own account is left out: it is a test account.
 export function segmentUserIds(data: AdminData, segment: UserSegment, now = Date.now()): Set<string> {
-  const adminIds = new Set(
-    data.profiles.filter((p) => p.email?.toLowerCase() === ADMIN_EMAIL).map((p) => p.id)
-  );
+  const adminIds = new Set(data.adminUserId ? [data.adminUserId] : []);
   const purchases = groupByUser(data.purchases);
   const results = groupByUser(data.results);
   const ids = new Set<string>();

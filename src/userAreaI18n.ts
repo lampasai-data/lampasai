@@ -146,6 +146,13 @@ export interface UserAreaStrings {
     bullets: string[];
     cta: string;
   };
+  reviewLocked: {
+    title: string;
+    lead: string;
+    bullets: string[];
+    cta: string;
+    sampleExplanation: string;
+  };
 }
 
 export const USER_T: Record<Lang, UserAreaStrings> = {
@@ -302,6 +309,17 @@ export const USER_T: Record<Lang, UserAreaStrings> = {
       ],
       cta: "Passer en mode Pro",
     },
+    reviewLocked: {
+      title: "Découvre la correction détaillée",
+      lead: "Tu vois ici si tu as juste ou faux. En mode examen, chaque question s'ouvre avec sa correction :",
+      bullets: [
+        "L'explication de chaque question, pas seulement la bonne réponse",
+        "Un filtre sur tes erreurs pour réviser ce qui compte",
+        "Une révision ciblée sur la rubrique la plus faible",
+      ],
+      cta: "Débloquer le mode examen",
+      sampleExplanation: "Explication",
+    },
   },
   en: {
     profile: {
@@ -455,6 +473,17 @@ export const USER_T: Record<Lang, UserAreaStrings> = {
         "Your success by domain and what to revise",
       ],
       cta: "Go Pro",
+    },
+    reviewLocked: {
+      title: "Discover the detailed correction",
+      lead: "Here you see whether you were right or wrong. In exam mode, every question opens with its correction:",
+      bullets: [
+        "The explanation of each question, not just the right answer",
+        "A filter on your mistakes to revise what matters",
+        "Targeted revision on your weakest domain",
+      ],
+      cta: "Unlock exam mode",
+      sampleExplanation: "Explanation",
     },
   },
 };

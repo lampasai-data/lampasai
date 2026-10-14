@@ -9,7 +9,6 @@ import { useLanguage } from "../i18n";
 import Badge from "./admin/Badge";
 import DataTable, { type Column } from "./admin/DataTable";
 
-const ADMIN_EMAIL = "mbairo.allatessem@gmail.com";
 
 interface VoucherRow {
   id: string;
@@ -30,10 +29,9 @@ interface RedemptionRow {
 }
 
 export default function AdminVouchers() {
-  const { user, ready } = useAuth();
+  const { user, ready, profileReady, isAdmin } = useAuth();
   const { lang } = useLanguage();
   const a = ADMIN_T[lang];
-  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
 
   const [certs, setCerts] = useState<CertificationSummary[]>([]);
   const [vouchers, setVouchers] = useState<VoucherRow[]>([]);
@@ -50,6 +48,11 @@ export default function AdminVouchers() {
   const [generating, setGenerating] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [picking, setPicking] = useState<Set<string>>(new Set());
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteNotice, setDeleteNotice] = useState<string | null>(null);
 
   const [redeemersModalVoucher, setRedeemersModalVoucher] = useState<VoucherRow | null>(null);
   const [redeemerSearch, setRedeemerSearch] = useState("");
@@ -176,6 +179,28 @@ export default function AdminVouchers() {
     return rows.map(redeemerName).join(", ");
   }
 
+  // Only a voucher that can no longer be used may go: fully used or expired.
+  // The database function applies the same rule, so this is only for the UI.
+  const deletableIds = vouchers
+    .filter((v) => picking.has(v.id) && statusCategory(v) !== "disponible")
+    .map((v) => v.id);
+
+  async function handleDelete() {
+    if (!supabase || deletableIds.length === 0) return;
+    setDeleting(true);
+    setError(null);
+    const { data, error: rpcError } = await supabase.rpc("admin_delete_exam_vouchers", { p_ids: deletableIds });
+    setDeleting(false);
+    setConfirmingDelete(false);
+    if (rpcError) {
+      setError(a.vouchersDeleteError);
+      return;
+    }
+    setDeleteNotice(a.vouchersDeleted(Number(data ?? 0)));
+    setPicking(new Set());
+    loadData();
+  }
+
   const categoryLabel = {
     disponible: a.vouchersAvailable,
     epuise: a.vouchersExhausted,
@@ -231,7 +256,7 @@ export default function AdminVouchers() {
     },
   ];
 
-  if (!ready) return null;
+  if (!ready || !profileReady) return null;
   if (!user || !isAdmin) {
     return <Navigate to="/formations" replace />;
   }
@@ -315,10 +340,42 @@ export default function AdminVouchers() {
         </p>
       )}
 
+      {deleteNotice && (
+        <p className="mt-4 rounded-lg border border-green/30 bg-green/10 px-4 py-3 text-sm text-green-ink">
+          {deleteNotice}
+        </p>
+      )}
+
+      {picking.size > 0 && (
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          <span className="mr-1 text-sm font-semibold text-ink">{a.selectedN(picking.size)}</span>
+          <span className="text-xs text-muted">{a.vouchersDeletableOf(deletableIds.length, picking.size)}</span>
+          <button
+            type="button"
+            onClick={() => (deletableIds.length > 0 ? setConfirmingDelete(true) : setError(a.vouchersDeleteNone))}
+            className="inline-flex items-center rounded-full border border-red-500/40 px-4 py-2 text-sm font-medium text-danger-ink hover:bg-red-500/10"
+          >
+            {a.vouchersDeleteN(deletableIds.length || picking.size)}
+          </button>
+          <button
+            type="button"
+            onClick={() => setPicking(new Set())}
+            className="inline-flex items-center rounded-full border border-black/12 px-4 py-2 text-sm font-medium text-ink hover:bg-black/[0.04]"
+          >
+            {a.dt.clear}
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <p className="mt-6 text-sm text-muted">{a.loading}</p>
       ) : (
         <DataTable
+          selected={picking}
+          onSelectedChange={(next) => {
+            setDeleteNotice(null);
+            setPicking(next);
+          }}
           rows={vouchers}
           columns={columns}
           rowKey={(v) => v.id}
@@ -326,6 +383,44 @@ export default function AdminVouchers() {
           emptyText={vouchers.length === 0 ? a.vouchersNone : a.vouchersNoMatch}
           initialSort={{ key: "created", dir: "desc" }}
         />
+      )}
+
+      {confirmingDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-6"
+          onClick={() => !deleting && setConfirmingDelete(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-md rounded-2xl border border-black/8 bg-white p-7 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-display text-lg font-medium text-ink">{a.vouchersDeleteTitle}</h3>
+            <p className="mt-3 text-sm leading-relaxed text-ink">{a.vouchersDeleteBody(deletableIds.length)}</p>
+            <p className="mt-3 rounded-lg border border-amber/30 bg-amber/10 px-3 py-2 text-xs leading-relaxed text-amber-ink">
+              {a.vouchersDeleteWarning}
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(false)}
+                disabled={deleting}
+                className="rounded-full border border-black/10 px-5 py-2 text-sm font-medium text-ink transition hover:bg-black/[0.03] disabled:opacity-50"
+              >
+                {a.vouchersDeleteCancel}
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="rounded-full bg-[#e5484d] px-5 py-2 text-sm font-semibold text-[#ffffff] transition hover:opacity-90 disabled:opacity-50"
+              >
+                {deleting ? a.vouchersDeleting : a.vouchersDeleteConfirm}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {redeemersModalVoucher && (

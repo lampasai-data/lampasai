@@ -6,21 +6,26 @@ const SERIES = [22, 30, 27, 38, 44, 41, 55, 62, 58, 72, 84, 96];
 const MONTHS = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
 
 const CHART_W = 400;
-const CHART_H = 112;
-const PAD_X = 10;
-const PAD_TOP = 14;
-const PAD_BOTTOM = 10;
+const CHART_H = 132;
+const PAD_X = 6;
+const PAD_TOP = 18;
+const PAD_BOTTOM = 4;
+const BAR_W = 20;
 
-function chartPoints() {
-  const max = Math.max(...SERIES);
-  const usableW = CHART_W - PAD_X * 2;
-  const usableH = CHART_H - PAD_TOP - PAD_BOTTOM;
-  return SERIES.map((v, i) => {
-    const x = PAD_X + (usableW * i) / (SERIES.length - 1);
-    const y = PAD_TOP + usableH * (1 - v / max);
-    return [x, y] as const;
-  });
-}
+const usableW = CHART_W - PAD_X * 2;
+const usableH = CHART_H - PAD_TOP - PAD_BOTTOM;
+const MAX = Math.max(...SERIES);
+const slot = usableW / SERIES.length;
+
+const barX = (i: number) => PAD_X + slot * i + (slot - BAR_W) / 2;
+const barH = (v: number) => (usableH * v) / MAX;
+const barY = (v: number) => CHART_H - PAD_BOTTOM - barH(v);
+
+// Tendance : moyenne glissante sur 3 mois, qui gomme les creux de la série.
+const TREND = SERIES.map((_, i) => {
+  const window = SERIES.slice(Math.max(0, i - 2), i + 1);
+  return window.reduce((sum, v) => sum + v, 0) / window.length;
+});
 
 /** Courbe lissée : une bézier par segment, tangentes horizontales au milieu. */
 function smoothPath(points: ReadonlyArray<readonly [number, number]>) {
@@ -36,14 +41,18 @@ function smoothPath(points: ReadonlyArray<readonly [number, number]>) {
 
 function DataPulse() {
   const { t } = useLanguage();
-  const points = chartPoints();
-  const line = smoothPath(points);
-  const area = `${line} L ${points[points.length - 1][0]} ${CHART_H} L ${points[0][0]} ${CHART_H} Z`;
-  const [lastX, lastY] = points[points.length - 1];
+  const trendPoints = TREND.map((v, i) => [barX(i) + BAR_W / 2, barY(v)] as const);
+  const trendLine = smoothPath(trendPoints);
+  const [lastX, lastY] = trendPoints[trendPoints.length - 1];
 
   return (
-    <div className="mx-auto w-full max-w-lg rounded-3xl border border-black/[0.07] bg-white/80 p-6 shadow-[0_24px_60px_-40px_rgba(20,20,43,0.5)] backdrop-blur-md">
-      <div className="flex items-start justify-between gap-4">
+    <div className="relative mx-auto w-full max-w-lg overflow-hidden rounded-3xl border border-black/[0.07] bg-white/80 p-6 shadow-[0_24px_60px_-40px_rgba(20,20,43,0.5)] backdrop-blur-md">
+      <div
+        className="pointer-events-none absolute -top-16 -right-16 h-52 w-52 rounded-full opacity-[0.16] blur-3xl"
+        style={{ background: "radial-gradient(circle, #4a8896, transparent 70%)" }}
+        aria-hidden="true"
+      />
+      <div className="relative flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">
             {t.services.statsLabel}
@@ -51,21 +60,29 @@ function DataPulse() {
           <p className="mt-1.5 font-heading text-3xl text-ink">{t.services.statsValue}</p>
         </div>
         <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-green/10 px-2.5 py-1 text-xs font-medium text-green">
-          <span className="h-1.5 w-1.5 rounded-full bg-green" aria-hidden="true" />
+          <span className="live-dot h-1.5 w-1.5 rounded-full bg-green" aria-hidden="true" />
           {t.services.statsBadge}
         </span>
       </div>
 
       <svg
         viewBox={`0 0 ${CHART_W} ${CHART_H}`}
-        className="mt-5 w-full"
+        className="relative mt-5 w-full overflow-visible"
         role="img"
-        aria-label={`${t.services.statsLabel} — ${t.services.statsCaption}`}
+        aria-label={`${t.services.statsLabel} - ${t.services.statsCaption}`}
       >
         <defs>
-          <linearGradient id="pulse-area" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#4a8896" stopOpacity="0.22" />
-            <stop offset="100%" stopColor="#4a8896" stopOpacity="0" />
+          <linearGradient id="bar-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#4a8896" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="#4a8896" stopOpacity="0.12" />
+          </linearGradient>
+          <linearGradient id="bar-fill-last" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--pipe-model)" stopOpacity="0.95" />
+            <stop offset="100%" stopColor="#4a8896" stopOpacity="0.25" />
+          </linearGradient>
+          <linearGradient id="trend-stroke" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#4a8896" />
+            <stop offset="100%" stopColor="var(--pipe-model)" />
           </linearGradient>
         </defs>
 
@@ -74,35 +91,52 @@ function DataPulse() {
             key={r}
             x1={PAD_X}
             x2={CHART_W - PAD_X}
-            y1={PAD_TOP + (CHART_H - PAD_TOP - PAD_BOTTOM) * r}
-            y2={PAD_TOP + (CHART_H - PAD_TOP - PAD_BOTTOM) * r}
-            stroke="rgba(20,20,43,0.06)"
+            y1={PAD_TOP + usableH * r}
+            y2={PAD_TOP + usableH * r}
+            stroke="currentColor"
             strokeWidth="1"
+            strokeDasharray="2 5"
+            className="text-ink/15"
           />
         ))}
 
-        <path className="chart-area" d={area} fill="url(#pulse-area)" />
+        {SERIES.map((v, i) => (
+          <rect
+            key={i}
+            className="chart-bar"
+            style={{ ["--i" as string]: i }}
+            x={barX(i)}
+            y={barY(v)}
+            width={BAR_W}
+            height={barH(v)}
+            rx="6"
+            fill={i === SERIES.length - 1 ? "url(#bar-fill-last)" : "url(#bar-fill)"}
+          />
+        ))}
+
         <path
           className="chart-line"
-          d={line}
+          d={trendLine}
           fill="none"
-          stroke="#4a8896"
-          strokeWidth="2"
+          stroke="url(#trend-stroke)"
+          strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
           pathLength={1}
         />
-
-        <circle className="chart-dot" cx={lastX} cy={lastY} r="5.5" fill="#7d4e2e" stroke="var(--color-white)" strokeWidth="2" />
+        <circle className="chart-dot" cx={lastX} cy={lastY} r="9" fill="var(--pipe-model)" opacity="0.2" />
+        <circle className="chart-dot" cx={lastX} cy={lastY} r="5" fill="var(--pipe-model)" stroke="var(--color-white)" strokeWidth="2" />
       </svg>
 
-      <div className="mt-2 flex justify-between px-1 text-[0.625rem] text-muted/70" aria-hidden="true">
+      <div className="relative mt-2 flex px-[6px] text-[0.625rem] text-muted/70" aria-hidden="true">
         {MONTHS.map((m, i) => (
-          <span key={`${m}-${i}`}>{m}</span>
+          <span key={`${m}-${i}`} className="flex-1 text-center">
+            {m}
+          </span>
         ))}
       </div>
 
-      <div className="mt-5 grid grid-cols-3 gap-3 border-t border-black/[0.06] pt-5">
+      <div className="relative mt-5 grid grid-cols-3 gap-3 border-t border-black/[0.06] pt-5">
         {t.services.stats.map((stat) => (
           <div key={stat.label}>
             <p className="font-display text-lg font-semibold text-ink">{stat.value}</p>

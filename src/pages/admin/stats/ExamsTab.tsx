@@ -105,7 +105,7 @@ export default function ExamsTab({ range }: { range: DateRange }) {
         <Kpi label={st.kpiPerCandidate} value={candidates ? (results.length / candidates).toFixed(1) : "-"} />
       </KpiGrid>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Card title={st.examsByWeek}>
             <TimeLine

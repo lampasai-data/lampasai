@@ -1,5 +1,5 @@
 import { useLanguage } from "../i18n";
-import snowflakeLogo from "../assets/snowflake.png";
+import snowflakeLogo from "../assets/snowflake-removebg-preview.png";
 import powerBiLogo from "../assets/icons8-puissance-bi-2021-96.png";
 import dbtLogo from "../assets/dbt.png";
 import gcpLogo from "../assets/GCP.png";
@@ -10,9 +10,12 @@ import sqlLogo from "../assets/icons8-sql-96.png";
 
 // Ordonné comme le pipeline se lit : ingestion, transformation, stockage,
 // restitution, puis les outils transverses.
-const STACK_TOOLS: { name: string; logo: string }[] = [
-  { name: "Fivetran", logo: fivetranLogo },
-  { name: "dbt", logo: dbtLogo },
+// `wide`: wordmarks (long and flat) get a wider tile, otherwise their letters
+// end up tiny in a square. Fivetran's file is mostly empty space around the
+// wordmark, so it is cropped by the tile (object-cover) instead of contained.
+const STACK_TOOLS: { name: string; logo: string; wide?: "crop" | "contain" }[] = [
+  { name: "Fivetran", logo: fivetranLogo, wide: "crop" },
+  { name: "dbt", logo: dbtLogo, wide: "contain" },
   { name: "Snowflake", logo: snowflakeLogo },
   { name: "GCP", logo: gcpLogo },
   { name: "SQL", logo: sqlLogo },
@@ -34,7 +37,7 @@ const GAP_LEN = NODE_X[1] - GAP_START;
 /** Source de données : un cylindre. */
 function SourceIcon() {
   return (
-    <g stroke="#4a8896" strokeWidth="1.6" fill="none">
+    <g stroke="var(--pipe-source)" strokeWidth="1.8" fill="none">
       <ellipse cx="0" cy="-8" rx="10" ry="4" />
       <path d="M-10 -8v16c0 2.2 4.5 4 10 4s10-1.8 10-4V-8" />
       <path d="M-10 0c0 2.2 4.5 4 10 4s10-1.8 10-4" />
@@ -45,13 +48,13 @@ function SourceIcon() {
 /** Modèle : trois neurones reliés. */
 function ModelIcon() {
   return (
-    <g stroke="#7d4e2e" strokeWidth="1.6" fill="none">
-      <path d="M-9 -7 L4 -9 M-9 -7 L4 7 M-9 6 L4 -9 M-9 6 L4 7 M4 -9 L9 -1 M4 7 L9 -1" opacity="0.55" />
-      <circle cx="-9" cy="-7" r="2.6" fill="#fff" />
-      <circle cx="-9" cy="6" r="2.6" fill="#fff" />
-      <circle cx="4" cy="-9" r="2.6" fill="#fff" />
-      <circle cx="4" cy="7" r="2.6" fill="#fff" />
-      <circle cx="9" cy="-1" r="2.6" fill="#7d4e2e" />
+    <g stroke="var(--pipe-model)" strokeWidth="1.8" fill="none">
+      <path d="M-9 -7 L4 -9 M-9 -7 L4 7 M-9 6 L4 -9 M-9 6 L4 7 M4 -9 L9 -1 M4 7 L9 -1" opacity="0.7" />
+      <circle cx="-9" cy="-7" r="2.6" fill="var(--pipe-node-fill)" />
+      <circle cx="-9" cy="6" r="2.6" fill="var(--pipe-node-fill)" />
+      <circle cx="4" cy="-9" r="2.6" fill="var(--pipe-node-fill)" />
+      <circle cx="4" cy="7" r="2.6" fill="var(--pipe-node-fill)" />
+      <circle cx="9" cy="-1" r="2.6" fill="var(--pipe-model)" />
     </g>
   );
 }
@@ -59,7 +62,7 @@ function ModelIcon() {
 /** Décision : trois barres croissantes. */
 function DecisionIcon() {
   return (
-    <g fill="#1d9e75">
+    <g fill="var(--pipe-decision)">
       <rect x="-10" y="0" width="5" height="10" rx="2" opacity="0.55" />
       <rect x="-2.5" y="-5" width="5" height="15" rx="2" opacity="0.75" />
       <rect x="5" y="-11" width="5" height="21" rx="2" />
@@ -91,9 +94,10 @@ function Pipeline() {
               x2={x + GAP_LEN}
               y1={y}
               y2={y}
-              stroke="rgba(20,20,43,0.12)"
+              stroke="currentColor"
               strokeWidth="1.5"
               strokeDasharray="3 4"
+              className="text-ink/20"
             />
             {[0, 1].map((d) => (
               <circle
@@ -102,7 +106,7 @@ function Pipeline() {
                 cx={x}
                 cy={y}
                 r="3"
-                fill={i === 0 ? "#4a8896" : "#7d4e2e"}
+                fill={i === 0 ? "var(--pipe-source)" : "var(--pipe-model)"}
                 style={{
                   ["--flow-dist" as string]: `${GAP_LEN}px`,
                   animationDelay: `${i * 0.5 + d * 1.4}s`,
@@ -127,7 +131,7 @@ function Pipeline() {
               rx="18"
               className="pipeline-node"
             />
-            <g transform={`translate(${cx}, ${NODE_Y + NODE_H / 2})`}>
+            <g transform={`translate(${cx}, ${NODE_Y + NODE_H / 2}) scale(1.25)`}>
               <Icon />
             </g>
           </g>
@@ -226,12 +230,22 @@ export default function Hero() {
                   quelle que soit la largeur, en occupant tout l'espace dispo. */}
               <div className="mt-3 flex items-center gap-1.5 border-t border-black/[0.06] pt-4 sm:gap-2">
                 {STACK_TOOLS.map((tool) => (
+                  // Always a white tile, also in dark theme: several logos are
+                  // black ink on transparent (Linux, dbt) and vanish on dark.
                   <span
                     key={tool.name}
                     title={tool.name}
-                    className="flex aspect-square min-w-0 flex-1 items-center justify-center rounded-xl border border-black/[0.07] bg-white/90 p-1.5 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md sm:p-2"
+                    className={`flex min-w-0 items-center justify-center rounded-xl border border-black/[0.07] bg-[#ffffff] shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md ${
+                      tool.wide
+                        ? "aspect-[1.75/1] flex-[1.75] overflow-hidden p-1 sm:p-1.5"
+                        : "aspect-square flex-1 p-1.5 sm:p-2"
+                    }`}
                   >
-                    <img src={tool.logo} alt={tool.name} className="h-full w-full object-contain" />
+                    <img
+                      src={tool.logo}
+                      alt={tool.name}
+                      className={`h-full w-full ${tool.wide === "crop" ? "scale-[1.2] object-cover" : "object-contain"}`}
+                    />
                   </span>
                 ))}
               </div>

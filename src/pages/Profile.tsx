@@ -20,7 +20,7 @@ const MAX_FILE = 10 * 1024 * 1024;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export default function Profile() {
-  const { user, ready, profile, reloadProfile, openUpgradeModal, signOut } = useAuth();
+  const { user, ready, profile, isAdmin, reloadProfile, openUpgradeModal, signOut } = useAuth();
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const t = USER_T[lang].profile;
@@ -58,7 +58,7 @@ export default function Profile() {
   if (!user) return <Navigate to="/formations" replace />;
 
   const unlockAt = changedAt ? new Date(new Date(changedAt).getTime() + WEEK_MS) : null;
-  const locked = unlockAt !== null && unlockAt.getTime() > Date.now() && user.email?.toLowerCase() !== "mbairo.allatessem@gmail.com";
+  const locked = unlockAt !== null && unlockAt.getTime() > Date.now() && !isAdmin;
   const fmt = (d: Date) => d.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
 
   function pickFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -196,7 +196,7 @@ export default function Profile() {
         )}
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <form onSubmit={saveName} className={card}>
           <h2 className="font-display text-lg font-semibold text-ink">{t.nameTitle}</h2>
 
@@ -281,7 +281,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {user.email?.toLowerCase() !== "mbairo.allatessem@gmail.com" && (
+      {!isAdmin && (
         <div className="mt-6 rounded-2xl border border-red-300/70 bg-red-50/40 p-6">
           <h2 className="font-display text-lg font-semibold text-red-700">{t.dangerTitle}</h2>
           <p className="mt-2 text-sm text-muted">{t.dangerText}</p>

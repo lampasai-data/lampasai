@@ -61,7 +61,7 @@ export default function EmailPreview({
           )}
         </div>
         <div className="border-t border-[#F0F0F0] px-6 py-4 text-center text-xs text-[#9CA3AF]">
-          © 2026 <b className="text-[#4A8896]">Lampas .ai</b> · <u>contact@lampasai.com</u>
+          © 2026 <b className="text-[#4A8896]">Lampas .ai</b> · <u>Nous contacter</u>
           <br />
           {p.footer}
         </div>

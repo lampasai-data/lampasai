@@ -1,26 +1,38 @@
 import { useRef, useState, type FormEvent } from "react";
 import { useLanguage } from "../i18n";
-import powerBiLogo from "../assets/icons8-puissance-bi-2021-96.png";
-import snowflakeLogo from "../assets/snowflake.png";
-import dbtLogo from "../assets/dbt.png";
-import gitLogo from "../assets/icons8-git-96.png";
-import linuxLogo from "../assets/icons8-linux-96.png";
-import sqlLogo from "../assets/icons8-sql-96.png";
+import { sendContactMessage } from "../lib/contact";
+import { TOOLS, TOOL_LOGOS } from "../data/toolLogos";
 
 const MIN_SUBMIT_DELAY_MS = 2500;
-const TOOLS = ["Power BI", "Snowflake", "dbt", "Git", "Linux", "SQL"];
-const TOOL_LOGOS: Record<string, string> = {
-  "Power BI": powerBiLogo,
-  Snowflake: snowflakeLogo,
-  dbt: dbtLogo,
-  Git: gitLogo,
-  Linux: linuxLogo,
-  SQL: sqlLogo,
-};
 
-export default function TrainingRequestForm() {
+// Pill choices instead of a native <select>: the browser's dropdown list cannot
+// be styled, and with two or three options everything fits on screen anyway.
+// Real radio inputs underneath, so the form data, the required check and the
+// keyboard behaviour stay native.
+function ChoiceGroup({ name, label, options }: { name: string; label: string; options: string[] }) {
+  return (
+    <fieldset>
+      <legend className="mb-1.5 block text-xs font-medium text-muted">{label}</legend>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option, i) => (
+          <label
+            key={option}
+            className="cursor-pointer rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-ink/80 transition hover:border-teal/30 has-[:checked]:border-teal/50 has-[:checked]:bg-teal/10 has-[:checked]:text-teal-dark has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal/30"
+          >
+            <input type="radio" name={name} value={option} required={i === 0} className="sr-only" />
+            {option}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+export default function TrainingRequestForm({ title, lead }: { title?: string; lead?: string }) {
   const [sent, setSent] = useState(false);
   const [tooFast, setTooFast] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
   const { t } = useLanguage();
   const mountedAt = useRef(Date.now());
@@ -31,9 +43,10 @@ export default function TrainingRequestForm() {
     );
   }
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setTooFast(false);
+    setFailure(null);
 
     const form = e.currentTarget;
     const data = new FormData(form);
@@ -52,17 +65,23 @@ export default function TrainingRequestForm() {
 
     if (selectedTools.length === 0) return;
 
-    const body = [
-      `Nom: ${data.get("name")}`,
-      `Email: ${data.get("email")}`,
-      `Outil(s): ${selectedTools.join(", ")}`,
-      `Niveau: ${data.get("level")}`,
-      `Format: ${data.get("format")}`,
-      `Précisions: ${data.get("message") || "-"}`,
-    ].join("\n");
-    window.location.href = `mailto:contact@lampasai.com?subject=${encodeURIComponent(
-      "Demande de formation - devis"
-    )}&body=${encodeURIComponent(body)}`;
+    setSending(true);
+    const result = await sendContactMessage({
+      kind: "training",
+      name: data.get("name"),
+      email: data.get("email"),
+      tools: selectedTools,
+      level: data.get("level"),
+      format: data.get("format"),
+      message: data.get("message"),
+      company_website: data.get("company_website"),
+      elapsedMs: Date.now() - mountedAt.current,
+    });
+    setSending(false);
+    if (result !== "ok") {
+      setFailure(result === "rate_limited" ? t.formations.requestRateLimited : t.formations.requestSendError);
+      return;
+    }
 
     setSent(true);
     form.reset();
@@ -75,6 +94,13 @@ export default function TrainingRequestForm() {
       onSubmit={handleSubmit}
       className="relative flex flex-col gap-4 rounded-2xl border border-black/8 bg-white p-7 shadow-sm"
     >
+      {title && (
+        <div className="mb-1">
+          <h3 className="font-display text-xl font-semibold text-ink">{title}</h3>
+          {lead && <p className="mt-2 text-sm leading-relaxed text-muted">{lead}</p>}
+        </div>
+      )}
+
       {/* Honeypot field: hidden from sighted users, invisible-but-focusable trap for bots. */}
       <div className="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
         <label htmlFor="tr_company_website">Company website</label>
@@ -130,7 +156,10 @@ export default function TrainingRequestForm() {
                 >
                   {isSelected && "✓"}
                 </span>
-                <img src={TOOL_LOGOS[tool]} alt="" className="h-4 w-4 object-contain" />
+                {/* White disc behind the logo: black-ink logos (Linux, dbt) vanish on dark. */}
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#ffffff] p-[3px] ring-1 ring-black/[0.08]">
+                  <img src={TOOL_LOGOS[tool]} alt="" className="h-full w-full object-contain" />
+                </span>
                 {tool}
               </button>
             );
@@ -141,45 +170,17 @@ export default function TrainingRequestForm() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-muted">
-            {t.formations.requestLevelLabel}
-          </label>
-          <select
-            name="level"
-            required
-            defaultValue=""
-            className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink focus:border-teal focus:outline-none"
-          >
-            <option value="" disabled>
-              -
-            </option>
-            <option value={t.formations.levelBeginner}>{t.formations.levelBeginner}</option>
-            <option value={t.formations.levelIntermediate}>
-              {t.formations.levelIntermediate}
-            </option>
-            <option value={t.formations.levelAdvanced}>{t.formations.levelAdvanced}</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-muted">
-            {t.formations.requestFormatLabel}
-          </label>
-          <select
-            name="format"
-            required
-            defaultValue=""
-            className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-ink focus:border-teal focus:outline-none"
-          >
-            <option value="" disabled>
-              -
-            </option>
-            <option value={t.formations.formatOnsite}>{t.formations.formatOnsite}</option>
-            <option value={t.formations.formatRemote}>{t.formations.formatRemote}</option>
-          </select>
-        </div>
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <ChoiceGroup
+          name="level"
+          label={t.formations.requestLevelLabel}
+          options={[t.formations.levelBeginner, t.formations.levelIntermediate, t.formations.levelAdvanced]}
+        />
+        <ChoiceGroup
+          name="format"
+          label={t.formations.requestFormatLabel}
+          options={[t.formations.formatOnsite, t.formations.formatRemote]}
+        />
       </div>
 
       <textarea
@@ -190,13 +191,14 @@ export default function TrainingRequestForm() {
       />
 
       {tooFast && <p className="text-sm text-amber">{t.formations.requestTooFast}</p>}
+      {failure && <p className="text-sm text-danger-ink">{failure}</p>}
 
       <button
         type="submit"
-        disabled={sent || selectedTools.length === 0}
+        disabled={sent || sending || selectedTools.length === 0}
         className="brand-gradient mt-2 self-start rounded-full px-7 py-3.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40"
       >
-        {sent ? t.formations.requestSent : t.formations.requestSubmit}
+        {sent ? t.formations.requestSent : sending ? t.formations.requestSending : t.formations.requestSubmit}
       </button>
     </form>
   );

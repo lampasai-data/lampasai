@@ -106,7 +106,7 @@ export default function SentTab({ api }: { api: EmailsApi }) {
         selected={selecting ?? undefined}
         onSelectedChange={selecting ? setSelecting : undefined}
         expanded={(c) => (
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
             <div>
               <p className="text-sm font-semibold text-ink">{c.subject}</p>
               <p className="mt-2 text-sm whitespace-pre-line text-muted">{c.message}</p>

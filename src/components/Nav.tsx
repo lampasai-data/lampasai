@@ -11,7 +11,7 @@ import { useTheme } from "../lib/theme";
 export default function Nav() {
   const [open, setOpen] = useState(false);
   const { lang, setLang, t } = useLanguage();
-  const { user, signOut, openAuthModal } = useAuth();
+  const { user, isAdmin, signOut, openAuthModal } = useAuth();
 
   const { pathname } = useLocation();
   const onHome = pathname === "/";
@@ -155,7 +155,7 @@ export default function Nav() {
               </Link>
             </li>
           )}
-          {user?.email?.toLowerCase() === "mbairo.allatessem@gmail.com" && (
+          {isAdmin && (
             <>
               <li>
                 <Link

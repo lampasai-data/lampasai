@@ -16,6 +16,7 @@ interface Signal {
   handled_at: string | null;
   handled_by: string | null;
   note: string | null;
+  archived_at: string | null;
 }
 
 const SEVERITY_TONE: Record<Severity, BadgeTone> = { alert: "danger", to_check: "amber", to_watch: "muted" };
@@ -26,7 +27,12 @@ export default function SecurityTab() {
   const t = AUDIT_T[lang].security;
   const locale = adminLocale(lang);
 
-  const [view, setView] = useState<"open" | "history">("open");
+  const [view, setView] = useState<"open" | "history" | "archived">("open");
+  const [picking, setPicking] = useState<Set<string>>(new Set());
+  const [bulk, setBulk] = useState<"handle" | "delete" | null>(null);
+  const [bulkNote, setBulkNote] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const [signals, setSignals] = useState<Signal[] | null>(null);
   const [openCounts, setOpenCounts] = useState<Record<Severity, number>>({ alert: 0, to_check: 0, to_watch: 0 });
   const [lastScan, setLastScan] = useState<string | null>(null);
@@ -41,7 +47,7 @@ export default function SecurityTab() {
     const [list, open, state] = await Promise.all([
       supabase
         .from("security_signals")
-        .select("id, detected_at, type, severity, details, handled_at, handled_by, note")
+        .select("id, detected_at, type, severity, details, handled_at, handled_by, note, archived_at")
         .order("detected_at", { ascending: false })
         .limit(1000),
       supabase.from("security_signals").select("severity").is("handled_at", null),
@@ -85,7 +91,34 @@ export default function SecurityTab() {
   const summaryOf = (s: Signal) => t.summary(s.type, s.details ?? {}, locale);
   const stale = lastScan !== null && Date.now() - new Date(lastScan).getTime() > STALE_AFTER_MS;
 
-  const rows = (signals ?? []).filter((s) => (view === "open" ? !s.handled_at : Boolean(s.handled_at)));
+  const rows = (signals ?? []).filter((s) =>
+    view === "open" ? !s.handled_at : view === "history" ? Boolean(s.handled_at) && !s.archived_at : Boolean(s.archived_at)
+  );
+
+  function changeView(next: "open" | "history" | "archived") {
+    setView(next);
+    setPicking(new Set());
+    setNotice(null);
+  }
+
+  // Runs one of the bulk functions on the picked signals, then reloads.
+  async function runBulk(fn: string, args: Record<string, unknown>, done: (n: number) => string) {
+    if (!supabase) return;
+    setBulkBusy(true);
+    setError(null);
+    const { data, error: e } = await supabase.rpc(fn, args);
+    setBulkBusy(false);
+    setBulk(null);
+    setBulkNote("");
+    if (e) {
+      setError(t.bulkFailed);
+      return;
+    }
+    setNotice(done(Number(data ?? 0)));
+    setPicking(new Set());
+    load();
+  }
+  const pickedIds = [...picking];
 
   const columns: Column<Signal>[] = [
     {
@@ -130,7 +163,7 @@ export default function SecurityTab() {
         );
       },
     },
-    ...(view === "history"
+    ...(view !== "open"
       ? ([
           {
             key: "handled",
@@ -180,16 +213,16 @@ export default function SecurityTab() {
         <p className="text-sm text-muted">{t.intro}</p>
         <div className="flex items-center gap-3">
           <div className="flex gap-0.5 rounded-xl border border-black/8 bg-white p-1 shadow-sm">
-            {(["open", "history"] as const).map((v) => (
+            {(["open", "history", "archived"] as const).map((v) => (
               <button
                 key={v}
                 type="button"
-                onClick={() => setView(v)}
+                onClick={() => changeView(v)}
                 className={`rounded-lg px-3 py-1.5 text-[13px] font-bold whitespace-nowrap transition ${
                   view === v ? "bg-teal/13 text-teal-dark" : "text-muted hover:text-ink"
                 }`}
               >
-                {v === "open" ? t.viewOpen : t.viewHistory}
+                {v === "open" ? t.viewOpen : v === "history" ? t.viewHistory : t.viewArchived}
               </button>
             ))}
           </div>
@@ -219,17 +252,141 @@ export default function SecurityTab() {
       )}
 
       {error && <p className="mt-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-danger-ink">{error}</p>}
+      {notice && <p className="mt-4 rounded-lg bg-green/10 px-3 py-2 text-sm text-green-ink">{notice}</p>}
+
+      {picking.size > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="mr-1 text-sm font-semibold text-ink">{t.selectedN(picking.size)}</span>
+          {view === "open" && (
+            <button
+              type="button"
+              onClick={() => setBulk("handle")}
+              className="brand-gradient inline-flex items-center rounded-full px-4 py-2 text-sm font-medium text-[#ffffff] hover:opacity-90"
+            >
+              {t.handleN(picking.size)}
+            </button>
+          )}
+          {view === "history" && (
+            <>
+              <button
+                type="button"
+                onClick={() => runBulk("admin_archive_security_signals", { p_ids: pickedIds, p_archive: true }, t.archivedNotice)}
+                disabled={bulkBusy}
+                className="inline-flex items-center rounded-full border border-black/12 px-4 py-2 text-sm font-medium text-ink hover:bg-black/[0.04] disabled:opacity-50"
+              >
+                {t.archiveN(picking.size)}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBulk("delete")}
+                className="inline-flex items-center rounded-full border border-red-500/40 px-4 py-2 text-sm font-medium text-danger-ink hover:bg-red-500/10"
+              >
+                {t.deleteN(picking.size)}
+              </button>
+            </>
+          )}
+          {view === "archived" && (
+            <>
+              <button
+                type="button"
+                onClick={() => runBulk("admin_archive_security_signals", { p_ids: pickedIds, p_archive: false }, t.restoredNotice)}
+                disabled={bulkBusy}
+                className="inline-flex items-center rounded-full border border-black/12 px-4 py-2 text-sm font-medium text-ink hover:bg-black/[0.04] disabled:opacity-50"
+              >
+                {t.restoreN(picking.size)}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBulk("delete")}
+                className="inline-flex items-center rounded-full border border-red-500/40 px-4 py-2 text-sm font-medium text-danger-ink hover:bg-red-500/10"
+              >
+                {t.deleteN(picking.size)}
+              </button>
+            </>
+          )}
+          <button
+            type="button"
+            onClick={() => setPicking(new Set())}
+            className="inline-flex items-center rounded-full border border-black/12 px-4 py-2 text-sm font-medium text-ink hover:bg-black/[0.04]"
+          >
+            {t.clearSelection}
+          </button>
+        </div>
+      )}
       {signals === null ? (
         <p className="mt-6 text-sm text-muted">{AUDIT_T[lang].loading}</p>
       ) : (
         <DataTable
           key={view}
+          selected={picking}
+          onSelectedChange={(next) => {
+            setNotice(null);
+            setPicking(next);
+          }}
           rows={rows}
           columns={columns}
           rowKey={(s) => s.id}
-          emptyText={view === "open" ? t.emptyOpen : t.emptyHistory}
+          emptyText={view === "open" ? t.emptyOpen : view === "history" ? t.emptyHistory : t.emptyArchived}
           initialSort={{ key: "date", dir: "desc" }}
         />
+      )}
+
+      {bulk && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-6"
+          onClick={() => !bulkBusy && setBulk(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-md rounded-2xl border border-black/8 bg-white p-7 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-display text-lg font-medium text-ink">
+              {bulk === "handle" ? t.bulkHandleTitle : t.deleteTitle}
+            </h3>
+            <p className="mt-3 text-sm leading-relaxed text-ink">
+              {bulk === "handle" ? t.bulkHandleBody(picking.size) : t.deleteBody(picking.size)}
+            </p>
+            {bulk === "handle" ? (
+              <textarea
+                value={bulkNote}
+                onChange={(e) => setBulkNote(e.target.value)}
+                rows={3}
+                placeholder={t.bulkNotePlaceholder}
+                className="mt-3 w-full resize-none rounded-xl border border-black/12 bg-white px-3 py-2 text-sm outline-none focus:border-teal focus:ring-2 focus:ring-teal/20"
+              />
+            ) : (
+              <p className="mt-3 rounded-lg border border-amber/30 bg-amber/10 px-3 py-2 text-xs leading-relaxed text-amber-ink">
+                {t.deleteWarning}
+              </p>
+            )}
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setBulk(null)}
+                disabled={bulkBusy}
+                className="rounded-full border border-black/10 px-5 py-2 text-sm font-medium text-ink hover:bg-black/[0.03] disabled:opacity-50"
+              >
+                {t.bulkCancel}
+              </button>
+              <button
+                type="button"
+                disabled={bulkBusy || (bulk === "handle" && bulkNote.trim().length < 3)}
+                onClick={() =>
+                  bulk === "handle"
+                    ? runBulk("admin_handle_security_signals", { p_ids: pickedIds, p_note: bulkNote.trim() }, t.handledNotice)
+                    : runBulk("admin_delete_security_signals", { p_ids: pickedIds }, t.deletedNotice)
+                }
+                className={`rounded-full px-5 py-2 text-sm font-semibold text-[#ffffff] hover:opacity-90 disabled:opacity-50 ${
+                  bulk === "handle" ? "brand-gradient" : "bg-[#e5484d]"
+                }`}
+              >
+                {bulkBusy ? t.bulkWorking : bulk === "handle" ? t.bulkConfirm : t.deleteN(picking.size)}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {current && (

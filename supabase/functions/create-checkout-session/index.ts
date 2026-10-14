@@ -6,7 +6,8 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2026-06-24.dahlia",
 });
 
-const CERT_PRICE_CENTS = 499; // 4,99 €, matches src/i18n.tsx t.formations.offerPrice
+// Fallback only: the price comes from certification_prices (edited in the admin).
+const DEFAULT_PRICE_CENTS = 499;
 
 function randomSuffix() {
   const alphabet = "abcdefghijklmnopqrstuvwxyz";
@@ -88,6 +89,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    const { data: priceRows } = await supabase
+      .from("certification_prices")
+      .select("certification_id, price_cents")
+      .in("certification_id", certificationIds);
+    const priceOf = (id: string) =>
+      priceRows?.find((r) => r.certification_id === id)?.price_cents ?? DEFAULT_PRICE_CENTS;
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       // Restrict to Card + Klarna (+ Apple Pay, which rides along with "card").
@@ -102,7 +110,7 @@ Deno.serve(async (req) => {
         price_data: {
           currency: "eur",
           product_data: { name: `${c.name} - accès illimité 3 mois` },
-          unit_amount: CERT_PRICE_CENTS,
+          unit_amount: priceOf(c.id),
         },
         quantity: 1,
       })),
@@ -112,6 +120,8 @@ Deno.serve(async (req) => {
       metadata: {
         user_id: user.id,
         certification_ids: JSON.stringify(certificationIds),
+        // What each line was charged, for the webhook to record as-is.
+        price_cents: JSON.stringify(Object.fromEntries(certificationIds.map((id: string) => [id, priceOf(id)]))),
       },
     });
 

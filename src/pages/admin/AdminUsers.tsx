@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../../i18n";
 import { localize } from "../../lib/i18nText";
-import { ADMIN_EMAIL, isActivePurchase, type AdminExamResult, type AdminProfile, type AdminPurchase } from "../../lib/adminData";
+import { isActivePurchase, type AdminExamResult, type AdminProfile, type AdminPurchase } from "../../lib/adminData";
 import { segmentUserIds, type UserSegment } from "../../lib/adminAlerts";
 import DeleteAccountsModal from "./DeleteAccountsModal";
 import { ADMIN_T, adminLocale } from "../adminI18n";
@@ -126,7 +126,7 @@ export default function AdminUsers() {
       render: (r) => (
         <span className="font-medium text-ink">
           {r.profile.first_name ?? "-"}
-          {r.profile.email?.toLowerCase() === ADMIN_EMAIL && (
+          {r.profile.id === data.adminUserId && (
             <span className="ml-2 align-middle">
               <Badge tone="teal">admin</Badge>
             </span>
@@ -295,7 +295,7 @@ export default function AdminUsers() {
           emptyText={a.noUserMatch}
           initialSort={{ key: "signed", dir: "desc" }}
           expanded={({ purchases, results }) => (
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>
                 <h3 className="text-xs font-semibold tracking-wide text-muted uppercase">{a.purchasesHeading}</h3>
                 {purchases.length === 0 ? (

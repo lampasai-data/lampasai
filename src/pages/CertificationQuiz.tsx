@@ -24,6 +24,7 @@ import { splitInlineCode } from "../lib/inlineCode";
 import { supabase } from "../lib/supabase";
 import AuthPanel from "../components/AuthPanel";
 import ProUpsell from "../components/ProUpsell";
+import LockedReview from "../components/LockedReview";
 import BackLink from "../components/BackLink";
 import lampasLogo from "../assets/Logo_Lampas_AI_flavicon.png";
 import { CERT_LOGOS } from "../data/certLogos";
@@ -371,13 +372,13 @@ function formatTime(totalSeconds: number) {
  * The tick on the ring is the goal, the same marker language as the per-rubric
  * bars below, and the colour uses the same three bands.
  */
-function ScoreRing({ pct, goal }: { pct: number; goal: number }) {
+function ScoreRing({ pct, goal, className = "h-32 w-32" }: { pct: number; goal: number; className?: string }) {
   const R = 52;
   const C = 2 * Math.PI * R;
   const colour = pct >= goal ? "var(--color-green)" : pct >= 40 ? "var(--color-amber)" : "#ef4444";
   const a = ((goal / 100) * 360 - 90) * (Math.PI / 180);
   return (
-    <svg viewBox="0 0 120 120" className="h-32 w-32" role="img" aria-label={`${pct}%`}>
+    <svg viewBox="0 0 120 120" className={className} role="img" aria-label={`${pct}%`}>
       <circle cx="60" cy="60" r={R} fill="none" stroke="rgba(0,0,0,0.07)" strokeWidth="9" />
       <motion.circle
         cx="60"
@@ -1439,7 +1440,7 @@ export default function CertificationQuiz() {
     const ratio = runSize > 0 ? currentScore / runSize : 0;
     const officialPass = getOfficialPass(slug);
     const passed = mode === "exam" && ratio >= GOAL_RATIO;
-    const doingWell = ratio >= 0.75;
+    const doingWell = ratio >= GOAL_RATIO;
 
     const REVIEW_PAGE_SIZE = 5;
     const reviewIds = Object.keys(results)
@@ -1465,8 +1466,12 @@ export default function CertificationQuiz() {
       }
     }
 
+    // Free run: the result and the blurred correction sit side by side, so the
+    // person sees what they would unlock without scrolling.
+    const showLockedReview = !isPro && mode !== "exam" && Object.keys(results).length > 0;
+
     return (
-      <section className="mx-auto max-w-2xl px-6 py-10 text-center">
+      <section className={`mx-auto px-6 py-10 text-center ${showLockedReview ? "max-w-5xl" : "max-w-2xl"}`}>
         {/* Back link lifted out of the card and flush with its left edge: sitting
             inside the p-10 padding it was inset twice over, and it cost the card
             a full row of height for a control that isn't part of the result. */}
@@ -1483,18 +1488,23 @@ export default function CertificationQuiz() {
             />
           </div>
         )}
+        <div className={showLockedReview ? "grid items-stretch gap-6 lg:grid-cols-2" : ""}>
         <div className="overflow-hidden rounded-3xl border border-black/8 bg-white text-left shadow-sm">
           {/* Verdict: the ring on the left (how much), the verdict and the
               score on the right (what it means). */}
           <div
-            className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 px-7 py-7 sm:justify-start"
+            className={`flex flex-wrap items-center justify-center gap-x-5 gap-y-3 sm:justify-start ${showLockedReview ? "px-5 py-4 lg:flex-nowrap" : "px-7 py-7"}`}
             style={{
               background: `linear-gradient(120deg, ${
                 (mode === "exam" ? passed : doingWell) ? "#1d9e7530" : accentOf(slug) + "30"
               } 0%, transparent 75%)`,
             }}
           >
-            <ScoreRing pct={Math.round(ratio * 100)} goal={Math.round(GOAL_RATIO * 100)} />
+            <ScoreRing
+              pct={Math.round(ratio * 100)}
+              goal={Math.round(GOAL_RATIO * 100)}
+              className={showLockedReview ? "h-24 w-24 shrink-0" : "h-32 w-32"}
+            />
             <div className="min-w-0 text-center sm:text-left">
               <span
                 className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold ${
@@ -1503,11 +1513,17 @@ export default function CertificationQuiz() {
                     : "border border-red-300 bg-red-50 text-red-600"
                 }`}
               >
-                {(mode === "exam" ? passed : doingWell) ? t.quiz.trainingSuccess : t.quiz.trainingFail}
+                {mode === "exam"
+                  ? passed
+                    ? t.quiz.trainingSuccess
+                    : t.quiz.trainingFail
+                  : doingWell
+                    ? t.quiz.goalReached
+                    : t.quiz.goalNotReached}
               </span>
-              <p className="mt-3 font-display text-4xl leading-none font-semibold text-ink tabular-nums">
+              <p className={`font-display leading-none font-semibold text-ink tabular-nums ${showLockedReview ? "mt-2 text-3xl" : "mt-3 text-4xl"}`}>
                 {currentScore}
-                <span className="text-2xl text-muted"> / {runSize}</span>
+                <span className={showLockedReview ? "text-xl text-muted" : "text-2xl text-muted"}> / {runSize}</span>
               </p>
               <p className="mt-1 text-sm text-muted">{t.quiz.finishedScore}</p>
               {mode === "exam" && (
@@ -1516,13 +1532,39 @@ export default function CertificationQuiz() {
                 </p>
               )}
             </div>
+            {/* Points earned, on the right of the verdict (wraps under it on a
+                narrow screen). */}
+            <div className="flex flex-col items-stretch gap-3 sm:ml-auto">
+              <div className="flex items-center gap-2.5 rounded-2xl border border-black/8 bg-white/70 px-3.5 py-2.5 shadow-sm">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-amber-ink">
+                  <TrophyIcon className="h-6 w-6" />
+                </span>
+                <span>
+                  <span className="block font-display text-2xl leading-tight font-semibold text-ink tabular-nums">
+                    {formatNumber(points, lang)}
+                  </span>
+                  <span className="block text-[11px] text-muted">{t.quiz.finishedPoints}</span>
+                </span>
+              </div>
+              {/* Side by side, the restart button joins the header so the
+                  card does not need a row of its own for it. */}
+              {showLockedReview && (
+                <button
+                  type="button"
+                  onClick={restartRun}
+                  className="brand-gradient rounded-full px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-teal/20 transition hover:opacity-90"
+                >
+                  {t.quiz.restart}
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="px-7 pt-5 pb-7">
-            <div className={`grid gap-3 ${isPro ? "grid-cols-2" : "grid-cols-1 sm:max-w-[16rem]"}`}>
-              {isPro && (
+          <div className={showLockedReview ? "px-4 pt-3 pb-4" : "px-7 pt-5 pb-7"}>
+            {isPro && (
+              <div className="grid grid-cols-2 gap-3 sm:max-w-[16rem] sm:grid-cols-1">
                 <div className="flex items-center gap-3 rounded-2xl border border-black/8 bg-white px-3.5 py-3 shadow-sm">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal/15 text-teal-dark">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-teal-dark">
                     <ClockIcon className="h-5 w-5" />
                   </span>
                   <span>
@@ -1532,22 +1574,19 @@ export default function CertificationQuiz() {
                     <span className="block text-[11px] text-muted">{t.quiz.finishedTime}</span>
                   </span>
                 </div>
-              )}
-              <div className="flex items-center gap-3 rounded-2xl border border-black/8 bg-white px-3.5 py-3 shadow-sm">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber/20 text-amber-ink">
-                  <TrophyIcon className="h-5 w-5" />
-                </span>
-                <span>
-                  <span className="block font-display text-lg leading-tight font-semibold text-ink tabular-nums">
-                    {formatNumber(points, lang)}
-                  </span>
-                  <span className="block text-[11px] text-muted">{t.quiz.finishedPoints}</span>
-                </span>
               </div>
-            </div>
+            )}
 
             {!isPro && (
-              <p className="mt-4 rounded-2xl border border-teal/25 bg-teal/5 px-4 py-3 text-sm leading-relaxed text-ink/80">
+              <p
+                className={`mt-4 rounded-2xl border border-teal/25 bg-teal/5 px-4 py-3 text-sm leading-relaxed text-ink/80 ${
+                  // Always one line from tablet width up; side by side the cards
+                  // are half the page each, so the text shrinks to 10.5px to fit.
+                  doingWell && !showLockedReview
+                    ? ""
+                    : "sm:text-center sm:text-[13px] sm:whitespace-nowrap lg:px-2 lg:text-[10.5px]"
+                }`}
+              >
                 {doingWell ? t.quiz.quotaCongrats : t.quiz.quotaEncourage}
               </p>
             )}
@@ -1559,13 +1598,13 @@ export default function CertificationQuiz() {
             )}
 
             {domainBreakdown.length > 0 && (
-              <div className="mt-7">
+              <div className="mt-5">
                 <p className="text-sm font-semibold text-muted">{t.quiz.domainBreakdownTitle}</p>
                 {/* Weakest first (the order is the revision order); the two
                     lowest under the goal are flagged and, after an exam, link
                     to a run limited to that domain. The tick on each bar is
                     the goal. */}
-                <ul className="mt-3 space-y-3">
+                <ul className={`mt-3 ${showLockedReview ? "space-y-2.5" : "space-y-3"}`}>
                   {domainBreakdown.map((row, i) => {
                     const weak = i < 2 && row.pct < GOAL_RATIO * 100;
                     const tone =
@@ -1612,7 +1651,7 @@ export default function CertificationQuiz() {
               </div>
             )}
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 border-t border-black/6 pt-6">
+            <div className={`mt-8 flex flex-wrap items-center justify-center gap-3 border-t border-black/6 pt-6 ${showLockedReview ? "hidden" : ""}`}>
               <button
                 type="button"
                 onClick={restartRun}
@@ -1640,6 +1679,17 @@ export default function CertificationQuiz() {
               )}
             </div>
           </div>
+        </div>
+
+        {showLockedReview && (
+          <LockedReview
+            outcomes={Object.keys(results)
+              .map(Number)
+              .sort((x, y) => x - y)
+              .map((qi) => results[qi])}
+            onUnlock={() => (user ? openUpgradeModal(slug) : openAuthModalForUpgrade(slug))}
+          />
+        )}
         </div>
 
         {shareOpen && (

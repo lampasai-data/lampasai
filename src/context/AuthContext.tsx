@@ -1,3 +1,4 @@
+import { clearGoogleFallback, completeGoogleSignIn, googleFallbackUsed, markGoogleFallbackUsed } from "../lib/googleAuth";
 import {
   createContext,
   useContext,
@@ -47,6 +48,8 @@ interface AuthState {
    * wait on this too, or it renders a locked state at a paying user.
    */
   profileReady: boolean;
+  /** Asked from the server (am_i_admin); settled together with profileReady. */
+  isAdmin: boolean;
   user: User | null;
   profile: Profile | null;
   /** Re-reads the profile (after the person changed their name or picture). */
@@ -85,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profileReady, setProfileReady] = useState(!isSupabaseConfigured);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
@@ -105,26 +109,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // "normal login" branch while the first firing's async block-and-sign-out
   // is still in flight, racing it and silently letting the user in.
   const handledSessionUserIdRef = useRef<string | null>(null);
+  const profileLoads = useRef(new Map<string, Promise<void>>());
 
   // `silent` is for a refresh while the screens are already showing: it must
   // not flip profileReady back to false, which would put every plan-dependent
   // screen into its loading state again.
   async function loadProfile(userId: string, silent = false) {
     if (!supabase) return;
+    // The session settles twice on a page load (getSession, then the auth
+    // event): the second, identical lookup rides on the first one's request
+    // instead of repeating the profile and admin queries. A silent refresh
+    // (after a rename, say) always asks again so it never returns stale data.
+    if (!silent) {
+      const running = profileLoads.current.get(userId);
+      if (running) return running;
+      const run = loadProfileNow(userId, silent).finally(() => profileLoads.current.delete(userId));
+      profileLoads.current.set(userId, run);
+      return run;
+    }
+    return loadProfileNow(userId, silent);
+  }
+
+  async function loadProfileNow(userId: string, silent: boolean) {
+    if (!supabase) return;
     if (!silent) setProfileReady(false);
     try {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, email, first_name, avatar_url, plan, free_questions_used")
-        .eq("id", userId)
-        .single();
+      const [{ data }, admin] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, email, first_name, avatar_url, plan, free_questions_used")
+          .eq("id", userId)
+          .single(),
+        supabase.rpc("am_i_admin"),
+      ]);
       if (data) setProfile(data as Profile);
+      setIsAdmin(admin.data === true);
     } finally {
       // Settled either way: a failed lookup means "no Pro plan known", not
       // "hold every dependent screen forever".
       setProfileReady(true);
     }
   }
+
+  // Back from Google's account chooser with an ID token in the URL: finish the
+  // sign-in, then return to the page the person was on. If the exchange fails,
+  // the Supabase redirect flow takes over once, so Google sign-in never dead-ends.
+  useEffect(() => {
+    completeGoogleSignIn(() => {
+      if (googleFallbackUsed()) return;
+      markGoogleFallbackUsed();
+      void signInWithGoogle();
+    }).then((path) => {
+      if (path) navigate(path, { replace: true });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!supabase) return;
@@ -148,6 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (newSession) loadProfile(newSession.user.id);
         else {
           setProfile(null);
+          setIsAdmin(false);
           setProfileReady(true);
         }
         // Supabase parses the recovery link's URL fragment automatically and
@@ -184,6 +224,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // either synchronously below, or later from the async orphan-check
     // branch once it's confirmed the account wasn't actually a fresh orphan.
     function completeLogin() {
+      clearGoogleFallback();
       setAuthModalOpen(false);
       // Remembered so the auth panel can default to "sign in" instead of
       // "sign up" for a browser that has already logged in before.
@@ -399,6 +440,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         ready,
         profileReady,
+        isAdmin,
         user: session?.user ?? null,
         profile,
         reloadProfile: async () => {

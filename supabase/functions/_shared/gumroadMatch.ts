@@ -1,4 +1,7 @@
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { sendPurchaseReceipt } from "./purchaseReceipt.ts";
+
+const RECEIPT_MAX_SALE_AGE_MS = 1000 * 60 * 60 * 48;
 
 export const THREE_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 3;
 
@@ -15,6 +18,9 @@ export interface GumroadSale {
   email: string;
   product_permalink: string;
   price: number;
+  // When the sale happened (ISO), used to only e-mail a confirmation for a
+  // recent sale and never for old ones picked up by a full history sweep.
+  created_at?: string;
   refunded: boolean;
   disputed: boolean;
   chargebacked: boolean;
@@ -63,6 +69,19 @@ export function createServiceClient(): SupabaseClient {
   return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 }
 
+// Gumroad pings carry partial card data (card[bin], card[visual],
+// card[expiry_month], ...). None of it is used, so it never reaches the logs:
+// any key starting with "card", at any depth (the ping and api_sale), is dropped.
+function stripCardData(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stripCardData);
+  if (typeof value !== "object" || value === null) return value;
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => !/^card/i.test(key))
+      .map(([key, v]) => [key, stripCardData(v)])
+  );
+}
+
 export async function logGumroadEvent(
   supabase: SupabaseClient,
   fields: {
@@ -73,7 +92,9 @@ export async function logGumroadEvent(
     error_message?: string;
   }
 ) {
-  const { error } = await supabase.from("gumroad_webhook_logs").insert(fields);
+  const { error } = await supabase
+    .from("gumroad_webhook_logs")
+    .insert({ ...fields, payload: stripCardData(fields.payload) });
   if (error) console.error("Failed to write gumroad_webhook_logs row", error);
 }
 
@@ -165,6 +186,20 @@ export async function recordVerifiedSale(
     // recorded (e.g. a race or a transient read failure upstream). The
     // access already exists, so this is a harmless duplicate, not a failure.
     const isDuplicate = error?.code === "23505";
+
+    // Confirmation e-mail only for a sale that is genuinely new and recent:
+    // not a duplicate, and not an old sale found by a full history sweep.
+    const saleAgeMs = sale.created_at ? Date.now() - new Date(sale.created_at).getTime() : Infinity;
+    if (!error && saleAgeMs < RECEIPT_MAX_SALE_AGE_MS) {
+      await sendPurchaseReceipt(supabase, {
+        userId: matchedProfile.id,
+        certificationId: cert.id,
+        amountCents,
+        currency,
+        expiresAt,
+        purchasedAt: sale.created_at,
+      });
+    }
 
     await logGumroadEvent(supabase, {
       payload,

@@ -215,6 +215,67 @@ export function StepBars({
   );
 }
 
+// Real funnel, laid out left to right: one band per step, each narrowing into
+// the next, with the count and its share of the first step above the band and
+// the step name (plus the drop from the previous step) underneath. The band
+// heights follow the values, so a steep drop reads at a glance. On a phone the
+// row scrolls sideways rather than squeezing the labels.
+export function FunnelChart({
+  rows,
+  dropLabel,
+}: {
+  rows: { label: string; value: number }[];
+  dropLabel: (pct: number) => string;
+}) {
+  const first = Math.max(rows[0]?.value ?? 0, 1);
+  const heightOf = (v: number) => Math.min(1, Math.max(v / first, 0.08));
+  // Steps are not strictly nested (someone can buy without answering), so a
+  // step is never drawn taller than the one before it.
+  const heights: number[] = [];
+  rows.forEach((r, i) => heights.push(i === 0 ? 1 : Math.min(heightOf(r.value), heights[i - 1])));
+  const shades = ["#4a8896", "#5a8a88", "#6d8479", "#837a62", "#7d4e2e"];
+
+  return (
+    <div className="overflow-x-auto pb-1">
+      <ul
+        className="flex min-w-[26rem] sm:min-w-0"
+        role="img"
+        aria-label={rows.map((r) => `${r.label}: ${r.value}`).join("; ")}
+      >
+        {rows.map((r, i) => {
+          const h = heights[i];
+          const nextH = i < rows.length - 1 ? heights[i + 1] : h * 0.82;
+          const top = ((1 - h) / 2) * 100;
+          const nextTop = ((1 - nextH) / 2) * 100;
+          const sharePct = Math.round((r.value / first) * 100);
+          const prev = i > 0 ? rows[i - 1].value : null;
+          const drop = prev && prev > 0 && r.value < prev ? Math.round((1 - r.value / prev) * 100) : null;
+          return (
+            <li key={r.label} className="flex min-w-0 flex-1 flex-col">
+              <div className="px-1 text-center">
+                <span className="block font-display text-lg font-semibold text-ink tabular-nums">{r.value}</span>
+                <span className="block text-[11px] text-muted tabular-nums">{sharePct} %</span>
+              </div>
+              <div
+                className="mt-1 h-36 w-full"
+                style={{
+                  background: `linear-gradient(90deg, ${shades[Math.min(i, shades.length - 1)]}, ${shades[Math.min(i + 1, shades.length - 1)]})`,
+                  clipPath: `polygon(0 ${top}%, 100% ${nextTop}%, 100% ${100 - nextTop}%, 0 ${100 - top}%)`,
+                  opacity: r.value > 0 ? 1 : 0.35,
+                }}
+              />
+              <div className="mt-2 px-1 text-center">
+                <span className="block text-[11px] leading-tight font-medium text-ink">{r.label}</span>
+                <span className="mt-0.5 block h-4 text-[11px] text-danger-ink/90">{drop !== null ? dropLabel(drop) : ""}</span>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 // Classic horizontal bar chart: label on the left, the bar from a shared
 // baseline, the value (and share) at the end of the bar.
 export function HBars({

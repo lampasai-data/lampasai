@@ -1,7 +1,6 @@
 import { supabase } from "./supabase";
 import { listCertifications, type CertificationSummary } from "./quizData";
 
-export const ADMIN_EMAIL = "mbairo.allatessem@gmail.com";
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
 // Same threshold as the Gumroad catch-up page: a pending sale younger than
@@ -83,6 +82,9 @@ export interface AdminData {
   // Gumroad events from the last 7 days that need a human look: real
   // errors only - harmless duplicates and heartbeats are filtered out.
   recentGumroadErrors: number;
+  // The signed-in admin's own user id, to leave their test account out of
+  // the figures (the admin address itself is never shipped to the browser).
+  adminUserId: string | null;
 }
 
 export const EMPTY_ADMIN_DATA: AdminData = {
@@ -97,6 +99,7 @@ export const EMPTY_ADMIN_DATA: AdminData = {
   voucherUses: new Map(),
   pendingStaleCount: 0,
   recentGumroadErrors: 0,
+  adminUserId: null,
 };
 
 export function isActivePurchase(p: AdminPurchase, now = Date.now()) {
@@ -232,7 +235,10 @@ export async function loadAdminData(): Promise<AdminData> {
     );
   });
 
+  const { data: sessionData } = await supabase.auth.getSession();
+
   return {
+    adminUserId: sessionData.session?.user.id ?? null,
     certs,
     profiles,
     purchases: (purchases.data as AdminPurchase[]) ?? [],

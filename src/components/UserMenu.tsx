@@ -5,13 +5,12 @@ import { useLanguage } from "../i18n";
 import { USER_T } from "../userAreaI18n";
 import Avatar from "./Avatar";
 
-const ADMIN_EMAIL = "mbairo.allatessem@gmail.com";
 
 // The signed-in person's entry in the top bar: picture, first name and a
 // chevron, so it reads as a menu. It holds the profile page, the admin area
 // (admin only) and the sign-out.
 export default function UserMenu() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, isAdmin, signOut } = useAuth();
   const { lang, t } = useLanguage();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -32,7 +31,6 @@ export default function UserMenu() {
   }, [open]);
 
   if (!user) return null;
-  const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
   const item =
     "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-ink transition hover:bg-black/[0.04]";
 

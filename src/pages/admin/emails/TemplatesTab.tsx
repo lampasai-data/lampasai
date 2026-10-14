@@ -126,10 +126,10 @@ export default function TemplatesTab({ api }: { api: EmailsApi }) {
       {error && <p className="mt-3 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-danger-ink">{error}</p>}
 
       {form && (
-        <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
+        <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
           <div className="space-y-4 rounded-2xl border border-black/8 bg-white p-5 shadow-sm">
             <h3 className="font-display text-base font-semibold text-ink">{form.id ? t.templates.edit : t.templates.newTitle}</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className={labelClass}>{t.templates.category}</label>
                 <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className={fieldClass}>

@@ -46,7 +46,7 @@ interface Translations {
     proUpsellBadge: string;
     proUpsellTitle: string;
     proUpsellDesc: (certName: string) => string;
-    proUpsellCta: string;
+    proUpsellCta: (price: string) => string;
     emailCheckingStatus: string;
     emailConfirmedTitle: string;
     emailConfirmedDesc: string;
@@ -111,6 +111,9 @@ interface Translations {
     submit: string;
     sent: string;
     tooFast: string;
+    sending: string;
+    sendError: string;
+    rateLimited: string;
   };
   footer: {
     tagline: string;
@@ -138,6 +141,9 @@ interface Translations {
     upgradeCta: string;
     dashboardWelcome: string;
     dashboardGreeting: (name: string) => string;
+    dashboardGreetingMorning: (name: string) => string;
+    dashboardGreetingAfternoon: (name: string) => string;
+    dashboardGreetingEvening: (name: string) => string;
     dashboardPlanPro: string;
     dashboardFullAccess: string;
     dashboardPaidBadge: string;
@@ -151,7 +157,7 @@ interface Translations {
     upgradeModalTitle: string;
     upgradeModalDesc: string;
     upgradeModalDescSingle: string;
-    upgradeModalDescForCert: (certName: string) => string;
+    upgradeModalDescForCert: (certName: string, price: string) => string;
     upgradeModalEmpty: string;
     upgradeModalChecking: string;
     upgradeModalLoadError: string;
@@ -160,6 +166,7 @@ interface Translations {
     upgradeModalLoading: string;
     upgradeModalError: string;
     checkoutSuccessBanner: (months: number) => string;
+    comingSoonBadge: string;
     comingSoonTitle: string;
     comingSoonDesc: string;
     comingSoonCta: string;
@@ -180,8 +187,10 @@ interface Translations {
     requestSubmit: string;
     requestSent: string;
     requestTooFast: string;
+    requestSending: string;
+    requestSendError: string;
+    requestRateLimited: string;
     offerBadge: string;
-    offerPrice: string;
     offerPeriod: string;
     offerNote: string;
     offerCertLabel: string;
@@ -268,6 +277,8 @@ interface Translations {
     passThresholdNote: (percent: number) => string;
     trainingSuccess: string;
     trainingFail: string;
+    goalReached: string;
+    goalNotReached: string;
     dragHint: string;
     validateOrder: string;
     matchHint: string;
@@ -338,7 +349,7 @@ const translations: Record<Lang, Translations> = {
       proUpsellTitle: "Tu as terminé tes 20 questions gratuites",
       proUpsellDesc: (certName: string) =>
         `Passe en mode Pro pour continuer à t'entraîner sans limite sur la certification ${certName} pendant toute la durée de ta préparation.`,
-      proUpsellCta: "Passer en mode Pro (4,99 € / 3 mois)",
+      proUpsellCta: (price) => `Passer en mode Pro (${price} / 3 mois)`,
       emailCheckingStatus: "Vérification en cours…",
       emailConfirmedTitle: "Email confirmé 🎉",
       emailConfirmedDesc: "Ton compte est validé et ta session est ouverte.",
@@ -417,6 +428,9 @@ const translations: Record<Lang, Translations> = {
       submit: "Contactez-nous",
       sent: "Message envoyé ✓",
       tooFast: "Merci de patienter quelques secondes avant d'envoyer.",
+      sending: "Envoi...",
+      sendError: "Le message n'a pas pu être envoyé. Réessaie dans un instant.",
+      rateLimited: "Trop de messages envoyés depuis ta connexion. Réessaie dans une heure.",
     },
     footer: {
       tagline: "Des solutions sur-mesure pour exploiter tout le potentiel de vos données.",
@@ -429,7 +443,7 @@ const translations: Record<Lang, Translations> = {
       title: "Certifications & formations",
       lead: "Prépare tes certifications ou découvre nos prochaines formations data et IA.",
       tabCertifications: "Certifications",
-      tabFormations: "Formations",
+      tabFormations: "Sur-mesure",
       tabPricing: "Pricing",
       trainFor: "S'entraîner",
       leaderboardTeaser: (points: number, ratioPercent: number) =>
@@ -445,6 +459,9 @@ const translations: Record<Lang, Translations> = {
       upgradeCta: "Passer en illimité",
       dashboardWelcome: "Ton espace d'entraînement",
       dashboardGreeting: (name) => `Bienvenue ${name}`,
+      dashboardGreetingMorning: (name) => `Bonjour ${name}`,
+      dashboardGreetingAfternoon: (name) => `Bonne journée ${name}`,
+      dashboardGreetingEvening: (name) => `Bonsoir ${name}`,
       dashboardPlanPro: "Compte Pro",
       dashboardFullAccess: "Accès complet",
       dashboardPaidBadge: "Payé",
@@ -458,10 +475,10 @@ const translations: Record<Lang, Translations> = {
         `${rank}${rank === 1 ? "re" : "e"} place au classement ce mois-ci`,
       dashboardGoPro: "Passer en mode Pro",
       upgradeModalTitle: "Débloquer des certifications",
-      upgradeModalDesc: "Choisis une ou plusieurs certifications pour un accès illimité pendant 3 mois (4,99 € / certification).",
-      upgradeModalDescSingle: "Choisis une certification pour un accès illimité pendant 3 mois (4,99 € / certification).",
-      upgradeModalDescForCert: (certName) =>
-        `Débloque ${certName} pour un accès illimité pendant 3 mois (4,99 €).`,
+      upgradeModalDesc: "Choisis une ou plusieurs certifications pour un accès illimité pendant 3 mois.",
+      upgradeModalDescSingle: "Choisis une certification pour un accès illimité pendant 3 mois.",
+      upgradeModalDescForCert: (certName, price) =>
+        `Débloque ${certName} pour un accès illimité pendant 3 mois (${price}).`,
       upgradeModalEmpty: "Toutes tes certifications sont déjà débloquées.",
       upgradeModalChecking: "Vérification de tes accès…",
       upgradeModalLoadError: "Impossible de vérifier tes accès. Réessaie dans un instant.",
@@ -471,6 +488,7 @@ const translations: Record<Lang, Translations> = {
       upgradeModalError: "Impossible de démarrer le paiement. Réessaie dans un instant.",
       checkoutSuccessBanner: (months: number) =>
         `Paiement confirmé, ton accès illimité est débloqué pour ${months} mois 🎉`,
+      comingSoonBadge: "Bientôt disponible",
       comingSoonTitle: "Nos formations arrivent bientôt",
       comingSoonDesc: "Nous préparons des parcours de formation complets (Power BI, Snowflake, Dbt, Git ...). Contacte-nous via le formulaire ci-dessous pour être informé en priorité.",
       comingSoonCta: "Voir les certifications",
@@ -491,8 +509,10 @@ const translations: Record<Lang, Translations> = {
       requestSubmit: "Demander un devis",
       requestSent: "Demande envoyée ✓ Nous te recontactons rapidement.",
       requestTooFast: "Merci de patienter quelques secondes avant d'envoyer.",
+      requestSending: "Envoi...",
+      requestSendError: "La demande n'a pas pu être envoyée. Réessaie dans un instant.",
+      requestRateLimited: "Trop de demandes envoyées depuis ta connexion. Réessaie dans une heure.",
       offerBadge: "Accès illimité pendant 3 mois",
-      offerPrice: "4,99 €",
       offerPeriod: "par certification, pour 3 mois d'accès illimité",
       offerNote: "Paiement unique par certification, sans réengagement.",
       offerCertLabel: "Certification :",
@@ -588,6 +608,8 @@ const translations: Record<Lang, Translations> = {
       passThresholdNote: (percent) => `Seuil de réussite : ${percent} % de bonnes réponses.`,
       trainingSuccess: "Succès 🎉",
       trainingFail: "Échec",
+      goalReached: "Objectif atteint 🎉",
+      goalNotReached: "Objectif non atteint",
       dragHint: "Fais glisser pour réordonner",
       validateOrder: "Valider mon classement",
       matchHint: "Fais glisser chaque élément vers la bonne cible",
@@ -597,7 +619,7 @@ const translations: Record<Lang, Translations> = {
       choosePlaceholder: "Choisir…",
       quotaCongrats: "Bravo, de très bons résultats ! Tu es sur la bonne voie pour réussir ta certification.",
       quotaEncourage: "C'est un bon début, encore un peu d'entraînement et tu vas y arriver - ne lâche rien !",
-      quotaUnlockHint: "Dans tous les cas, débloque l'accès illimité pour t'entraîner sur toutes les questions et arriver serein le jour J.",
+      quotaUnlockHint: "Débloque l'accès illimité et arrive serein le jour J.",
       reviewTitle: "Revoir les questions",
       reviewErrorsOnly: "Voir mes erreurs",
       reviewAll: "Voir toutes les questions",
@@ -656,7 +678,7 @@ const translations: Record<Lang, Translations> = {
       proUpsellTitle: "You've finished your 20 free questions",
       proUpsellDesc: (certName: string) =>
         `Go Pro to keep training without limits on the ${certName} certification for as long as you need to prepare.`,
-      proUpsellCta: "Go Pro (€4.99 / 3 months)",
+      proUpsellCta: (price) => `Go Pro (${price} / 3 months)`,
       emailCheckingStatus: "Checking…",
       emailConfirmedTitle: "Email confirmed 🎉",
       emailConfirmedDesc: "Your account is verified and you're signed in.",
@@ -735,6 +757,9 @@ const translations: Record<Lang, Translations> = {
       submit: "Contact us",
       sent: "Message sent ✓",
       tooFast: "Please wait a few seconds before sending.",
+      sending: "Sending...",
+      sendError: "The message could not be sent. Try again in a moment.",
+      rateLimited: "Too many messages sent from your connection. Try again in an hour.",
     },
     footer: {
       tagline: "Tailor-made AI solutions to unlock the full potential of your data.",
@@ -747,7 +772,7 @@ const translations: Record<Lang, Translations> = {
       title: "Data certifications & training",
       lead: "Prepare your certifications or discover our upcoming data and AI training.",
       tabCertifications: "Certifications",
-      tabFormations: "Training",
+      tabFormations: "Custom",
       tabPricing: "Pricing",
       trainFor: "Practice",
       leaderboardTeaser: (points: number, ratioPercent: number) =>
@@ -762,7 +787,10 @@ const translations: Record<Lang, Translations> = {
       upgradeDesc: "Switch to Pro to access every certification question",
       upgradeCta: "Go unlimited",
       dashboardWelcome: "Your training space",
-      dashboardGreeting: (name) => `Welcome ${name}, your training space`,
+      dashboardGreeting: (name) => `Welcome ${name}`,
+      dashboardGreetingMorning: (name) => `Good morning ${name}`,
+      dashboardGreetingAfternoon: (name) => `Good afternoon ${name}`,
+      dashboardGreetingEvening: (name) => `Good evening ${name}`,
       dashboardPlanPro: "Pro account",
       dashboardFullAccess: "Full access",
       dashboardPaidBadge: "Paid",
@@ -776,10 +804,10 @@ const translations: Record<Lang, Translations> = {
         `Ranked #${rank} on this month's leaderboard`,
       dashboardGoPro: "Go Pro",
       upgradeModalTitle: "Unlock certifications",
-      upgradeModalDesc: "Pick one or more certifications for unlimited access for 3 months (€4.99 / certification).",
-      upgradeModalDescSingle: "Pick a certification for unlimited access for 3 months (€4.99 / certification).",
-      upgradeModalDescForCert: (certName) =>
-        `Unlock ${certName} for unlimited access for 3 months (€4.99).`,
+      upgradeModalDesc: "Pick one or more certifications for unlimited access for 3 months.",
+      upgradeModalDescSingle: "Pick a certification for unlimited access for 3 months.",
+      upgradeModalDescForCert: (certName, price) =>
+        `Unlock ${certName} for unlimited access for 3 months (${price}).`,
       upgradeModalEmpty: "All your certifications are already unlocked.",
       upgradeModalChecking: "Checking your access…",
       upgradeModalLoadError: "Could not check your access. Please try again in a moment.",
@@ -789,6 +817,7 @@ const translations: Record<Lang, Translations> = {
       upgradeModalError: "Couldn't start the payment. Please try again in a moment.",
       checkoutSuccessBanner: (months: number) =>
         `Payment confirmed, your unlimited access is unlocked for ${months} month${months > 1 ? "s" : ""} 🎉`,
+      comingSoonBadge: "Coming soon",
       comingSoonTitle: "Our training paths are coming soon",
       comingSoonDesc: "We're building complete training paths (Power BI, Snowflake, Dbt, Git ...). Contact us via the form below to be notified first.",
       comingSoonCta: "See certifications",
@@ -809,8 +838,10 @@ const translations: Record<Lang, Translations> = {
       requestSubmit: "Request a quote",
       requestSent: "Request sent ✓ We'll get back to you shortly.",
       requestTooFast: "Please wait a few seconds before sending.",
+      requestSending: "Sending...",
+      requestSendError: "The request could not be sent. Try again in a moment.",
+      requestRateLimited: "Too many requests sent from your connection. Try again in an hour.",
       offerBadge: "Unlimited access for 3 months",
-      offerPrice: "€4.99",
       offerPeriod: "per certification, for 3 months of unlimited access",
       offerNote: "One-time payment per certification, no subscription.",
       offerCertLabel: "Certification:",
@@ -906,6 +937,8 @@ const translations: Record<Lang, Translations> = {
       passThresholdNote: (percent) => `Pass mark: ${percent}% correct answers.`,
       trainingSuccess: "Success 🎉",
       trainingFail: "Failure",
+      goalReached: "Goal reached 🎉",
+      goalNotReached: "Goal not reached",
       dragHint: "Drag to reorder",
       validateOrder: "Submit my ranking",
       matchHint: "Drag each item onto the correct target",
@@ -915,7 +948,7 @@ const translations: Record<Lang, Translations> = {
       choosePlaceholder: "Choose…",
       quotaCongrats: "Great job, solid results! You're on track to pass your certification.",
       quotaEncourage: "That's a good start - a bit more practice and you'll get there, don't give up!",
-      quotaUnlockHint: "Either way, unlock unlimited access to train on every question and feel ready on exam day.",
+      quotaUnlockHint: "Unlock unlimited access and feel ready on exam day.",
       reviewTitle: "Review the questions",
       reviewErrorsOnly: "Show my mistakes",
       reviewAll: "Show all questions",

@@ -304,7 +304,7 @@ export const EMAIL_T: Record<Lang, EmailStrings> = {
     },
     preview: {
       hello: "Bonjour",
-      footer: "Email automatique, merci de ne pas y répondre.",
+      footer: "Tu peux répondre directement à cet e-mail.",
       unsubscribe: "Ne plus recevoir nos offres",
       unsubscribeFooter: "Tu reçois cet e-mail car tu as un compte Lampas .ai.",
       example: "Le message apparaîtra ici.",
@@ -484,7 +484,7 @@ export const EMAIL_T: Record<Lang, EmailStrings> = {
     },
     preview: {
       hello: "Hello",
-      footer: "Automatic e-mail, please do not reply.",
+      footer: "You can reply to this e-mail directly.",
       unsubscribe: "Stop receiving our offers",
       unsubscribeFooter: "You are receiving this e-mail because you have a Lampas .ai account.",
       example: "The message will appear here.",

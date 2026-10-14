@@ -15,6 +15,9 @@ import Dashboard from "../components/Dashboard";
 import TrainingRequestForm from "../components/TrainingRequestForm";
 import { CERTIFICATION_DOMAINS, EXAM_QUESTION_COUNTS } from "../data/certificationDomains";
 import { CERT_LOGOS } from "../data/certLogos";
+import { TOOLS, TOOL_LOGOS } from "../data/toolLogos";
+import { accentOf } from "../lib/certAccent";
+import { useCertPrices } from "../lib/certPrices";
 
 type Tab = "certifications" | "formations" | "pricing";
 
@@ -28,6 +31,16 @@ function QuestionBankIcon({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
+// Round white chip behind a tool logo: black-ink logos (Linux, dbt) would
+// vanish on the dark theme without it.
+function LogoChip({ src, size = "h-9 w-9" }: { src: string; size?: string }) {
+  return (
+    <span className={`flex ${size} shrink-0 items-center justify-center rounded-full bg-[#ffffff] p-1.5 shadow-sm ring-1 ring-black/[0.08]`}>
+      <img src={src} alt="" className="h-full w-full object-contain" />
+    </span>
+  );
+}
+
 export default function Formations() {
   const [certs, setCerts] = useState<CertificationSummary[]>([]);
   const [tab, setTab] = useState<Tab>("certifications");
@@ -38,6 +51,7 @@ export default function Formations() {
   >({});
   const { user, profile, openAuthModal, openAuthModalForUpgrade } = useAuth();
   const { lang, t } = useLanguage();
+  const prices = useCertPrices(lang);
 
   useEffect(() => {
     listCertifications().then(setCerts);
@@ -139,33 +153,50 @@ export default function Formations() {
             exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.25 }}
           >
-            <div className="mt-8 flex flex-col items-center rounded-2xl border border-black/8 bg-white px-8 py-14 text-center">
-              <span className="brand-gradient inline-flex h-12 w-12 items-center justify-center rounded-full text-lg text-white">
-                🚧
-              </span>
-              <h3 className="mt-5 font-display text-xl font-medium text-ink">
-                {t.formations.comingSoonTitle}
-              </h3>
-              <p className="mt-3 max-w-md text-sm leading-relaxed text-muted">
-                {t.formations.comingSoonDesc}
-              </p>
-              <button
-                type="button"
-                onClick={() => setTab("certifications")}
-                className="brand-gradient mt-6 rounded-full px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90"
-              >
-                {t.formations.comingSoonCta}
-              </button>
+            <div className="relative mt-8 overflow-hidden rounded-3xl border border-black/8 bg-white px-6 py-10 shadow-sm sm:px-10 sm:py-12">
+              <div
+                className="pointer-events-none absolute -top-24 -right-20 h-72 w-72 rounded-full opacity-[0.14] blur-3xl"
+                style={{ background: "radial-gradient(circle, #4a8896, transparent 70%)" }}
+                aria-hidden="true"
+              />
+              <div
+                className="pointer-events-none absolute -bottom-28 -left-16 h-72 w-72 rounded-full opacity-[0.10] blur-3xl"
+                style={{ background: "radial-gradient(circle, #7d4e2e, transparent 70%)" }}
+                aria-hidden="true"
+              />
+              <div className="relative max-w-2xl">
+                <span className="inline-flex items-center gap-2 rounded-full border border-teal/30 bg-teal/[0.07] px-3 py-1 text-xs font-semibold text-teal-dark">
+                  <span className="h-1.5 w-1.5 rounded-full bg-teal" aria-hidden="true" />
+                  {t.formations.comingSoonBadge}
+                </span>
+                <h3 className="mt-4 font-heading text-3xl text-ink md:text-4xl">
+                  {t.formations.comingSoonTitle}
+                </h3>
+                <p className="mt-4 leading-relaxed text-muted">{t.formations.comingSoonDesc}</p>
+                <ul className="mt-6 flex flex-wrap gap-2">
+                  {TOOLS.map((tool) => (
+                    <li
+                      key={tool}
+                      className="inline-flex items-center gap-2 rounded-full border border-black/8 bg-surface py-1 pr-3.5 pl-1 text-sm font-medium text-ink"
+                    >
+                      <LogoChip src={TOOL_LOGOS[tool]} size="h-7 w-7" />
+                      {tool}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  onClick={() => setTab("certifications")}
+                  className="brand-gradient mt-8 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white shadow-sm shadow-teal/20 transition hover:opacity-90"
+                >
+                  {t.formations.comingSoonCta}
+                  <span aria-hidden="true">→</span>
+                </button>
+              </div>
             </div>
 
-            <div className="mt-8 flex flex-col">
-              <h3 className="font-display text-2xl font-semibold text-ink">
-                {t.formations.requestTitle}
-              </h3>
-              <p className="mt-3 leading-relaxed text-muted">{t.formations.requestLead}</p>
-              <div className="mt-6">
-                <TrainingRequestForm />
-              </div>
+            <div className="mt-8">
+              <TrainingRequestForm title={t.formations.requestTitle} lead={t.formations.requestLead} />
             </div>
           </motion.div>
         ) : tab === "certifications" ? (
@@ -215,114 +246,123 @@ export default function Formations() {
             )}
 
             <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
-              {certs.map((cert) => (
-                <div key={cert.slug}>
-                  <div className="group flex h-full flex-col rounded-2xl border border-black/8 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-teal/30 hover:shadow-md">
-                    <div className="flex items-start justify-between gap-3">
-                      <Link
-                        to={`/formations/${cert.slug}`}
-                        className="flex h-16 w-16 items-center justify-center rounded-xl border border-black/8 bg-surface"
+              {certs.map((cert) => {
+                const accent = accentOf(cert.slug);
+                const domains = CERTIFICATION_DOMAINS[cert.slug];
+                return (
+                  <div key={cert.slug}>
+                    <div className="group flex h-full flex-col overflow-hidden rounded-3xl border border-black/8 bg-white shadow-sm transition hover:-translate-y-1 hover:border-teal/30 hover:shadow-md">
+                      <div
+                        className="px-7 pt-6 pb-5"
+                        style={{
+                          background: `linear-gradient(120deg, ${accent}1a 0%, ${accent}08 60%, transparent 100%)`,
+                        }}
                       >
-                        {CERT_LOGOS[cert.slug] ? (
-                          <img
-                            src={CERT_LOGOS[cert.slug]}
-                            alt=""
-                            className={
-                              cert.slug === "power-bi"
-                                ? "h-14 w-14 object-contain"
-                                : "h-11 w-11 object-contain"
-                            }
-                          />
-                        ) : (
-                          <span className="brand-gradient h-2.5 w-2.5 rounded-full" />
-                        )}
-                      </Link>
-                      <Link
-                        to={`/formations/${cert.slug}`}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-teal/30 bg-teal/[0.06] px-5 py-2 text-sm font-semibold text-teal-dark transition group-hover:border-teal/50 group-hover:bg-teal/10"
-                      >
-                        {t.formations.trainFor}
-                      </Link>
-                    </div>
-                    <Link to={`/formations/${cert.slug}`}>
-                      <h3 className="mt-4 font-display text-xl font-medium text-ink">
-                        {localize(cert.name, lang)}
-                      </h3>
-                      <p className="mt-3 text-sm leading-relaxed text-muted">
-                        {localize(cert.description, lang)}
-                      </p>
-                    </Link>
-
-                    {CERTIFICATION_DOMAINS[cert.slug] && (
-                      <div className="mt-5 border-t border-black/5 pt-4">
-                        <p className="text-xs font-medium text-teal-dark">
-                          {t.formations.domainsLabel}
-                        </p>
-                        <ul className="mt-2.5 flex flex-col gap-1.5">
-                          {CERTIFICATION_DOMAINS[cert.slug].map((domain) => (
-                            <li
-                              key={domain.label.fr}
-                              className="flex items-center justify-between gap-3 text-xs text-ink/70"
-                            >
-                              <span className="flex items-center gap-1.5">
-                                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-teal/60" />
-                                {localize(domain.label, lang)}
-                              </span>
-                              <span className="shrink-0 font-medium text-muted">
-                                {domain.weight}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    <div className="mt-auto">
-                    {leaderboardPreviews[cert.slug] && (
-                      <div className="mt-5 flex items-center gap-2.5 rounded-xl border border-amber/30 bg-amber/[0.08] px-4 py-2">
-                        <span className="text-lg leading-none">🏆</span>
-                        <p className="whitespace-pre-line text-xs font-semibold leading-tight text-ink">
-                          {t.formations.leaderboardTeaser(
-                            leaderboardPreviews[cert.slug].topPoints,
-                            Math.round(leaderboardPreviews[cert.slug].topRatio * 100)
-                          )}
-                        </p>
-                      </div>
-                    )}
-
-                    {isPro && (
-                      <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
-                        <Link
-                          to={`/formations/${cert.slug}`}
-                          className="brand-gradient rounded-full px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
-                        >
-                          {t.formations.accessQuiz}
+                        <div className="flex items-start justify-between gap-3">
+                          <Link
+                            to={`/formations/${cert.slug}`}
+                            className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#ffffff] shadow-sm ring-1 ring-black/[0.06]"
+                          >
+                            {CERT_LOGOS[cert.slug] ? (
+                              <img
+                                src={CERT_LOGOS[cert.slug]}
+                                alt=""
+                                className={
+                                  cert.slug === "power-bi"
+                                    ? "h-14 w-14 object-contain"
+                                    : "h-11 w-11 object-contain"
+                                }
+                              />
+                            ) : (
+                              <span className="brand-gradient h-2.5 w-2.5 rounded-full" />
+                            )}
+                          </Link>
+                          <Link
+                            to={`/formations/${cert.slug}`}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-teal/30 bg-teal/[0.06] px-5 py-2 text-sm font-semibold text-teal-dark transition group-hover:border-teal/50 group-hover:bg-teal/10"
+                          >
+                            {t.formations.trainFor}
+                          </Link>
+                        </div>
+                        <Link to={`/formations/${cert.slug}`}>
+                          <h3 className="mt-4 font-display text-xl font-medium text-ink">
+                            {localize(cert.name, lang)}
+                          </h3>
+                          <p className="mt-2 text-sm leading-relaxed text-muted">
+                            {localize(cert.description, lang)}
+                          </p>
                         </Link>
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadPdf(cert)}
-                          disabled={downloadingSlug === cert.slug}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-4 py-1.5 text-xs font-medium text-ink transition hover:border-black/20 disabled:opacity-50"
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
-                            <path
-                              d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                          {downloadingSlug === cert.slug
-                            ? t.formations.downloadingPdf
-                            : t.formations.downloadPdf}
-                        </button>
                       </div>
-                    )}
+
+                      <div className="flex flex-1 flex-col px-7 pt-4 pb-6">
+                        {domains && (
+                          <div>
+                            <p className="text-xs font-semibold text-muted">{t.formations.domainsLabel}</p>
+                            <ul className="mt-3 flex flex-col gap-2.5">
+                              {domains.map((domain) => (
+                                <li
+                                  key={domain.label.fr}
+                                  className="flex items-center justify-between gap-3 text-xs text-ink/80"
+                                >
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-teal/60" />
+                                    {localize(domain.label, lang)}
+                                  </span>
+                                  <span className="shrink-0 font-semibold text-ink tabular-nums">{domain.weight}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        <div className="mt-auto">
+                          {leaderboardPreviews[cert.slug] && (
+                            <div className="mt-5 flex items-center gap-2.5 rounded-xl border border-amber/30 bg-amber/[0.08] px-4 py-2">
+                              <span className="text-lg leading-none">🏆</span>
+                              <p className="whitespace-pre-line text-xs font-semibold leading-tight text-ink">
+                                {t.formations.leaderboardTeaser(
+                                  leaderboardPreviews[cert.slug].topPoints,
+                                  Math.round(leaderboardPreviews[cert.slug].topRatio * 100)
+                                )}
+                              </p>
+                            </div>
+                          )}
+
+                          {isPro && (
+                          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
+                            <Link
+                              to={`/formations/${cert.slug}`}
+                              className="brand-gradient rounded-full px-4 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+                            >
+                              {t.formations.accessQuiz}
+                            </Link>
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadPdf(cert)}
+                                disabled={downloadingSlug === cert.slug}
+                                className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-4 py-1.5 text-xs font-medium text-ink transition hover:border-black/20 disabled:opacity-50"
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+                                  <path
+                                    d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                                {downloadingSlug === cert.slug
+                                  ? t.formations.downloadingPdf
+                                  : t.formations.downloadPdf}
+                              </button>
+                          </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
         ) : tab === "pricing" ? (
@@ -332,90 +372,133 @@ export default function Formations() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.25 }}
-            className="mt-8 flex justify-center"
+            className="mt-8"
           >
-            <div className="flex w-full max-w-xl">
-              <div className="relative flex w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-teal/25 bg-white p-6 shadow-sm">
-                <span className="brand-gradient inline-flex w-fit self-start rounded-full px-3 py-1 text-xs font-semibold text-white">
-                  {t.formations.offerBadge}
-                </span>
-                <div className="mt-3 flex flex-wrap items-end gap-2">
-                  <span className="font-display text-4xl font-semibold text-ink">
-                    {t.formations.offerPrice}
-                  </span>
-                  <span className="pb-1 text-sm text-muted">{t.formations.offerPeriod}</span>
-                </div>
-                <p className="mt-1 text-xs text-muted">{t.formations.offerNote}</p>
+            {(() => {
+              const domains = CERTIFICATION_DOMAINS[pricingSlug] ?? [];
+              const accent = accentOf(pricingSlug);
+              return (
+                <div className="mx-auto grid grid-cols-1 w-full max-w-5xl overflow-hidden rounded-3xl border border-black/8 bg-white shadow-sm md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+                  {/* Purchase panel: what you buy, for how much, and the button. */}
+                  <div
+                    className="flex flex-col p-7 sm:p-8"
+                    style={{
+                      background: `linear-gradient(160deg, ${accent}24 0%, ${accent}0c 60%, transparent 100%)`,
+                    }}
+                  >
+                    <span className="brand-gradient inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold text-white">
+                      {t.formations.offerBadge}
+                    </span>
 
-                {certs.filter((c) => CERTIFICATION_DOMAINS[c.slug]).length > 0 && (
-                  <div className="mt-4">
-                    <p className="text-xs font-medium text-muted">{t.formations.offerCertLabel}</p>
-                    <div className="mt-2 inline-flex gap-1 rounded-full border border-black/8 bg-surface p-1">
-                      {certs
-                        .filter((c) => CERTIFICATION_DOMAINS[c.slug])
-                        .map((c) => (
-                          <button
-                            key={c.slug}
-                            type="button"
-                            onClick={() => setPricingSlug(c.slug)}
-                            className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
-                              pricingSlug === c.slug
-                                ? "brand-gradient text-white shadow-sm"
-                                : "text-muted hover:text-ink"
-                            }`}
-                          >
-                            {localize(c.name, lang)}
-                          </button>
-                        ))}
+                    {certs.filter((c) => CERTIFICATION_DOMAINS[c.slug]).length > 0 && (
+                      <div className="mt-6">
+                        <p className="text-xs font-medium text-muted">{t.formations.offerCertLabel}</p>
+                        <div className="mt-2 flex flex-col gap-2">
+                          {certs
+                            .filter((c) => CERTIFICATION_DOMAINS[c.slug])
+                            .map((c) => (
+                              <button
+                                key={c.slug}
+                                type="button"
+                                onClick={() => setPricingSlug(c.slug)}
+                                aria-pressed={pricingSlug === c.slug}
+                                className={`flex items-center gap-3 rounded-2xl border px-3 py-2.5 text-left text-sm font-semibold transition ${
+                                  pricingSlug === c.slug
+                                    ? "border-teal/50 bg-white text-ink shadow-sm ring-1 ring-teal/30"
+                                    : "border-black/8 bg-white/50 text-muted hover:border-teal/30 hover:text-ink"
+                                }`}
+                              >
+                                {CERT_LOGOS[c.slug] && (
+                                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#ffffff] p-1 ring-1 ring-black/[0.08]">
+                                    <img src={CERT_LOGOS[c.slug]} alt="" className="h-full w-full object-contain" />
+                                  </span>
+                                )}
+                                {localize(c.name, lang)}
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-7">
+                      {/* Hidden until the real price is known, rather than flashing a default. */}
+                      <span
+                        className={`block font-display text-5xl font-semibold text-ink tabular-nums transition-opacity ${
+                          prices.ready ? "opacity-100" : "opacity-0"
+                        }`}
+                      >
+                        {prices.price(pricingSlug)}
+                      </span>
+                      <p className="mt-1 text-sm text-muted">{t.formations.offerPeriod}</p>
+                      <p className="mt-1 text-xs text-muted">{t.formations.offerNote}</p>
+                    </div>
+
+                    {EXAM_QUESTION_COUNTS[pricingSlug] !== undefined && (
+                      <p className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-teal/25 bg-white/70 px-3 py-1.5 text-xs font-semibold text-teal-dark">
+                        <QuestionBankIcon className="h-3.5 w-3.5 shrink-0" />
+                        {t.formations.offerQuestionBank(EXAM_QUESTION_COUNTS[pricingSlug])}
+                      </p>
+                    )}
+
+                    <div className="mt-auto pt-8">
+                      <button
+                        type="button"
+                        onClick={() => openAuthModalForUpgrade(pricingSlug)}
+                        className="brand-gradient w-full rounded-full px-6 py-3.5 text-sm font-semibold text-white shadow-sm shadow-teal/20 transition hover:opacity-90"
+                      >
+                        {t.formations.offerCta}
+                      </button>
                     </div>
                   </div>
-                )}
 
-                {EXAM_QUESTION_COUNTS[pricingSlug] !== undefined && (
-                  <p className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-teal/25 bg-teal/5 px-3 py-1.5 text-xs font-semibold text-teal-dark">
-                    <QuestionBankIcon className="h-3.5 w-3.5 shrink-0" />
-                    {t.formations.offerQuestionBank(EXAM_QUESTION_COUNTS[pricingSlug])}
-                  </p>
-                )}
+                  {/* Details: what is included, then what the exam covers. */}
+                  <div className="flex flex-col gap-7 p-7 sm:p-8">
+                    <div>
+                      <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+                        {t.formations.offerFeaturesLabel}
+                      </p>
+                      <ul className="mt-3 flex flex-col gap-3 text-sm text-ink/85">
+                        {t.formations.offerFeatures.map((feature) => (
+                          <li key={feature} className="flex items-start gap-3">
+                            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal/15 text-teal-dark">
+                              <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3" aria-hidden="true">
+                                <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </span>
+                            <span className="leading-snug">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
 
-                <p className="mt-4 text-xs font-medium text-teal-dark">{t.formations.domainsLabel}</p>
-                <ul className="mt-2 flex flex-col gap-1.5 text-sm text-ink/80">
-                  {(CERTIFICATION_DOMAINS[pricingSlug] ?? []).map((domain) => (
-                    <li key={domain.key} className="flex items-start justify-between gap-3">
-                      <span className="flex items-start gap-2">
-                        <span className="mt-0.5 shrink-0 text-teal-dark">✓</span>
-                        {localize(domain.label, lang)}
-                      </span>
-                      {/* The official weight, as on the dashboard cards: it
-                          tells a buyer where the exam actually puts its marks. */}
-                      <span className="mt-0.5 shrink-0 text-xs font-medium text-muted">
-                        {domain.weight}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                <p className="mt-4 text-xs font-medium text-teal-dark">
-                  {t.formations.offerFeaturesLabel}
-                </p>
-                <ul className="mt-2 flex flex-col gap-1.5 text-sm text-ink/80">
-                  {t.formations.offerFeatures.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2">
-                      <span className="mt-0.5 shrink-0 text-teal-dark">✓</span>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  type="button"
-                  onClick={() => openAuthModalForUpgrade(pricingSlug)}
-                  className="brand-gradient mt-6 inline-flex self-start rounded-full px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
-                >
-                  {t.formations.offerCta}
-                </button>
-              </div>
-            </div>
+                    <div className="border-t border-black/[0.06] pt-6">
+                      <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+                        {t.formations.domainsLabel}
+                      </p>
+                      {/* One tile per exam block: the official weight in big
+                          figures, the block name under it. */}
+                      <ul className="mt-3 grid grid-cols-2 gap-3">
+                        {domains.map((domain, i) => (
+                          <li
+                            key={domain.key}
+                            className={`rounded-2xl border border-black/8 bg-surface px-4 py-3 ${
+                              domains.length % 2 === 1 && i === domains.length - 1 ? "col-span-2" : ""
+                            }`}
+                          >
+                            <p className="font-display text-2xl font-semibold text-teal-dark tabular-nums">
+                              {domain.weight}
+                            </p>
+                            <p className="mt-0.5 text-xs leading-snug text-ink/80">
+                              {localize(domain.label, lang)}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </motion.div>
         ) : null}
       </AnimatePresence>

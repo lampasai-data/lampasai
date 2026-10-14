@@ -1,5 +1,5 @@
 import { useLanguage } from "../../../i18n";
-import { ADMIN_EMAIL, DAY_MS, isActivePurchase, type AdminProfile } from "../../../lib/adminData";
+import { DAY_MS, isActivePurchase, type AdminProfile } from "../../../lib/adminData";
 import { addDays, inRange, startOfDay, type DateRange } from "../../../lib/dateRange";
 import { localize } from "../../../lib/i18nText";
 import { ADMIN_T, adminLocale } from "../../adminI18n";
@@ -52,7 +52,7 @@ export default function RetentionTab({ range }: { range: DateRange }) {
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(locale);
 
   // The admin's own account is a test account: left out of every figure.
-  const isAdmin = (p: AdminProfile) => p.email?.toLowerCase() === ADMIN_EMAIL;
+  const isAdmin = (p: AdminProfile) => p.id === data.adminUserId;
   const users = data.profiles.filter((p) => !isAdmin(p));
   const signups = users.filter((p) => inRange(p.created_at, range));
 

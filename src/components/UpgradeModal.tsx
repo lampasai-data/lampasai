@@ -17,8 +17,9 @@ import {
   PENDING_GUMROAD_PURCHASE_KEY,
   buildGumroadCheckoutUrl,
 } from "../lib/paymentConfig";
+import { useCertPrices } from "../lib/certPrices";
+import { formatMoney } from "../lib/money";
 
-const CERT_PRICE_EUR = 4.99;
 
 export default function UpgradeModal() {
   const {
@@ -30,6 +31,7 @@ export default function UpgradeModal() {
     refreshPurchases,
   } = useAuth();
   const { lang, t } = useLanguage();
+  const prices = useCertPrices(lang);
   const navigate = useNavigate();
   const [certs, setCerts] = useState<CertificationSummary[]>([]);
   const [purchasedIds, setPurchasedIds] = useState<Map<string, PurchasedCertificationAccess>>(
@@ -180,7 +182,10 @@ export default function UpgradeModal() {
     upgradeModalPreselect !== null && certs.length > 0 && preselectMatches.length === 0;
   const gumroadCerts =
     upgradeModalPreselect && !preselectAlreadyOwned ? preselectMatches : availableCerts;
-  const total = (selected.size * CERT_PRICE_EUR).toFixed(2).replace(".", ",");
+  const totalCents = availableCerts
+    .filter((c) => selected.has(c.id))
+    .reduce((sum, c) => sum + prices.cents(c.slug), 0);
+  const total = formatMoney(totalCents, "eur", lang === "fr" ? "fr-FR" : "en-US");
 
   return (
     <AnimatePresence>
@@ -221,7 +226,7 @@ export default function UpgradeModal() {
                 )
               ) : ENABLE_GUMROAD ? (
                 gumroadCerts.length === 1 ? (
-                  t.formations.upgradeModalDescForCert(localize(gumroadCerts[0].name, lang))
+                  t.formations.upgradeModalDescForCert(localize(gumroadCerts[0].name, lang), prices.price(gumroadCerts[0].slug))
                 ) : (
                   t.formations.upgradeModalDescSingle
                 )
@@ -248,7 +253,7 @@ export default function UpgradeModal() {
                     className="flex items-center justify-between gap-3 rounded-xl border border-black/10 px-4 py-3 text-left text-sm transition hover:border-teal/40 hover:bg-teal/[0.04]"
                   >
                     <span className="text-ink">{localize(cert.name, lang)}</span>
-                    <span className="shrink-0 font-medium text-teal-dark">4,99 €</span>
+                    <span className="shrink-0 font-medium text-teal-dark">{prices.price(cert.slug)}</span>
                   </button>
                 ))}
               </div>
@@ -272,7 +277,7 @@ export default function UpgradeModal() {
                       />
                       <span className="text-ink">{localize(cert.name, lang)}</span>
                     </span>
-                    <span className="shrink-0 font-medium text-muted">4,99 €</span>
+                    <span className="shrink-0 font-medium text-muted">{prices.price(cert.slug)}</span>
                   </label>
                 ))}
               </div>
@@ -281,7 +286,7 @@ export default function UpgradeModal() {
             {!voucherOpen && !ENABLE_GUMROAD && selected.size > 0 && (
               <div className="mt-5 flex items-center justify-between border-t border-black/5 pt-4 text-sm">
                 <span className="text-muted">{t.formations.upgradeModalTotal}</span>
-                <span className="font-display text-lg font-semibold text-ink">{total} €</span>
+                <span className="font-display text-lg font-semibold text-ink">{total}</span>
               </div>
             )}
 

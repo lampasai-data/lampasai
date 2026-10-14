@@ -3,17 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Thème choisi (src/lib/theme.ts), appliqué avant le premier rendu pour
-         éviter un flash clair quand on a choisi le sombre. -->
-    <script>
-      try {
-        var t = localStorage.getItem("lampasai-theme") || localStorage.getItem("lampasai-admin-theme");
-        if (t === "dark") {
-          document.documentElement.dataset.theme = "dark";
-          document.documentElement.style.colorScheme = "dark";
-        }
-      } catch (e) {}
-    </script>
+    <!-- Thème et retour de redirection GitHub Pages, avant le premier rendu. -->
+    <script src="/boot.js"></script>
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -61,26 +52,6 @@
         "logo": "https://lampasai.com/favicon.png",
         "sameAs": ["https://www.linkedin.com/company/lampasai"]
       }
-    </script>
-    <script>
-      // Restore the real path after the GitHub Pages SPA redirect (see public/404.html).
-      (function () {
-        var search = window.location.search;
-        if (search[1] === "/") {
-          var decoded = search
-            .slice(1)
-            .split("&")
-            .map(function (s) {
-              return s.replace(/~and~/g, "&");
-            })
-            .join("?");
-          window.history.replaceState(
-            null,
-            "",
-            window.location.pathname.slice(0, -1) + decoded + window.location.hash
-          );
-        }
-      })();
     </script>
   </head>
   <body>

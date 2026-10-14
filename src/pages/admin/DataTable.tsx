@@ -235,7 +235,99 @@ export default function DataTable<T>({
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      {/* Phone: no room for a wide table, so rows become cards (below) and the
+          sort / filter menus of the column headers move into this strip. */}
+      <div className="flex items-center gap-2 overflow-x-auto border-b border-black/8 px-4 py-2.5 md:hidden">
+        {selectable && (
+          <input
+            type="checkbox"
+            checked={allSelected}
+            ref={(el) => {
+              if (el) el.indeterminate = someSelected;
+            }}
+            onChange={toggleAll}
+            aria-label="Select all"
+            className="mr-1 h-5 w-5 shrink-0 accent-teal"
+          />
+        )}
+        {columns
+          .filter((c) => c.value)
+          .map((c) => {
+            const dir = sort?.key === c.key ? sort.dir : null;
+            const filtered =
+              (choices[c.key]?.length ?? 0) > 0 ||
+              (texts[c.key] ?? "").trim() !== "" ||
+              Boolean(ranges[c.key]?.from || ranges[c.key]?.to);
+            return (
+              <button
+                key={c.key}
+                type="button"
+                onClick={(e) => {
+                  const anchor = e.currentTarget;
+                  setMenu((m) => (m?.key === c.key ? null : { key: c.key, anchor }));
+                }}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                  dir || filtered ? "border-teal/40 bg-teal/10 text-teal-dark" : "border-black/10 text-muted"
+                }`}
+              >
+                {c.label}
+                {dir && <IconSort dir={dir} />}
+                <span className={filtered ? "text-teal-dark" : "opacity-40"}>
+                  <IconFilter />
+                </span>
+              </button>
+            );
+          })}
+      </div>
+
+      <ul className="md:hidden">
+        {pageRows.length === 0 ? (
+          <li className="px-4 py-8 text-center text-xs text-muted">{emptyText ?? d.empty}</li>
+        ) : (
+          pageRows.map((row) => {
+            const k = rowKey(row);
+            const isOpen = openKey === k;
+            return (
+              <li key={k} className={`border-b border-black/5 ${isOpen ? "bg-black/[0.02]" : ""}`}>
+                <div
+                  onClick={onRowClick ? () => onRowClick(row) : expanded ? () => setOpenKey(isOpen ? null : k) : undefined}
+                  className={`flex items-start gap-3 px-4 py-3.5 text-xs ${clickable ? "cursor-pointer" : ""}`}
+                >
+                  {selectable && (
+                    <input
+                      type="checkbox"
+                      checked={selected!.has(k)}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={() => toggleRowSelection(k)}
+                      aria-label="Select"
+                      className="mt-0.5 h-5 w-5 shrink-0 accent-teal"
+                    />
+                  )}
+                  <dl className="grid min-w-0 flex-1 grid-cols-[minmax(0,6.5rem)_minmax(0,1fr)] items-baseline gap-x-3 gap-y-1.5">
+                    {columns
+                      // A field with nothing to say ("-") only costs height on a phone.
+                      .filter((c) => {
+                        const v = c.value?.(row);
+                        return !c.value || (v !== null && v !== undefined && v !== "" && v !== "-");
+                      })
+                      .map((c) => (
+                        <Fragment key={c.key}>
+                          <dt className="text-[11px] font-semibold text-muted">{c.label}</dt>
+                          <dd className="min-w-0 text-ink [overflow-wrap:anywhere]">
+                            {c.render ? c.render(row) : String(c.value?.(row) ?? "-")}
+                          </dd>
+                        </Fragment>
+                      ))}
+                  </dl>
+                </div>
+                {isOpen && expanded && <div className="px-4 pb-4">{expanded(row)}</div>}
+              </li>
+            );
+          })
+        )}
+      </ul>
+
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="bg-black/[0.025]">

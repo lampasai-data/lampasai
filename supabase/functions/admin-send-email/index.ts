@@ -19,6 +19,8 @@ import { unsubscribeApiUrl, unsubscribePageUrl } from "../_shared/unsubscribe.ts
 // never reach the browser: the segment is resolved here with the service role.
 // verify_jwt stays on (a real signed-in admin calls this).
 const RESEND_FROM = "Lampas .ai <noreply@lampasai.com>";
+// Replies to a campaign land in the contact inbox instead of noreply.
+const REPLY_TO = Deno.env.get("CONTACT_TO") ?? "contact@lampasai.com";
 const SITE_URL = "https://lampasai.com";
 const BATCH_SIZE = 100; // Resend batch API limit
 // Safety net against a mis-click: one send never goes beyond this.
@@ -112,7 +114,7 @@ ${emailHeader()}
         </tr>
 ${emailFrameOpen()}
 ${emailBody(`${emailSalutation(r.first_name, lang)}${text}${cta}${unsub}`)}
-${emailFooter(lang)}
+${emailFooter(lang, true)}
 ${emailFrameClose()}
 ${emailCardClose()}
   `);
@@ -197,6 +199,7 @@ Deno.serve(async (req) => {
         if (lang === "en") englishCount++;
         return {
           from: RESEND_FROM,
+          reply_to: REPLY_TO,
           to: r.email,
           subject: (c.test ? "[TEST] " : "") + content.subject,
           html: buildHtml(content, lang, r, pageUrl),

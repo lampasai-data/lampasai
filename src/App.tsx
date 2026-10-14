@@ -1,11 +1,10 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect, useState, type ReactNode } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Nav from "./components/Nav";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 import ScrollToHash from "./components/ScrollToHash";
-import AuthModal from "./components/AuthModal";
-import UpgradeModal from "./components/UpgradeModal";
+import { useAuth } from "./context/AuthContext";
 import GumroadReturnHandler from "./components/GumroadReturnHandler";
 import LanguageSync from "./components/LanguageSync";
 import Home from "./pages/Home";
@@ -15,6 +14,20 @@ import Home from "./pages/Home";
 // Everything else is split out: the quiz engine, the leaderboard and the
 // three admin pages were all shipped to every visitor who only ever read the
 // marketing page.
+// The two dialogs are closed on every page load and pull in the animation
+// library; they are downloaded only the first time one is opened, then stay
+// mounted so their closing animation still plays.
+const AuthModal = lazy(() => import("./components/AuthModal"));
+const UpgradeModal = lazy(() => import("./components/UpgradeModal"));
+
+function MountOnFirstOpen({ open, children }: { open: boolean; children: ReactNode }) {
+  const [wasOpen, setWasOpen] = useState(open);
+  useEffect(() => {
+    if (open) setWasOpen(true);
+  }, [open]);
+  return wasOpen ? <Suspense fallback={null}>{children}</Suspense> : null;
+}
+
 const Formations = lazy(() => import("./pages/Formations"));
 const CertificationQuiz = lazy(() => import("./pages/CertificationQuiz"));
 const CertificationLeaderboard = lazy(() => import("./pages/CertificationLeaderboard"));
@@ -28,7 +41,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const AdminFeedback = lazy(() => import("./pages/admin/AdminFeedback"));
 const AdminAudit = lazy(() => import("./pages/admin/AdminAudit"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
-const AdminVouchers = lazy(() => import("./pages/AdminVouchers"));
+const AdminVouchersHub = lazy(() => import("./pages/admin/AdminVouchersHub"));
 const AdminStats = lazy(() => import("./pages/admin/AdminStats"));
 
 // Deliberately plain: every split route already renders its own loading state
@@ -42,6 +55,7 @@ function App() {
   // The admin area is a back office with its own sidebar: the marketing nav
   // and footer would only get in the way there.
   const inAdmin = useLocation().pathname.startsWith("/admin");
+  const { authModalOpen, upgradeModalOpen } = useAuth();
 
   return (
     <>
@@ -60,7 +74,7 @@ function App() {
             <Route index element={<AdminStats />} />
             <Route path="utilisateurs" element={<AdminUsers />} />
             <Route path="gumroad" element={<AdminGumroad />} />
-            <Route path="vouchers" element={<AdminVouchers />} />
+            <Route path="vouchers" element={<AdminVouchersHub />} />
             <Route path="emails" element={<AdminEmails />} />
             <Route path="audit" element={<AdminAudit />} />
             <Route path="feedback" element={<AdminFeedback />} />
@@ -71,8 +85,12 @@ function App() {
       {!inAdmin && <Footer />}
       <ScrollToTop />
       <ScrollToHash />
-      <AuthModal />
-      <UpgradeModal />
+      <MountOnFirstOpen open={authModalOpen}>
+        <AuthModal />
+      </MountOnFirstOpen>
+      <MountOnFirstOpen open={upgradeModalOpen}>
+        <UpgradeModal />
+      </MountOnFirstOpen>
       <GumroadReturnHandler />
       <LanguageSync />
     </>

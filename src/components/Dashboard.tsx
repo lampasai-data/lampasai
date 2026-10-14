@@ -85,7 +85,36 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
   // actual expires_at rather than assumed - a voucher grants 1 month, a real
   // purchase 3, so the banner must reflect whichever one actually happened.
   const [checkoutBannerMonths, setCheckoutBannerMonths] = useState<number | null>(null);
+  // "Bienvenue" only for someone who just created their account and has not
+  // yet seen this page; everyone else gets a greeting for the time of day.
+  // Decided once per mount, so the flag written below does not flip the text.
+  const [isFirstVisit] = useState(() => {
+    if (!user) return false;
+    const key = `lampas-welcomed-${user.id}`;
+    try {
+      if (localStorage.getItem(key)) return false;
+    } catch {
+      return false;
+    }
+    return Date.now() - new Date(user.created_at).getTime() < 24 * 3600 * 1000;
+  });
+  useEffect(() => {
+    if (!user) return;
+    try {
+      localStorage.setItem(`lampas-welcomed-${user.id}`, "1");
+    } catch {
+      /* private mode: the greeting just falls back to the time of day */
+    }
+  }, [user]);
   const isPro = profile?.plan === "pro";
+
+  function greeting(name: string) {
+    if (isFirstVisit) return t.formations.dashboardGreeting(name);
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return t.formations.dashboardGreetingMorning(name);
+    if (hour >= 12 && hour < 18) return t.formations.dashboardGreetingAfternoon(name);
+    return t.formations.dashboardGreetingEvening(name);
+  }
   // Everything that decides locked vs unlocked - the upgrade banner and each
   // card's action row - has to wait for both the plan and the purchases.
   // Rendering on a half-known answer showed a Pro subscriber the "go
@@ -254,9 +283,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
             </Link>
             <div>
               <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1 font-display text-2xl font-semibold text-ink">
-                {profile?.first_name
-                  ? t.formations.dashboardGreeting(profile.first_name)
-                  : t.formations.dashboardWelcome}
+                {profile?.first_name ? greeting(profile.first_name) : t.formations.dashboardWelcome}
                 {/* Two distinct statuses, deliberately styled apart: "Pro" is
                     a subscription; "Accès complet" means every certification
                     happens to be unlocked right now through purchases or
@@ -325,7 +352,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
             const rate = answered > 0 ? Math.round((correct / answered) * 100) : null;
             // Outline icons on a 24px grid (2px round strokes), one tint per tile.
             const icon = (...paths: string[]) => (
-              <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
                 {paths.map((d) => (
                   <path key={d} d={d} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 ))}
@@ -335,42 +362,42 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
               {
                 label: it.tileStreak,
                 value: it.tileStreakValue(streak),
-                tint: "bg-amber/20 text-amber-ink",
+                tint: "text-amber-ink",
                 icon: icon("M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"),
               },
               {
                 label: it.tileAnswered,
                 value: String(answered),
-                tint: "bg-green/15 text-green-ink",
+                tint: "text-green-ink",
                 icon: icon("M21.8 10A10 10 0 1 1 17 3.34", "m9 11 3 3L22 4"),
               },
               {
                 label: it.tileSuccess,
                 value: rate === null ? "-" : `${rate} %`,
-                tint: "bg-teal/15 text-teal-dark",
+                tint: "text-teal-dark",
                 icon: icon("M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z", "M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z", "M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"),
               },
               {
                 label: it.tileExams,
                 value: String(examCount),
-                tint: "bg-brown/12 text-brown",
+                tint: "text-brown-ink",
                 icon: icon("M8 2h8a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z", "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2", "m9 14 2 2 4-4"),
               },
               {
                 label: it.tileBest,
                 value: best === null ? "-" : `${Math.round(best * 100)} %`,
-                tint: "bg-amber/20 text-amber-ink",
+                tint: "text-amber-ink",
                 icon: icon("M6 9H4.5a2.5 2.5 0 0 1 0-5H6", "M18 9h1.5a2.5 2.5 0 0 0 0-5H18", "M4 22h16", "M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22", "M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22", "M18 2H6v7a6 6 0 0 0 12 0V2z"),
               },
             ];
             return tiles.map((tile) => (
               <div key={tile.label} className="flex items-center gap-3 rounded-2xl border border-black/8 bg-white px-3.5 py-3 shadow-sm">
-                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tile.tint}`}>
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center ${tile.tint}`}>
                   {tile.icon}
                 </span>
                 <span className="min-w-0">
                   <span className="block font-display text-lg leading-tight font-semibold text-ink tabular-nums">{tile.value}</span>
-                  <span className="block truncate text-[11px] text-muted">{tile.label}</span>
+                  <span className="block text-[11px] leading-tight text-muted sm:truncate">{tile.label}</span>
                 </span>
               </div>
             ));
@@ -421,7 +448,7 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
               <div
                 className="px-7 pt-5 pb-4"
                 style={{
-                  background: `linear-gradient(120deg, ${accentOf(cert.slug)}2e 0%, ${accentOf(cert.slug)}0a 55%, transparent 100%)`,
+                  background: `linear-gradient(120deg, ${accentOf(cert.slug)}1a 0%, ${accentOf(cert.slug)}08 55%, transparent 100%)`,
                 }}
               >
               <div className="flex flex-wrap items-start gap-x-3 gap-y-3">
@@ -472,14 +499,6 @@ export default function Dashboard({ certs }: { certs: CertificationSummary[] }) 
                         )
                       : t.formations.dashboardNotStarted}
                   </p>
-                  {stats && stats.answered > 0 && (
-                    <div className="mt-2.5 h-[3px] w-full max-w-[14rem] rounded-full bg-black/[0.07]">
-                      <div
-                        className="brand-gradient h-full rounded-full"
-                        style={{ width: `${Math.max(3, Math.round((stats.correct / stats.answered) * 100))}%` }}
-                      />
-                    </div>
-                  )}
                 </div>
                 {unlocked && (
                   <div className="flex shrink-0 items-center gap-1.5">

@@ -43,6 +43,19 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Caps guesses per account: a code is 8 characters, but nothing else slows
+  // down someone trying codes in a loop. Same helper as the signup limit.
+  const { data: tries, error: rateLimitError } = await supabase.rpc("record_and_count_rate_limit", {
+    p_bucket: `voucher:${user.id}`,
+    p_window: "1 hour",
+  });
+  if (!rateLimitError && (tries ?? 0) > 10) {
+    return new Response(JSON.stringify({ error: "Trop de tentatives. Réessaie dans une heure." }), {
+      status: 429,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const { code, certificationId } = await req.json();
   const normalizedCode = typeof code === "string" ? code.trim().toUpperCase() : "";
   if (!normalizedCode) {
@@ -59,7 +72,9 @@ Deno.serve(async (req) => {
   });
 
   if (claimError) {
-    return new Response(JSON.stringify({ error: claimError.message }), {
+    // The database message stays in the server logs, never in the browser.
+    console.error("claim_exam_voucher failed", claimError);
+    return new Response(JSON.stringify({ error: "Le code n'a pas pu être vérifié. Réessaie dans un instant." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

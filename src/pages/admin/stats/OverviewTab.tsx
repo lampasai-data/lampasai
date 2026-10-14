@@ -5,6 +5,7 @@ import { currencyOf, feeRateOf, formatMoney, netCents, sumByCurrency } from "../
 import { DAY_MS, isActivePurchase, type AdminPurchase } from "../../../lib/adminData";
 import type { DisplayCurrency } from "../../../lib/useDisplayCurrency";
 import DataTable, { type Column } from "../DataTable";
+import { Card, FunnelChart } from "../charts";
 import { useAdminContext } from "../useAdminContext";
 
 export default function OverviewTab({ currency }: { currency: DisplayCurrency }) {
@@ -91,6 +92,20 @@ export default function OverviewTab({ currency }: { currency: DisplayCurrency })
     },
   ];
 
+  // Funnel over every account (the admin's own test account left out).
+  const funnelUsers = profiles.filter((p) => p.id !== data.adminUserId);
+  const funnelUserIds = new Set(funnelUsers.map((p) => p.id));
+  const countUsers = (ids: Iterable<string>) => [...new Set(ids)].filter((id) => funnelUserIds.has(id)).length;
+  const funnelRows = [
+    { label: a.st.funnelSignups, value: funnelUsers.length },
+    ...(data.activityLoaded
+      ? [{ label: a.st.funnelAnswered, value: countUsers(data.activity.keys()) }]
+      : []),
+    { label: a.st.funnelExam, value: countUsers(results.map((r) => r.user_id)) },
+    { label: a.st.funnelBought, value: countUsers(realSales.map((p) => p.user_id)) },
+    { label: a.st.funnelActive, value: countUsers(activeAccess.map((p) => p.user_id)) },
+  ];
+
   const kpis = [
     { label: a.kpiUsers, value: profiles.length },
     { label: a.kpiActiveAccess, value: activeAccess.length },
@@ -120,6 +135,13 @@ export default function OverviewTab({ currency }: { currency: DisplayCurrency })
             {k.hint && <p className="mt-0.5 text-[11px] text-muted/80">{k.hint}</p>}
           </div>
         ))}
+      </div>
+
+      <div className="mt-6">
+        <Card title={a.st.funnelAll}>
+          <FunnelChart rows={funnelRows} dropLabel={a.st.funnelDrop} />
+          <p className="mt-4 text-center text-[11px] text-muted/80">{a.st.funnelAllNote}</p>
+        </Card>
       </div>
 
       <DataTable

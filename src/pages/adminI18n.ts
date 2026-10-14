@@ -135,6 +135,10 @@ export interface AdminStrings {
     funnelExam: string;
     funnelBought: string;
     funnelActive: string;
+    funnelAll: string;
+    funnelAllNote: string;
+    funnelAnswered: string;
+    funnelDrop: (pct: number) => string;
     bySource: string;
     byCertification: string;
     allSales: string;
@@ -326,6 +330,47 @@ export interface AdminStrings {
   statsUser: string;
   statsRecentSignups: string;
   statsName: string;
+  vouchersDeleteN: (n: number) => string;
+  vouchersDeletableOf: (deletable: number, total: number) => string;
+  vouchersDeleteTitle: string;
+  vouchersDeleteBody: (n: number) => string;
+  vouchersDeleteWarning: string;
+  vouchersDeleteNone: string;
+  vouchersDeleted: (n: number) => string;
+  vouchersDeleteError: string;
+  vouchersDeleteConfirm: string;
+  vouchersDeleteCancel: string;
+  vouchersDeleting: string;
+  // Pricing (sub-tab of the vouchers page)
+  tabVouchers: string;
+  tabPricing: string;
+  pricingTitle: string;
+  pricingLead: string;
+  pricingGumroadNote: string;
+  pricingCurrent: string;
+  pricingNew: string;
+  pricingSave: string;
+  pricingSaving: string;
+  pricingSaved: (cert: string, price: string) => string;
+  pricingGumroadReminder: (cert: string, price: string) => string;
+  pricingUnchanged: string;
+  pricingInvalid: string;
+  pricingRange: (min: string, max: string) => string;
+  pricingConfirmTitle: string;
+  pricingConfirmBody: (cert: string, oldPrice: string, newPrice: string) => string;
+  pricingBigChange: (pct: number) => string;
+  pricingConfirm: string;
+  pricingCancel: string;
+  pricingStale: string;
+  pricingError: string;
+  pricingHistory: string;
+  pricingHistoryNone: string;
+  pricingColDate: string;
+  pricingColCert: string;
+  pricingColChange: string;
+  pricingColBy: string;
+  pricingLastChange: (date: string) => string;
+  pricingNeverChanged: string;
   // Vouchers
   vouchersTitle: string;
   vouchersLead: string;
@@ -514,6 +559,10 @@ export const ADMIN_T: Record<Lang, AdminStrings> = {
       funnelExam: "Ont passé un examen",
       funnelBought: "Ont acheté",
       funnelActive: "Accès actif aujourd'hui",
+      funnelAll: "Entonnoir de conversion",
+      funnelAllNote: "Tous les comptes depuis le début, hors le tien. Les étapes ne sont pas strictement emboîtées : on peut acheter sans avoir passé d'examen.",
+      funnelAnswered: "Ont répondu à une question",
+      funnelDrop: (pct) => `-${pct} %`,
       bySource: "Par source",
       byCertification: "Par certification",
       allSales: "Toutes les ventes",
@@ -611,7 +660,7 @@ export const ADMIN_T: Record<Lang, AdminStrings> = {
     navOverview: "Vue d'ensemble",
     navUsers: "Utilisateurs",
     navSales: "Ventes Gumroad",
-    navVouchers: "Vouchers examen",
+    navVouchers: "Offres",
     navEmails: "E-mails",
     navAudit: "Audit",
     navFeedback: "Feedback",
@@ -739,6 +788,55 @@ export const ADMIN_T: Record<Lang, AdminStrings> = {
     statsUser: "Utilisateur",
     statsRecentSignups: "3 dernières inscriptions",
     statsName: "Nom",
+    vouchersDeleteN: (n) => `Supprimer ${n} voucher${n > 1 ? "s" : ""}`,
+    vouchersDeletableOf: (d, t) => `${d} supprimable${d > 1 ? "s" : ""} sur ${t} (utilisés ou expirés)`,
+    vouchersDeleteTitle: "Supprimer les vouchers",
+    vouchersDeleteBody: (n) =>
+      `${n} voucher${n > 1 ? "s" : ""} utilisé${n > 1 ? "s" : ""} ou expiré${n > 1 ? "s" : ""} ${n > 1 ? "seront supprimés" : "sera supprimé"} définitivement.`,
+    vouchersDeleteWarning:
+      "Les accès déjà accordés avec ces vouchers ne changent pas. Seul l'historique d'utilisation (qui l'a utilisé, quand) disparaît, et les statistiques de vouchers en tiennent compte. Les vouchers encore disponibles ne sont jamais supprimés.",
+    vouchersDeleteNone:
+      "Aucun voucher sélectionné n'est supprimable : seuls ceux qui sont utilisés jusqu'à épuisement ou expirés peuvent l'être.",
+    vouchersDeleted: (n) => `${n} voucher${n > 1 ? "s" : ""} supprimé${n > 1 ? "s" : ""}.`,
+    vouchersDeleteError: "La suppression a échoué. Réessaie dans un instant.",
+    vouchersDeleteConfirm: "Supprimer",
+    vouchersDeleteCancel: "Annuler",
+    vouchersDeleting: "Suppression...",
+    tabVouchers: "Vouchers",
+    tabPricing: "Tarification",
+    pricingTitle: "Tarification",
+    pricingLead:
+      "Le prix affiché sur le site pour chaque certification : page de tarification, fenêtre d'achat et message d'accès. Les accès déjà achetés ne changent pas.",
+    pricingGumroadNote:
+      "Ce que Gumroad facture, c'est le prix du produit dans ton dashboard Gumroad : change-le là-bas aussi, au même montant, sinon le site affichera un prix différent de celui payé.",
+    pricingCurrent: "Prix actuel",
+    pricingNew: "Nouveau prix (€)",
+    pricingSave: "Enregistrer",
+    pricingSaving: "Enregistrement...",
+    pricingSaved: (cert, price) => `Prix de ${cert} enregistré : ${price}.`,
+    pricingGumroadReminder: (cert, price) =>
+      `N'oublie pas de mettre aussi ${cert} à ${price} dans ton dashboard Gumroad.`,
+    pricingUnchanged: "Le prix est identique à l'actuel.",
+    pricingInvalid: "Saisis un montant valide, par exemple 4,99.",
+    pricingRange: (min, max) => `Le prix doit être compris entre ${min} et ${max}.`,
+    pricingConfirmTitle: "Confirmer le changement de prix",
+    pricingConfirmBody: (cert, oldPrice, newPrice) =>
+      `${cert} passera de ${oldPrice} à ${newPrice} sur tout le site, immédiatement.`,
+    pricingBigChange: (pct) =>
+      `Attention : c'est une variation de ${pct} %. Vérifie qu'il ne s'agit pas d'une faute de frappe.`,
+    pricingConfirm: "Confirmer",
+    pricingCancel: "Annuler",
+    pricingStale:
+      "Ce prix a été modifié entre-temps (autre onglet ou autre session). Les prix ont été rechargés : vérifie puis réessaie.",
+    pricingError: "Le prix n'a pas pu être enregistré. Réessaie dans un instant.",
+    pricingHistory: "Historique des changements",
+    pricingHistoryNone: "Aucun changement de prix pour l'instant.",
+    pricingColDate: "Date",
+    pricingColCert: "Certification",
+    pricingColChange: "Changement",
+    pricingColBy: "Par",
+    pricingLastChange: (date) => `Dernière modification : ${date}`,
+    pricingNeverChanged: "Jamais modifié",
     vouchersTitle: "Vouchers examen",
     vouchersLead:
       "Génère un code qui débloque le mode examen (30 jours, sans export PDF) d'une certification, en usage unique ou partagé.",
@@ -927,6 +1025,10 @@ export const ADMIN_T: Record<Lang, AdminStrings> = {
       funnelExam: "Took an exam",
       funnelBought: "Bought",
       funnelActive: "Active access today",
+      funnelAll: "Conversion funnel",
+      funnelAllNote: "All accounts since the start, excluding yours. Steps are not strictly nested: someone can buy without having taken an exam.",
+      funnelAnswered: "Answered a question",
+      funnelDrop: (pct) => `-${pct}%`,
       bySource: "By source",
       byCertification: "By certification",
       allSales: "All sales",
@@ -1024,7 +1126,7 @@ export const ADMIN_T: Record<Lang, AdminStrings> = {
     navOverview: "Overview",
     navUsers: "Users",
     navSales: "Gumroad sales",
-    navVouchers: "Exam vouchers",
+    navVouchers: "Offers",
     navEmails: "E-mails",
     navAudit: "Audit",
     navFeedback: "Feedback",
@@ -1151,6 +1253,54 @@ export const ADMIN_T: Record<Lang, AdminStrings> = {
     statsUser: "Utilisateur",
     statsRecentSignups: "3 dernières inscriptions",
     statsName: "Nom",
+    vouchersDeleteN: (n) => `Delete ${n} voucher${n > 1 ? "s" : ""}`,
+    vouchersDeletableOf: (d, t) => `${d} deletable of ${t} (used or expired)`,
+    vouchersDeleteTitle: "Delete vouchers",
+    vouchersDeleteBody: (n) => `${n} used or expired voucher${n > 1 ? "s" : ""} will be permanently deleted.`,
+    vouchersDeleteWarning:
+      "Access already granted with these vouchers does not change. Only the usage history (who used it, when) disappears, and the voucher statistics reflect that. Vouchers that are still available are never deleted.",
+    vouchersDeleteNone:
+      "None of the selected vouchers can be deleted: only those fully used or expired can be.",
+    vouchersDeleted: (n) => `${n} voucher${n > 1 ? "s" : ""} deleted.`,
+    vouchersDeleteError: "The deletion failed. Try again in a moment.",
+    vouchersDeleteConfirm: "Delete",
+    vouchersDeleteCancel: "Cancel",
+    vouchersDeleting: "Deleting...",
+    tabVouchers: "Vouchers",
+    tabPricing: "Pricing",
+    pricingTitle: "Pricing",
+    pricingLead:
+      "The price shown on the site for each certification: pricing page, purchase window and access message. Access already purchased does not change.",
+    pricingGumroadNote:
+      "What Gumroad charges is the product price in your Gumroad dashboard: change it there too, to the same amount, or the site will show a different price from the one paid.",
+    pricingCurrent: "Current price",
+    pricingNew: "New price (€)",
+    pricingSave: "Save",
+    pricingSaving: "Saving...",
+    pricingSaved: (cert, price) => `${cert} price saved: ${price}.`,
+    pricingGumroadReminder: (cert, price) =>
+      `Don't forget to set ${cert} to ${price} in your Gumroad dashboard too.`,
+    pricingUnchanged: "The price is the same as the current one.",
+    pricingInvalid: "Enter a valid amount, for example 4.99.",
+    pricingRange: (min, max) => `The price must be between ${min} and ${max}.`,
+    pricingConfirmTitle: "Confirm the price change",
+    pricingConfirmBody: (cert, oldPrice, newPrice) =>
+      `${cert} will go from ${oldPrice} to ${newPrice} across the whole site, immediately.`,
+    pricingBigChange: (pct) =>
+      `Careful: that is a ${pct}% change. Make sure it is not a typo.`,
+    pricingConfirm: "Confirm",
+    pricingCancel: "Cancel",
+    pricingStale:
+      "This price was changed in the meantime (another tab or session). Prices have been reloaded: check and try again.",
+    pricingError: "The price could not be saved. Try again in a moment.",
+    pricingHistory: "Change history",
+    pricingHistoryNone: "No price change yet.",
+    pricingColDate: "Date",
+    pricingColCert: "Certification",
+    pricingColChange: "Change",
+    pricingColBy: "By",
+    pricingLastChange: (date) => `Last changed: ${date}`,
+    pricingNeverChanged: "Never changed",
     vouchersTitle: "Exam vouchers",
     vouchersLead:
       "Generate a code that unlocks exam mode (30 days, no PDF export) for a certification, single-use or shared.",

@@ -1,5 +1,6 @@
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n";
+import { useCertPrices } from "../lib/certPrices";
 
 export default function ProUpsell({
   certName,
@@ -9,7 +10,8 @@ export default function ProUpsell({
   certSlug: string;
 }) {
   const { openUpgradeModal } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const prices = useCertPrices(lang);
 
   return (
     <div className="mx-auto max-w-md rounded-2xl border border-teal/25 bg-teal/5 p-7 text-center">
@@ -27,7 +29,7 @@ export default function ProUpsell({
         onClick={() => openUpgradeModal(certSlug)}
         className="brand-gradient mt-6 inline-block rounded-full px-7 py-3.5 text-sm font-medium text-white transition hover:opacity-90"
       >
-        {t.auth.proUpsellCta}
+        {t.auth.proUpsellCta(prices.price(certSlug))}
       </button>
     </div>
   );

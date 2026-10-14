@@ -1,18 +1,22 @@
 import { useRef, useState, type FormEvent } from "react";
 import { useLanguage } from "../i18n";
 import Reveal from "./Reveal";
+import { sendContactMessage } from "../lib/contact";
 
 const MIN_SUBMIT_DELAY_MS = 2500;
 
 export default function Contact() {
   const [sent, setSent] = useState(false);
   const [tooFast, setTooFast] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
   const { t } = useLanguage();
   const mountedAt = useRef(Date.now());
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setTooFast(false);
+    setFailure(null);
 
     const form = e.currentTarget;
     const data = new FormData(form);
@@ -29,17 +33,22 @@ export default function Contact() {
       return;
     }
 
-    const body = [
-      `Prénom: ${data.get("firstname")}`,
-      `Nom: ${data.get("lastname")}`,
-      `Email: ${data.get("email")}`,
-      `Téléphone: ${data.get("phone") || "-"}`,
-      "",
-      String(data.get("message") || ""),
-    ].join("\n");
-    window.location.href = `mailto:contact@lampasai.com?subject=${encodeURIComponent(
-      "Contact depuis lampasai.com"
-    )}&body=${encodeURIComponent(body)}`;
+    setSending(true);
+    const result = await sendContactMessage({
+      kind: "contact",
+      firstname: data.get("firstname"),
+      lastname: data.get("lastname"),
+      email: data.get("email"),
+      phone: data.get("phone"),
+      message: data.get("message"),
+      company_website: data.get("company_website"),
+      elapsedMs: Date.now() - mountedAt.current,
+    });
+    setSending(false);
+    if (result !== "ok") {
+      setFailure(result === "rate_limited" ? t.contact.rateLimited : t.contact.sendError);
+      return;
+    }
 
     setSent(true);
     form.reset();
@@ -115,12 +124,13 @@ export default function Contact() {
           {tooFast && (
             <p className="text-sm text-amber">{t.contact.tooFast}</p>
           )}
+          {failure && <p className="text-sm text-danger-ink">{failure}</p>}
           <button
             type="submit"
-            disabled={sent}
+            disabled={sent || sending}
             className="brand-gradient mt-2 rounded-full px-7 py-3.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-70"
           >
-            {sent ? t.contact.sent : t.contact.submit}
+            {sent ? t.contact.sent : sending ? t.contact.sending : t.contact.submit}
           </button>
         </form>
       </Reveal>

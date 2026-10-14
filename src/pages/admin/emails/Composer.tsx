@@ -175,12 +175,12 @@ export default function Composer({
     </button>
   );
 
-  const adminName = data.profiles.find((p) => p.email?.toLowerCase() === "mbairo.allatessem@gmail.com")?.first_name;
+  const adminName = data.profiles.find((p) => p.id === data.adminUserId)?.first_name;
   const preview = toParagraphs(cur.message.split("{prenom}").join(adminName ?? "Prénom"));
   const englishRecipients = count?.en ?? 0;
 
   return (
-    <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
+    <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
       <div className="space-y-4 rounded-2xl border border-black/8 bg-white p-5 shadow-sm">
         <h3 className="font-display text-base font-semibold text-ink">{c.title}</h3>
 
@@ -192,7 +192,7 @@ export default function Composer({
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_200px]">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_200px]">
           <div>
             <label className={labelClass}>{c.target}</label>
             <select value={segment} onChange={(e) => setSegment(e.target.value as SegmentId)} className={fieldClass}>
@@ -360,7 +360,7 @@ export default function Composer({
           <textarea value={cur.message} rows={8} maxLength={5000} onChange={(e) => setCur({ message: e.target.value })} className={fieldClass} />
           <p className="mt-1 text-xs text-muted">{c.messageHint}</p>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label className={labelClass}>{c.ctaLabel}</label>
             <input value={cur.cta} onChange={(e) => setCur({ cta: e.target.value })} placeholder={c.ctaOptional} className={fieldClass} />

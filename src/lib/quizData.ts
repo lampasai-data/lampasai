@@ -31,7 +31,23 @@ function toLocalizedOptions(fr: string[], en?: string[] | null): LocalizedText[]
   return fr.map((value, i) => toLocalizedPair(value, en?.[i]));
 }
 
-export async function listCertifications(): Promise<CertificationSummary[]> {
+// The catalogue changes a few times a year, yet every page asked for it again
+// (the dashboard alone did it three times per load). Pages asking within the
+// same minute share one request; a failed read is never kept.
+const CERTS_TTL_MS = 60_000;
+let certsCache: { at: number; promise: Promise<CertificationSummary[]> } | null = null;
+
+export function listCertifications(): Promise<CertificationSummary[]> {
+  if (certsCache && Date.now() - certsCache.at < CERTS_TTL_MS) return certsCache.promise;
+  const promise = fetchCertifications();
+  certsCache = { at: Date.now(), promise };
+  promise.catch(() => {
+    if (certsCache?.promise === promise) certsCache = null;
+  });
+  return promise;
+}
+
+async function fetchCertifications(): Promise<CertificationSummary[]> {
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase
       .from("certifications")
@@ -143,53 +159,51 @@ export async function loadQuestions(slug: string): Promise<{
   return fallback ? { id: fallback.slug, ...fallback } : null;
 }
 
-// Aggregates each certification's attempt history for the signed-in user,
-// keyed by certification slug, so the dashboard can show real progress.
+// What the dashboard needs from a person's answer history, computed by the
+// database (get_my_attempt_summary) instead of downloading every answer.
+export interface AttemptSummary {
+  answered_total: number;
+  correct_total: number;
+  days: string[]; // distinct local calendar days with an answer, YYYY-MM-DD
+  certs: {
+    slug: string;
+    answered: number;
+    correct: number;
+    days: string[];
+    last_run_answered: number;
+    last_run_correct: number;
+    domains: { key: string; answered: number; correct: number }[];
+  }[];
+}
+
+// The dashboard asks twice (progress, then insights) within the same moment:
+// both share one request. Kept a few seconds only, so a quiz finished just
+// before never shows stale figures.
+const SUMMARY_TTL_MS = 3000;
+let summaryCache: { userId: string; at: number; promise: Promise<AttemptSummary | null> } | null = null;
+
+export function loadAttemptSummary(userId: string): Promise<AttemptSummary | null> {
+  if (!isSupabaseConfigured || !supabase) return Promise.resolve(null);
+  if (summaryCache && summaryCache.userId === userId && Date.now() - summaryCache.at < SUMMARY_TTL_MS) {
+    return summaryCache.promise;
+  }
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const promise = Promise.resolve(supabase.rpc("get_my_attempt_summary", { p_tz: tz })).then(({ data, error }) =>
+    error || !data || !Array.isArray((data as AttemptSummary).certs) ? null : (data as AttemptSummary)
+  );
+  summaryCache = { userId, at: Date.now(), promise };
+  return promise;
+}
+
+// Each certification's last quiz session (a new session starts after a gap of
+// more than 20 minutes), keyed by certification slug, for the dashboard.
 export async function getUserProgress(
   userId: string
 ): Promise<Record<string, CertificationProgress>> {
-  if (!isSupabaseConfigured || !supabase) return {};
-
-  const { data: certs } = await supabase.from("certifications").select("id, slug");
-  if (!certs || certs.length === 0) return {};
-  const slugById = new Map(certs.map((c) => [c.id, c.slug]));
-
-  const { data: attempts, error } = await supabase
-    .from("attempts")
-    .select("is_correct, answered_at, quiz_questions(certification_id)")
-    .eq("user_id", userId)
-    .order("answered_at", { ascending: true });
-  if (error || !attempts) return {};
-
-  // Group attempts per certification, then split them into runs: a new run
-  // starts whenever there's a gap of more than 20 minutes since the previous
-  // attempt. Only the most recent run is kept, so the dashboard reflects the
-  // last quiz taken rather than a lifetime cumulative average.
-  const RUN_GAP_MS = 20 * 60 * 1000;
-  const bySlug: Record<string, { is_correct: boolean; answered_at: string }[]> = {};
-  for (const row of attempts) {
-    const nested = row.quiz_questions as unknown as
-      | { certification_id: string }
-      | { certification_id: string }[]
-      | null;
-    const certId = Array.isArray(nested) ? nested[0]?.certification_id : nested?.certification_id;
-    const slug = certId ? slugById.get(certId) : undefined;
-    if (!slug) continue;
-    (bySlug[slug] ??= []).push({ is_correct: row.is_correct, answered_at: row.answered_at });
-  }
-
+  const summary = await loadAttemptSummary(userId);
   const progress: Record<string, CertificationProgress> = {};
-  for (const [slug, rows] of Object.entries(bySlug)) {
-    let runStart = 0;
-    for (let i = 1; i < rows.length; i++) {
-      const gap = new Date(rows[i].answered_at).getTime() - new Date(rows[i - 1].answered_at).getTime();
-      if (gap > RUN_GAP_MS) runStart = i;
-    }
-    const lastRun = rows.slice(runStart);
-    progress[slug] = {
-      answered: lastRun.length,
-      correct: lastRun.filter((r) => r.is_correct).length,
-    };
+  for (const c of summary?.certs ?? []) {
+    progress[c.slug] = { answered: c.last_run_answered, correct: c.last_run_correct };
   }
   return progress;
 }

@@ -1,4 +1,5 @@
 import { createServiceClient, logGumroadEvent } from "../_shared/gumroadMatch.ts";
+import { sendPurchaseReceipt } from "../_shared/purchaseReceipt.ts";
 import { corsHeaders } from "../_shared/admin.ts";
 
 // Called by the frontend right after every login AND every signup (both fire
@@ -92,7 +93,21 @@ Deno.serve(async (req) => {
       gumroad_sale_id: row.gumroad_sale_id,
     });
 
-    if (!alreadyExists) reconciled++;
+    if (!alreadyExists) {
+      reconciled++;
+      // The buyer had no account (or another e-mail) when the sale came in, so
+      // no confirmation was sent then. Only worth sending while the access is
+      // still running.
+      if (new Date(row.expires_at).getTime() > Date.now()) {
+        await sendPurchaseReceipt(supabase, {
+          userId: user.id,
+          certificationId: row.certification_id,
+          amountCents: row.amount_cents,
+          currency: row.currency,
+          expiresAt: row.expires_at,
+        });
+      }
+    }
   }
 
   return new Response(JSON.stringify({ reconciled }), {

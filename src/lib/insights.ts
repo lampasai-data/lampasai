@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { loadAttemptSummary } from "./quizData";
 
 export interface DomainStat {
   key: string;
@@ -68,57 +69,30 @@ export function streakFrom(days: Set<string>, now = new Date()): number {
 export async function loadMyInsights(userId: string): Promise<MyInsights> {
   if (!supabase) return EMPTY_INSIGHTS;
 
-  const [certs, attempts, exams] = await Promise.all([
+  const [certs, summary, exams] = await Promise.all([
     supabase.from("certifications").select("id, slug"),
-    supabase
-      .from("attempts")
-      .select("is_correct, answered_at, quiz_questions(certification_id, domain)")
-      .eq("user_id", userId)
-      .order("answered_at", { ascending: false })
-      .limit(20000),
+    loadAttemptSummary(userId),
     supabase
       .from("exam_results")
       .select("certification_id, correct_count, total_count, completed_at")
       .eq("user_id", userId)
       .order("completed_at", { ascending: true }),
   ]);
-  if (certs.error || attempts.error || exams.error) return EMPTY_INSIGHTS;
+  if (certs.error || !summary || exams.error) return EMPTY_INSIGHTS;
 
   const slugById = new Map((certs.data ?? []).map((c) => [c.id as string, c.slug as string]));
   const bySlug: Record<string, CertInsights> = {};
   const get = (slug: string) => (bySlug[slug] ??= { domains: [], exams: [] });
-  const tally = new Map<string, Map<string, DomainStat>>();
-  const days = new Set<string>();
-  const daysBySlug = new Map<string, Set<string>>();
-  const totals: Record<string, { answered: number; correct: number }> = {};
-  let correctTotal = 0;
+  const totalsBySlug: Record<string, CertTotals> = {};
 
-  for (const row of attempts.data ?? []) {
-    days.add(dayKey(new Date(row.answered_at as string)));
-    if (row.is_correct) correctTotal++;
-    const nested = row.quiz_questions as unknown as
-      | { certification_id: string; domain: string | null }
-      | { certification_id: string; domain: string | null }[]
-      | null;
-    const q = Array.isArray(nested) ? nested[0] : nested;
-    const slug = q ? slugById.get(q.certification_id) : undefined;
-    if (slug) {
-      const t = (totals[slug] ??= { answered: 0, correct: 0 });
-      t.answered++;
-      if (row.is_correct) t.correct++;
-      const d = daysBySlug.get(slug) ?? new Set<string>();
-      d.add(dayKey(new Date(row.answered_at as string)));
-      daysBySlug.set(slug, d);
-    }
-    if (!q || !slug || !q.domain) continue;
-    const perDomain = tally.get(slug) ?? new Map<string, DomainStat>();
-    const stat = perDomain.get(q.domain) ?? { key: q.domain, answered: 0, correct: 0 };
-    stat.answered++;
-    if (row.is_correct) stat.correct++;
-    perDomain.set(q.domain, stat);
-    tally.set(slug, perDomain);
+  for (const c of summary.certs) {
+    get(c.slug).domains = c.domains.map((d) => ({ key: d.key, answered: d.answered, correct: d.correct }));
+    totalsBySlug[c.slug] = {
+      answered: c.answered,
+      correct: c.correct,
+      streakDays: streakFrom(new Set(c.days)),
+    };
   }
-  for (const [slug, perDomain] of tally) get(slug).domains = [...perDomain.values()];
 
   let bestExamRatio: number | null = null;
   let examCount = 0;
@@ -132,14 +106,12 @@ export async function loadMyInsights(userId: string): Promise<MyInsights> {
   }
 
   return {
-    streakDays: streakFrom(days),
-    answeredTotal: attempts.data?.length ?? 0,
-    correctTotal,
+    streakDays: streakFrom(new Set(summary.days)),
+    answeredTotal: summary.answered_total,
+    correctTotal: summary.correct_total,
     examCount,
     bestExamRatio,
     bySlug,
-    totalsBySlug: Object.fromEntries(
-      Object.entries(totals).map(([slug, t]) => [slug, { ...t, streakDays: streakFrom(daysBySlug.get(slug) ?? new Set()) }])
-    ),
+    totalsBySlug,
   };
 }

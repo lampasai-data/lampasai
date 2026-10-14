@@ -7,7 +7,6 @@ import { actionableCount, computeAlerts } from "../../lib/adminAlerts";
 import { supabase } from "../../lib/supabase";
 import { useAdminTheme } from "../../lib/useAdminTheme";
 import {
-  ADMIN_EMAIL,
   EMPTY_ADMIN_DATA,
   loadAdminData,
   type AdminData,
@@ -36,10 +35,9 @@ import {
 const COLLAPSED_KEY = "lampasai-admin-sidebar-collapsed";
 
 export default function AdminLayout() {
-  const { user, ready, signOut } = useAuth();
+  const { user, ready, profileReady, isAdmin, signOut } = useAuth();
   const { lang } = useLanguage();
   const a = ADMIN_T[lang];
-  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
 
   const [data, setData] = useState<AdminData>(EMPTY_ADMIN_DATA);
   const [loading, setLoading] = useState(true);
@@ -104,7 +102,8 @@ export default function AdminLayout() {
   const alerts = useMemo(() => computeAlerts(data), [data]);
   const alertBadge = actionableCount(alerts);
 
-  if (!ready) return null;
+  // Wait for the server to answer am_i_admin before deciding to redirect.
+  if (!ready || !profileReady) return null;
   if (!user || !isAdmin) return <Navigate to="/formations" replace />;
 
   const links = [

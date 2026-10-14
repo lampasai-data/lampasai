@@ -5,7 +5,6 @@ import { GOAL_RATIO } from "../lib/goals";
 import type { CertInsights } from "../lib/insights";
 import { localize } from "../lib/i18nText";
 import type { CertificationSummary } from "../lib/quizData";
-import { accentOf } from "../lib/certAccent";
 import { USER_T } from "../userAreaI18n";
 
 // Fewer answers than this and a domain's percentage says little: it is shown
@@ -15,8 +14,12 @@ const LAST_EXAMS = 3;
 const TREND_POINTS = 8;
 
 const pct = (r: number) => Math.round(r * 100);
-const tone = (r: number) => (r >= GOAL_RATIO ? "text-green" : r >= 0.6 ? "text-teal" : "text-amber");
-const barColor = (r: number) => (r >= GOAL_RATIO ? "bg-green" : r >= 0.6 ? "bg-teal" : "bg-amber");
+const tone = (r: number) => (r >= GOAL_RATIO ? "text-green-ink" : r >= 0.6 ? "text-teal-dark" : "text-amber-ink");
+// Below the goal it is the same brown-orange as the trend curve, in both themes (the "-ink" text tones
+// swing from dark brown to bright yellow between light and dark, which read as
+// two different colours on a thick arc).
+const ringTone = (r: number) => (r >= GOAL_RATIO ? "text-green/65" : r >= 0.6 ? "text-teal/65" : "text-[#cf9248]");
+const barColor = (r: number) => (r >= GOAL_RATIO ? "bg-green/60" : r >= 0.6 ? "bg-teal/60" : "bg-amber/55");
 
 // Readiness as a ring: the arc is the score, the tick is the goal.
 function Ring({ ratio }: { ratio: number }) {
@@ -39,7 +42,7 @@ function Ring({ ratio }: { ratio: number }) {
           strokeWidth="10"
           strokeLinecap="round"
           strokeDasharray={`${Math.min(1, ratio) * C} ${C}`}
-          className={tone(ratio)}
+          className={ringTone(ratio)}
         />
       </svg>
       <svg viewBox="0 0 116 116" className="absolute inset-0 h-full w-full" aria-hidden="true">
@@ -55,7 +58,12 @@ function Ring({ ratio }: { ratio: number }) {
   );
 }
 
-function Trend({ exams, accent }: { exams: CertInsights["exams"]; accent: string }) {
+// One soft brown-orange for the curve, identical in light and dark (a per-cert
+// accent made Power BI yellow and Snowflake blue, unlike the ring and bars).
+const TREND_COLOR = "#cf9248";
+
+function Trend({ exams }: { exams: CertInsights["exams"] }) {
+  const accent = TREND_COLOR;
   const { lang } = useLanguage();
   const t = USER_T[lang].insights;
   const trend = exams.slice(-TREND_POINTS);
@@ -72,7 +80,7 @@ function Trend({ exams, accent }: { exams: CertInsights["exams"]; accent: string
       <svg viewBox={`0 0 ${W} ${H}`} className="mt-1 w-full max-w-[16rem]" role="img" aria-label={t.trendTitle}>
         <defs>
           <linearGradient id={`trend-${accent.slice(1)}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={accent} stopOpacity="0.35" />
+            <stop offset="0%" stopColor={accent} stopOpacity="0.22" />
             <stop offset="100%" stopColor={accent} stopOpacity="0" />
           </linearGradient>
         </defs>
@@ -118,7 +126,7 @@ function Domains({ slug, data }: { slug: string; data: CertInsights }) {
               <span className={`h-2 w-2 shrink-0 rounded-full ${enough ? barColor(ratio) : "bg-black/20"}`} />
               <span className="truncate font-medium text-ink">{localize(domain.shortLabel, lang)}</span>
               {weakest.has(domain.key) && (
-                <span className="shrink-0 rounded-full bg-amber/20 px-2 py-0.5 text-[10px] font-semibold text-amber-ink">
+                <span className="shrink-0 rounded-full bg-amber/12 px-2 py-0.5 text-[10px] font-semibold text-amber-ink">
                   {t.domainsWeakest}
                 </span>
               )}
@@ -175,7 +183,6 @@ export function ReadinessBadge({ data }: { data: CertInsights }) {
 export function CertAnalysis({ cert, data }: { cert: CertificationSummary; data: CertInsights }) {
   const { lang } = useLanguage();
   const t = USER_T[lang].insights;
-  const accent = accentOf(cert.slug);
   const last = data.exams.slice(-LAST_EXAMS);
   const ratio = last.length ? last.reduce((s, e) => s + e.ratio, 0) / last.length : null;
   const step = weakestStep(cert.slug, data, lang);
@@ -194,9 +201,8 @@ export function CertAnalysis({ cert, data }: { cert: CertificationSummary; data:
                 <ReadinessBadge data={data} />
                 <p className="text-sm font-semibold text-ink">{t.goal(pct(GOAL_RATIO))}</p>
               </div>
-              <p className="mt-0.5 text-xs text-muted">{t.readinessBasis(last.length)}</p>
             </div>
-            <Trend exams={data.exams} accent={accent} />
+            <Trend exams={data.exams} />
           </div>
         </div>
       )}
