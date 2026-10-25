@@ -190,9 +190,9 @@ export async function loadAdminData(): Promise<AdminData> {
     )
   );
   const voucherUses = new Map<string, VoucherUse[]>();
-  for (const r of (redemptionRes.data as { voucher_id: string; user_id: string; redeemed_at: string }[]) ?? []) {
+  for (const r of (redemptionRes.data as { voucher_id: string; user_id: string | null; redeemed_at: string }[]) ?? []) {
     const v = vouchersById.get(r.voucher_id);
-    if (!v) continue;
+    if (!v || !r.user_id) continue;
     const list = voucherUses.get(r.user_id) ?? [];
     list.push({
       code: v.code,

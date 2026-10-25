@@ -254,6 +254,7 @@ export interface AdminStrings {
   colAccess: string;
   colLastActivity: string;
   colSessions: string;
+  colAnswers: string;
   colAccessEnd: string;
   colLanguage: string;
   langValue: (l: string | null) => string;
@@ -707,6 +708,7 @@ export const ADMIN_T: Record<Lang, AdminStrings> = {
     colAccess: "Accès payant",
     colLastActivity: "Dernier examen",
     colSessions: "Examens",
+    colAnswers: "Réponses",
     colAccessEnd: "Fin d'accès",
     colLanguage: "Langue",
     langValue: (l) => (l === "en" ? "Anglais" : l === "fr" ? "Français" : "Inconnue"),
@@ -1172,6 +1174,7 @@ export const ADMIN_T: Record<Lang, AdminStrings> = {
     colAccess: "Paid access",
     colLastActivity: "Last exam",
     colSessions: "Exams",
+    colAnswers: "Answers",
     colAccessEnd: "Access ends",
     colLanguage: "Language",
     langValue: (l) => (l === "en" ? "English" : l === "fr" ? "French" : "Unknown"),

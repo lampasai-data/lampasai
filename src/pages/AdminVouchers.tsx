@@ -24,7 +24,8 @@ const ACCESS_DAY_OPTIONS = [7, 14, 30, 90];
 
 interface RedemptionRow {
   voucher_id: string;
-  user_id: string;
+  // null once the person's account has been deleted.
+  user_id: string | null;
   redeemed_at: string;
 }
 
@@ -74,7 +75,7 @@ export default function AdminVouchers() {
     setRedemptions(redemptionRowsTyped);
     if (!certificationId && certList.length > 0) setCertificationId(certList[0].id);
 
-    const redeemerIds = [...new Set(redemptionRowsTyped.map((r) => r.user_id))];
+    const redeemerIds = [...new Set(redemptionRowsTyped.flatMap((r) => (r.user_id ? [r.user_id] : [])))];
     if (redeemerIds.length > 0) {
       const { data: profileRows } = await supabase
         .from("profiles")
@@ -165,8 +166,8 @@ export default function AdminVouchers() {
   }
 
   function redeemerName(r: RedemptionRow) {
-    const p = redeemers.get(r.user_id);
-    return p?.first_name ?? p?.email ?? r.user_id;
+    const p = r.user_id ? redeemers.get(r.user_id) : undefined;
+    return p?.first_name ?? p?.email ?? r.user_id ?? "-";
   }
 
   // Plain text used for filtering only - the table cell itself renders a
@@ -463,16 +464,16 @@ export default function AdminVouchers() {
               {redemptionsFor(redeemersModalVoucher.id)
                 .filter((r) => {
                   if (!redeemerSearch) return true;
-                  const p = redeemers.get(r.user_id);
+                  const p = r.user_id ? redeemers.get(r.user_id) : undefined;
                   const haystack = `${p?.first_name ?? ""} ${p?.email ?? ""}`.toLowerCase();
                   return haystack.includes(redeemerSearch.toLowerCase());
                 })
                 .sort((a, b) => a.redeemed_at.localeCompare(b.redeemed_at))
                 .map((r) => {
-                  const p = redeemers.get(r.user_id);
+                  const p = r.user_id ? redeemers.get(r.user_id) : undefined;
                   return (
                     <div
-                      key={r.user_id}
+                      key={r.user_id ?? r.redeemed_at}
                       className="flex items-center justify-between gap-3 border-b border-black/5 px-5 py-2.5 text-sm last:border-0"
                     >
                       <div className="min-w-0">

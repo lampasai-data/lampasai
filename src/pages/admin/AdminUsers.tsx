@@ -193,6 +193,20 @@ export default function AdminUsers() {
     },
     { key: "exams", label: a.colSessions, value: (r) => r.results.length },
     {
+      key: "answers",
+      label: a.colAnswers,
+      value: (r) => data.activity.get(r.profile.id)?.answers ?? 0,
+      render: (r) => {
+        const act = data.activity.get(r.profile.id);
+        if (!act || act.answers === 0) return "-";
+        return (
+          <span className="whitespace-nowrap">
+            {act.answers.toLocaleString(locale)} · {Math.round((act.correct / act.answers) * 100)} %
+          </span>
+        );
+      },
+    },
+    {
       key: "last",
       label: a.colLastActivity,
       value: (r) => r.lastExam,
